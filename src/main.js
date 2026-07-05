@@ -11,6 +11,6 @@ window.app = app;
 
 import map from './components/map.js';
 window.mapApp = map;
-app.appendChild(utils.templateToElement(mapApp().template))
+app.appendChild(utils.templateToElement(map().template))
 
 Alpine.start()
