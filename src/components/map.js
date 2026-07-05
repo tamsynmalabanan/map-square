@@ -2,9 +2,7 @@ import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
 const template = `
-
 <div x-id="['map']" :id="$id('map')" class="h-screen" x-data="mapApp()"></div>
-
 `;
 
 export default () => {
