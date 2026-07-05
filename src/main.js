@@ -1,16 +1,16 @@
 import './style.css'
-import Alpine from 'alpinejs'
 
-window.Alpine = Alpine
+import Alpine from 'alpinejs'
+window.Alpine = Alpine;
+
+import * as utils from './utils.js';
+window.utils = utils;
+
+const app = document.querySelector('#app')
+window.app = app;
+
+import map from './components/map.js';
+window.mapApp = map;
+app.appendChild(utils.templateToElement(mapApp().template))
 
 Alpine.start()
-
-import maplibregl from 'maplibre-gl';
-import 'maplibre-gl/dist/maplibre-gl.css';
-
-const map = new maplibregl.Map({
-    container: 'map', // container id
-    style: 'https://demotiles.maplibre.org/globe.json', // style URL
-    center: [0, 0], // starting position [lng, lat]
-    zoom: 1 // starting zoom
-});
