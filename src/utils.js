@@ -1,5 +1,5 @@
-export const templateToElement = (template) => {
+export const strToEl = (str) => {
     const div = document.createElement('div');
-    div.innerHTML = template.trim();
+    div.innerHTML = str.replace(/\s{2,}/g, ' ').trim();
     return div.firstElementChild;
 }

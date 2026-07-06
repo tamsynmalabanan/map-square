@@ -1,13 +1,7 @@
 import Map from '../gis/map.js';
+import Alpine from 'alpinejs';
 
-const template = `
-
-`;
-
-export default () => {
-  return {
-    template: `<div x-id="['map']" :id="$id('map')" class="h-full z-0" x-data="mapApp()"></div>`,
-    
+Alpine.data('mapApp', (options={}) => ({
     init() {
       this.$nextTick(() => {
         const map = new Map({
@@ -18,5 +12,8 @@ export default () => {
         });
       });
     },
-  }
+}))
+
+export default (options={}) => {
+  return `<div x-id="['map']" :id="$id('map')" class="size-full z-0" x-data="mapApp()"></div>`
 }

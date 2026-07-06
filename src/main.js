@@ -1,25 +1,21 @@
 import './style.css'
 
+import * as utils from './utils.js'; 
+window.utils = utils;
+
+import * as icons from './icons.js'; 
+window.icons = icons;
+
 import Alpine from 'alpinejs'
 window.Alpine = Alpine;
 
-import * as utils from './utils.js';
-window.utils = utils;
+import persist from '@alpinejs/persist'
+Alpine.plugin(persist)
 
-const app = document.querySelector('#app')
-window.app = app;
+import registerStores from './stores.js'
+registerStores()
 
-import map from './components/map.js';
-window.mapApp = map;
-app.appendChild(utils.templateToElement(mapApp().template))
-
-import modal from './components/modal.js';
-window.modalApp = modal;
-const dashboardModal = utils.templateToElement(modalApp({
-    containerClass: 'absolute bottom-0 left-0 m-4',
-    toggleHTML: `<div class="border rounded p-1">Dashboard</div>`,
-    modalTitle: 'Dashboard'
-}).template)
-app.appendChild(dashboardModal)
+import registerLayout from './layout.js'
+registerLayout()
 
 Alpine.start()
