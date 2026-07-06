@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" :class="$store.dark == true && 'dark'">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -8,7 +8,7 @@
     <link href="/src/style.css" rel="stylesheet">
   </head>
   <body>
-    <div id="app"></div>
+    <div id="app" class="h-screen"></div>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>

@@ -1,12 +1,12 @@
 import Map from '../gis/map.js';
 
 const template = `
-<div x-id="['map']" :id="$id('map')" class="h-screen" x-data="mapApp()"></div>
+
 `;
 
 export default () => {
   return {
-    template: template,
+    template: `<div x-id="['map']" :id="$id('map')" class="h-full z-0" x-data="mapApp()"></div>`,
     
     init() {
       this.$nextTick(() => {
