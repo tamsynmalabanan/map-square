@@ -1,14 +1,10 @@
 import Alpine from 'alpinejs';
-import button from '../templates/button.js'; 
-
-Alpine.data('dashboardOptionsApp', (options={}) => ({
-  
-}))
+import button from '../../templates/button.js'; 
 
 export default (options={}) => {
   return `
     <div 
-      x-data='dashboardOptionsApp()'
+      x-data
       class="flex flex-col"
     >
       <div class='flex flex-nowrap justify-start items-start gap-3'>
