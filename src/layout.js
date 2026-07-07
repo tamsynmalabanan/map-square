@@ -13,7 +13,7 @@ export default function registerLayout() {
     app.appendChild(utils.strToEl(modal({
         open: false,
         title: 'Dashboard',
-        classStr: "absolute bottom-0 left-0 m-4",
+        classStr: "absolute bottom-0 left-0 m-[10px]",
         icon: icons.walletSolid,
         origin: 'bottom.left',
         collapsible: true,
