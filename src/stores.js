@@ -1,16 +1,16 @@
 export default function registerStores() {
-    Alpine.store('darkMode', {
-        on: Alpine.$persist(null).as('darkModeIsOn'),
+    Alpine.store('colorScheme', {
+        darkMode: Alpine.$persist(null),
     
-        toggle() {
-            this.on = !this.isOn;
+        toggleDarkMode() {
+            this.darkMode = !this.darkMode;
         },
     
-        get isOn() {
-            if (this.on === null) {
-                this.on = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        get darkModeIsOn() {
+            if (this.darkMode === null) {
+                this.darkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
             }
-            return this.on;
+            return this.darkMode;
         }
     })
 }

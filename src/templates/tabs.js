@@ -28,10 +28,8 @@ export default ({
               icon: tab.icon,
               title: tab.title,
               collapsible: true,
-              attrs: `:id="$id('tabs', 'toggles')+'-'+${index}" :class="{
-                'bg-teal-500 dark:bg-teal-500': active == ${index},
-                'bg-teal-50 dark:bg-teal-950': active != ${index},
-              }" @click="active = ${index}"`
+              attrs: `:id="$id('tabs', 'toggles')+'-'+${index}" @click="active = ${index}"`,
+              highlightExp: `active == ${index}`
           })).join('\n')}
         </div>
         <div 

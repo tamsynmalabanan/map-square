@@ -23,10 +23,8 @@ export default ({
         title, 
         icon, 
         collapsible,
-        attrs: `:class="{
-          'bg-teal-500 dark:bg-teal-500': open,
-          'bg-teal-50 dark:bg-teal-950': !open,
-        }" @click="toggle"`,
+        attrs: `@click="toggle"`,
+        highlightExp: `open`
       })}
       
       <template x-teleport="#app">

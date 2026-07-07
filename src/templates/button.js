@@ -6,13 +6,21 @@ export default ({
   classStr='',
   attrs='',
   collapsible=false,
+  highlightExp='',
+  classBindings='',
 }={}) => {
   return `
-    <button 
+    <button
       ${attrs}
       x-data
       x-id="['button']" 
       :id="$id('button')" 
+      :class="{
+        ${highlightExp ? `
+          'bg-teal-500 dark:bg-teal-500': ${highlightExp},
+          'bg-teal-50 dark:bg-teal-950': !${highlightExp},
+        ` : ''}
+      }"
       class="
         flex 
         justify-center 
