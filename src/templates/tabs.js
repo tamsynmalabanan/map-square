@@ -17,7 +17,7 @@ export default ({
       <div 
         x-id="['tabs']" 
         :id="$id('tabs')" 
-        x-data='tabsApp(${JSON.stringify({active})})'
+        x-data='tabsApp(${utils.objToStr({active})})'
         class="flex flex-col gap-4 grow"
       >
         <div 

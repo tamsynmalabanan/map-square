@@ -8,7 +8,9 @@ import {default as dashboardOptions} from './components/dashboard/options.js';
 export default function registerLayout() {
     const app = document.querySelector('#app');
 
-    app.appendChild(utils.strToEl(map()))
+    // NOTE: if there are get params for source and url, check firts if source-url config is already in indexeddb else download
+    const config = {}
+    app.appendChild(utils.strToEl(map({config})))
 
     app.appendChild(utils.strToEl(modal({
         open: false,
