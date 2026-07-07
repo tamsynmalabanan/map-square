@@ -29,12 +29,15 @@ export default ({
               title: tab.title,
               collapsible: true,
               attrs: `:id="$id('tabs', 'toggles')+'-'+${index}" @click="active = ${index}"`,
-              highlightExp: `active == ${index}`
+              highlightExp: `active == ${index}`,
           })).join('\n')}
         </div>
         <div 
           :id="$id('tabs', 'contents')"
-          class="flex flex-col grow border-t-3 border-teal-950/50 dark:border-teal-50/50 py-5"
+          :class="{
+            ['bg-'+color+'-500/10']: true,
+          }"
+          class="flex flex-col grow p-5 rounded"
         >
           ${tabs.map((tab, index) => `
             <div 

@@ -24,7 +24,8 @@ export default ({
         icon, 
         collapsible,
         attrs: `@click="toggle"`,
-        highlightExp: `open`
+        highlightExp: `open`,
+        classStr: 'border-2'
       })}
       
       <template x-teleport="#app">
@@ -32,30 +33,37 @@ export default ({
           :id="$id('modal', 'container')" 
           x-show="open" 
           x-transition.origin.${origin}
-          class="z-10 absolute top-0 left-0 size-full flex items-center justify-center bg-teal-50/50 dark:bg-teal-950/50"
+          :class="{
+            ['bg-'+color+'-50/50 dark:bg-'+color+'-950/50']: true,
+          }"
+          class="z-10 absolute top-0 left-0 size-full flex items-center justify-center"
         >
-          <div :id="$id('modal')" @click.outside="toggle" class="
-            bg-teal-50 dark:bg-teal-950
-            border-teal-950/50 dark:border-teal-50/50
-            dark:text-white
-            border-3 
-            shadow-lg 
-            rounded-none 
-            sm:rounded-xl 
-            size-full 
-            sm:size-3/4 
-            lg:w-1/2 p-4
-            flex
-            flex-col
-            gap-5
-          ">
+          <div 
+            :id="$id('modal')" 
+            @click.outside="toggle" 
+            :class="{
+              ['bg-'+color+'-50/100 dark:bg-'+color+'-950/100']: true,
+            }"
+            class="
+              dark:text-white
+              shadow-2xl
+              rounded-none 
+              sm:rounded-xl 
+              size-full 
+              sm:size-3/4 
+              lg:w-1/2 p-4
+              flex
+              flex-col
+              gap-5
+            "
+          >
             <div class="flex items-start justify-between">
               <div class="flex justify-start gap-2 items-center">
                 ${icon || ''}
                 <h1>${title}</h1>
               </div>
               ${button({
-                icon: icons.close,
+                icon: icons.xMini,
                 attrs: `@click="toggle"`,
               })}
             </div>

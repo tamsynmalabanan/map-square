@@ -6,7 +6,7 @@ export default ({
   classStr='',
   attrs='',
   collapsible=false,
-  highlightExp='',
+  highlightExp=false,
   classBindings='',
 }={}) => {
   return `
@@ -14,27 +14,21 @@ export default ({
       ${attrs}
       x-data
       x-id="['button']" 
-      :id="$id('button')" 
+      :id="$id('button')"
       :class="{
-        ${highlightExp ? `
-          'bg-teal-500 dark:bg-teal-500': ${highlightExp},
-          'bg-teal-50 dark:bg-teal-950': !${highlightExp},
-        ` : ''}
+        ['bg-'+color+'-500/50']: ${highlightExp},
+        ['bg-'+color+'-50/100 dark:bg-'+color+'-950/100 hover:bg-'+color+'-500/50']: !(${highlightExp}),
       }"
       class="
         flex 
         justify-center 
-        items-center 
+        items-center
+        border-gray-500/50
         gap-2 
         rounded 
         py-1
         px-2 
-        border-teal-950/50 
-        dark:border-teal-50/50 
-        bg-teal-50 
-        dark:bg-teal-950 
-        dark:text-white 
-        hover:bg-teal-500 
+        dark:text-white  
         cursor-pointer
         ${classStr}
       "

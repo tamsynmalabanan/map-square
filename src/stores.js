@@ -1,5 +1,5 @@
 export default function registerStores() {
-    Alpine.store('colorScheme', {
+    Alpine.store('displaySettings', {
         darkMode: Alpine.$persist(null),
     
         toggleDarkMode() {
@@ -11,6 +11,32 @@ export default function registerStores() {
                 this.darkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
             }
             return this.darkMode;
-        }
+        },
+
+        changeColorScheme(color) {
+            this.colorScheme = color
+        },
+
+        colorScheme: Alpine.$persist('teal'),
+
+        colorOptions: [
+            'yellow',
+            'teal',
+            'blue',
+            'pink',
+            'gray',
+        ]
+
+        // colors: [
+        //     'red', 'orange', 'amber',
+        //     'yellow', 'lime', 'green',
+        //     'emerald', 'teal', 'cyan',
+        //     'sky', 'blue', 'indigo',
+        //     'violet', 'purple', 'fuchsia',
+        //     'pink', 'rose', 'slate',
+        //     'gray', 'zinc', 'neutral',
+        //     'stone', 'taupe', 'mauve',
+        //     'mist', 'olive',
+        // ]
     })
 }

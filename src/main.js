@@ -12,8 +12,14 @@ window.Alpine = Alpine;
 import persist from '@alpinejs/persist'
 Alpine.plugin(persist)
 
+import anchor from '@alpinejs/anchor'
+Alpine.plugin(anchor)
+
 import registerStores from './stores.js'
 registerStores()
+
+import registerData from './data.js'
+registerData()
 
 import registerLayout from './layout.js'
 registerLayout()
