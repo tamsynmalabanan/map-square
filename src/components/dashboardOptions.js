@@ -11,7 +11,7 @@ export default (options={}) => {
       x-data='dashboardOptionsApp()'
       class="flex flex-col"
     >
-      <div class='flex flex-wrap justify-start items-start gap-3'>
+      <div class='flex flex-nowrap justify-start items-start gap-3'>
         ${button({
             icon: icons.moonMini,
             title: 'Dark Mode',
