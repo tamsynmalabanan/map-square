@@ -34,13 +34,12 @@ export default ({
         </div>
         <div 
           :id="$id('tabs', 'contents')"
-          class="flex flex-col grow"
+          class="flex flex-col grow border-t-3 border-teal-950/50 dark:border-teal-50/50 py-5"
         >
           ${tabs.map((tab, index) => `
             <div 
                 :id="$id('tabs', 'contents')+'-'+${index}" 
                 x-show="active == ${index}"
-                class="border-t-2 py-5  grow"
             >${tab.content}</div>  
           `).join('\n')}
         </div>
