@@ -1,76 +1,28 @@
 import Alpine from 'alpinejs';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
+import * as utils from '../utils.js'; 
 
-const defaultConfig = {
+const defaultSettings = {
   locked: true,
   unit: 'metric',
-  projection: 'mercator',
   precision: 1000000,
+  projection: 'mercator',
   terrain: false,
-  interactions: {
-      tooltip: {
-        active: true,
-      },
-      popup: {
-        active: true,
-        targets: {
-          layers: true,
-          osm: true,
-          elevation: true,
-        }
-      }
-  },
-  hillshade: {
-    render: true,
-    methods: [{
-      name: 'standard',
-      title: 'Standard',
-      active: true,
-      params: {
-        'hillshade-illumination-direction': 315,
-        'hillshade-illumination-altitude': 45,
-        'hillshade-highlight-color': '#FFFFFF',
-        'hillshade-shadow-color': '#000000',
-      }
-    }, {
-      name: 'multi',
-      title: 'Multidirectional',
-      active: true,
-      params: {
-        'hillshade-illumination-direction': [315, 45, 135, 225],
-        'hillshade-illumination-altitude': [45, 45, 45, 45],
-        'hillshade-highlight-color': [
-            '#ff0000',
-            '#80ff00',
-            '#00ffff',
-            '#7f00ff',
-        ],
-        'hillshade-shadow-color': [
-            '#503030',
-            '#405030',
-            '#305050',
-            '#403050',
-        ],
-      }
-    }],
-    exaggeration: 0.1,
-    accent: '#000000',
-  },
   bookmark: {
     extents: [{
+      active: true,
       name: 'centroid',
       title: 'Centroid',
-      active: true,
       params: {
         zoom: 1,
         lng: 0,
         lat: 3,
       },
     }, {
+      active: false,
       name: 'bbox',
       title: 'Bounding Box',
-      active: false,
       params: {
         w: -140,
         s: -70,
@@ -85,11 +37,6 @@ const defaultConfig = {
   },  
   basemap: {
     render: true,
-    tiles: ['https://a.tile.openstreetmap.org/{z}/{x}/{y}.png'],
-    tileSize: 256,
-    maxzoom: 20,
-    attribution: '&copy; OpenStreetMap Contributors',
-    
     theme: 'auto',
     paints: {
       default: {
@@ -134,12 +81,116 @@ const defaultConfig = {
       },
     }
   },
-  legend: {
-      sources: {},
-      themes: [
-        // {active: true, title:'', description: '', layers: [], }
-      ]
+  hillshade: {
+    render: true,
+    methods: [{
+      active: true,
+      name: 'standard',
+      title: 'Standard',
+      params: {
+        'hillshade-illumination-direction': 315,
+        'hillshade-illumination-altitude': 45,
+        'hillshade-highlight-color': '#FFFFFF',
+        'hillshade-shadow-color': '#000000',
+      }
+    }, {
+      active: false,
+      name: 'multi',
+      title: 'Multidirectional',
+      params: {
+        'hillshade-illumination-direction': [315, 45, 135, 225],
+        'hillshade-illumination-altitude': [45, 45, 45, 45],
+        'hillshade-highlight-color': [
+          '#ff0000',
+          '#80ff00',
+          '#00ffff',
+          '#7f00ff',
+        ],
+        'hillshade-shadow-color': [
+          '#503030',
+          '#405030',
+          '#305050',
+          '#403050',
+        ],
+      }
+    }],
+    exaggeration: 0.1,
+    accent: '#000000',
   },
+  interactions: {
+    tooltip: {
+      active: true,
+    },
+    popup: {
+      active: true,
+      targets: {
+        layers: true,
+        osm: true,
+        elevation: true,
+      }
+    }
+  },
+}
+
+const defaultConfig = {
+  sources: {
+    basemap: {
+      type: 'raster',
+      tileSize: 256,
+      maxzoom: 20,
+      tiles: ['https://a.tile.openstreetmap.org/{z}/{x}/{y}.png'],
+      attribution: '&copy; OpenStreetMap Contributors',
+    },
+    terrain: {
+        type: 'raster-dem',
+        tiles: ['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],
+        tileSize: 256,
+        attribution: 'Terrain Tiles © Mapzen, <a href="https://registry.opendata.aws/terrain-tiles/" target="_blank">Registry of Open Data on AWS</a>',
+        encoding: 'terrarium' 
+    },
+  },
+  themes: [{
+    active: true,
+    id: utils.randomId(),
+    settings: structuredClone(defaultSettings),
+    metadata: {
+      title: 'Untitled Map',
+      abstract: '',
+      author: '',
+    },
+    legend: [] 
+    // legend should be a nested array and objects of groups and layers
+    // [
+    //   {
+    //     type: 'group', 
+    //     params: {
+    //       title: '', 
+    //       contents: [
+    //         {
+    //           type: 'group',
+    //           params: {
+    //             title: '',
+    //             contents: [
+    //               {
+    //                 type: 'layer',
+    //                 params: {
+    //                   title: '',
+    //                 }
+    //               }
+    //             ]
+    //           }
+    //         },
+    //         {
+    //           type: 'layer',
+    //           params: {
+    //             title: ''
+    //           }
+    //         }
+    //       ]
+    //     }
+    //   }
+    // ]
+  }]
 }
 
 export default class Map extends maplibregl.Map {
@@ -148,16 +199,19 @@ export default class Map extends maplibregl.Map {
       config = structuredClone(defaultConfig)
     }
 
-    const bookmark = config.bookmark
+    const theme = config.themes.find(theme => theme.active)
+    const settings = theme.settings
+
+    const bookmark = settings.bookmark
     const extent = bookmark.extents.find(props => props.active)
 
-    const basemap = config.basemap
-    const theme = basemap.paints[(basemap.theme == 'dark' || (
-      basemap.theme === 'auto' && Alpine.store('displaySettings').darkModeIsOn
+    const basemap = settings.basemap
+    const paints = basemap.paints[(basemap.theme == 'dark' || (
+      basemap.theme == 'auto' && Alpine.store('displaySettings').darkModeIsOn
     )) ? 'dark' : 'default']
     
     const options = {
-      container: container,
+      container,
       pitch: bookmark.pitch,
       bearing: bookmark.bearing,
       ...(extent.name == 'centroid' ? {
@@ -166,34 +220,19 @@ export default class Map extends maplibregl.Map {
       } : {}),
       maxZoom: 22,
       maxPitch: 75,
-      interactive: !config.locked,
+      interactive: !settings.locked,
       hash: false,
       style: {
         version: 8,
-        sources: {
-          basemap: {
-              type: 'raster',
-              tileSize: basemap.tileSize,
-              maxzoom: basemap.maxzoom,
-              tiles: basemap.tiles,
-              attribution: basemap.attribution,
-          },
-          terrain: {
-              type: 'raster-dem',
-              tiles: ['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],
-              tileSize: 256,
-              attribution: 'Terrain Tiles © Mapzen, <a href="https://registry.opendata.aws/terrain-tiles/" target="_blank">Registry of Open Data on AWS</a>',
-              encoding: 'terrarium' 
-          },
-        },
+        sources: config.sources,
         ...(basemap.render ? {
           layers: [{
             id: 'basemap',
             type: 'raster',
             source: 'basemap',
-            paint: theme.basemap
+            paint: paints.basemap
           }],
-          sky: theme.sky
+          sky: paints.sky
         } : {})
       },
     }

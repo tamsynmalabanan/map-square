@@ -7,3 +7,11 @@ export const strToEl = (str) => {
 export const objToStr = (obj) => {
     return JSON.stringify(obj).replace(/"/g, '&quot;')
 }
+
+export const randomId = (prefix=undefined, suffix=undefined) => {
+    return Array(
+        prefix, 
+        Math.random().toString(36).substr(2, 9), 
+        suffix
+    ).filter(Boolean).join('-')
+}
