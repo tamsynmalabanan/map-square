@@ -5,7 +5,10 @@ Alpine.data('mapApp', ({
   config=null,
 }={}) => ({
     init() {
-      this.$nextTick(() => { new Map(this.$el, config) });
+      this.$nextTick(() => {
+        const map = new Map(this.$el, config)
+        // NOTE: $watch darkMode, color changes
+      });
     },
 }))
 

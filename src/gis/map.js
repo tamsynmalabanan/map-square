@@ -59,6 +59,7 @@ const defaultConfig = {
       basemap: {
         render: true,
         theme: 'auto',
+        color: 'auto',
         paints: {
           default: {
             basemap: {
