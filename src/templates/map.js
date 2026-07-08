@@ -15,5 +15,15 @@ Alpine.data('mapApp', ({
 export default ({
   config=null,
 }={}) => {
-  return `<div x-id="['map']" :id="$id('map')" class="size-full z-0" x-data="mapApp(${utils.objToStr(config)})"></div>`
+  return `
+  <div 
+    x-id="['map']" 
+    :id="$id('map')" 
+    :class="{
+      ['bg-'+color+'-50/100 dark:bg-'+color+'-950/100']: true,
+    }"
+    class="size-full z-0" 
+    x-data="mapApp(${utils.objToStr(config)})"
+  ></div>
+  `
 }
