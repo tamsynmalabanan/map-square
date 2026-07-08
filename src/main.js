@@ -3,6 +3,9 @@ import './style.css'
 import * as utils from './utils.js'; 
 window.utils = utils;
 
+import * as gisUtils from './gis/utils.js'; 
+window.gisUtils = gisUtils;
+
 import * as icons from './icons.js'; 
 window.icons = icons;
 

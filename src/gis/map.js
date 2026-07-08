@@ -2,6 +2,7 @@ import Alpine from 'alpinejs';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import * as utils from '../utils.js'; 
+import * as gisUtils from './utils.js'; 
 
 const defaultSettings = {
   locked: true,
@@ -238,6 +239,49 @@ export default class Map extends maplibregl.Map {
     }
 
     super(options);
+    
     this.config = config
+    this.theme = theme
+
+    this.configAddLayer()
+    this.configRemoveLayer()
+    this.configFitBounds()
+    
+    window.map = this
+  }
+  
+  configAddLayer() {
+    const originalAddLayer = this.addLayer.bind(this)
+
+    this.addLayer = (layer, beforeId) => {
+      const result = originalAddLayer(layer, beforeId)
+      this.fire('layeradded', { layer })
+      return result
+    }
+  }
+
+  configRemoveLayer() {
+    const originalRemoveLayer = this.removeLayer.bind(this)
+
+    this.removeLayer = (layerId) => {
+      const result = originalRemoveLayer(layerId)
+      this.fire('layerremoved', { layerId })
+      return result
+  }
+  }
+
+  configFitBounds() {
+    const originalFitBounds = this.fitBounds.bind(this)
+
+    this.fitBounds = (bounds, options) => {
+      if (this.theme.settings.locked) {
+        return alert('map view is locked.')
+      }
+      return originalFitBounds(bounds, options)
+    }
+  }
+
+  getBbox() {
+    return this.getBounds().toArray().flatMap(i => i)
   }
 }
