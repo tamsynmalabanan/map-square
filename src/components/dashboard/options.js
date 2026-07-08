@@ -20,7 +20,7 @@ export default (options={}) => {
             icon: icons.swatchMini,
             title: 'Color Scheme',
             attrs: `
-              :class="{['bg-'+color+'-500/100']: true}"
+              :class="{['bg-'+color+'-500/100!']: true}"
               x-ref="button"
               @click="open = !open"
               `,
@@ -30,14 +30,14 @@ export default (options={}) => {
           x-show="open" 
             x-anchor="$refs.button"
             @click.outside="open = false"
-            :class="{['bg-'+color+'-500/10']: true}"
+            :class="{['bg-'+color+'-500/10!']: true}"
             class='mt-2 flex gap-2 p-2 border-2 border-gray-500/50 rounded'
           >
             ${Alpine.store('displaySettings').colorOptions.map(color => {
               return button({
                 attrs: `
                   :class="{
-                    ['bg-${color}-500/100']: true,
+                    ['bg-${color}-500/100!']: true,
                     ['border-gray-950 dark:border-gray-50']: color == '${color}',
                     ['border-gray-500/50']: color != '${color}',
                   }"

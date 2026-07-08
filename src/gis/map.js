@@ -3,8 +3,15 @@ import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import * as utils from '../utils.js'; 
 import * as gisUtils from './utils.js'; 
+import HandleControls from './handlers/controls.js';
 
 const defaultConfig = {
+  id: utils.randomId(),
+  metadata: {
+    title: 'Untitled Map',
+    abstract: '',
+    author: '',
+  },
   sources: {
     basemap: {
       type: 'raster',
@@ -25,7 +32,7 @@ const defaultConfig = {
     active: true,
     id: utils.randomId(),
     settings: {
-      locked: true,
+      locked: false,
       unit: 'metric',
       precision: 1000000,
       projection: 'mercator',
@@ -152,11 +159,11 @@ const defaultConfig = {
           }
         }
       },
+      controls: {}
     },
     metadata: {
       title: 'Untitled Map',
       abstract: '',
-      author: '',
     },
     legend: [] 
     // legend should be a nested array and objects of groups and layers
@@ -236,17 +243,16 @@ export default class Map extends maplibregl.Map {
     super(options);
 
     this.on('load', () => {
-
+      this.handlers['handleControls'] = new HandleControls(this)
     })
 
-    this.config = config
-    this.theme = theme
+    this._ms = {config, theme, controls: {}}
 
     this.configAddLayer()
     this.configRemoveLayer()
     this.configFitBounds()
     
-    // window.map = this
+    window.map = this
   }
   
   static normalizeConfig(config) {

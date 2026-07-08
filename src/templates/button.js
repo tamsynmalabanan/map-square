@@ -16,8 +16,8 @@ export default ({
       x-id="['button']" 
       :id="$id('button')"
       :class="{
-        ['bg-'+color+'-500/50']: ${highlightExp},
-        ['bg-'+color+'-50/100 dark:bg-'+color+'-950/100 hover:bg-'+color+'-500/50']: !(${highlightExp}),
+        ['bg-'+color+'-500/50!']: ${highlightExp},
+        ['bg-'+color+'-50/100! dark:bg-'+color+'-950/100! hover:bg-'+color+'-500/50!']: !(${highlightExp}),
       }"
       class="
         flex 
