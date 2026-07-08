@@ -195,73 +195,32 @@ const defaultConfig = {
 
 export default class Map extends maplibregl.Map {
   constructor(container, config=null) {
-    const cloneConfig = structuredClone(defaultConfig)
-    const cloneTheme = cloneConfig.themes[0]
-    const cloneSettings = cloneTheme.settings
-    const cloneCentroid = cloneSettings.bookmark.extents.find(props => props.name == 'centroid')
-
-    config ??= cloneConfig
-
-    let theme = (config.themes ??= []).find(theme => theme.active)
-    if (!theme) {
-      theme = config.themes[0] ??= cloneTheme
-      theme.active = true
-    }
-
-    const settings = theme.settings ??= cloneSettings
-    const bookmark = settings.bookmark ??= cloneSettings.bookmark
+    config = Map.normalizeConfig(config)
     
-    let extent = (bookmark.extents ??= cloneSettings.bookmark.extents).find(props => props.active)
-    if (!extent) {
-      extent = bookmark.extents[0] ??= cloneSettings.bookmark.extents[0]
-      extent.active = true
-
-      const extentNames = bookmark.extents.map(props => props.name)
-      cloneSettings.bookmark.extents.forEach(props => {
-        if (!extentNames.includes(props.name)) {
-          props.active = false
-          bookmark.extents.push(props)
-        }
-      })
-    }
-
-    const basemap = settings.basemap ??= cloneSettings.basemap
-    basemap.render ??= cloneSettings.basemap.render
-    basemap.theme ??= cloneSettings.basemap.theme
-    
-    let paints = (basemap.paints ??= cloneSettings.basemap.paints)[(basemap.theme == 'dark' || (
+    const theme = config.themes.find(theme => theme.active)
+    const settings = theme.settings
+    const bookmark = settings.bookmark
+    const extent = bookmark.extents.find(props => props.active)
+    const basemap = settings.basemap
+    const paints = basemap.paints[(basemap.theme == 'dark' || (
       basemap.theme == 'auto' && Alpine.store('displaySettings').darkModeIsOn
     )) ? 'dark' : 'default']
-    if (!paints) {
-      basemap.theme = Object.keys(basemap.paints)[0] ?? Object.keys(cloneSettings.basemap.paints)[0]
-      paints = basemap.paints[basemap.theme] ??= cloneSettings.basemap.paints[basemap.theme]
-
-      Object.entries(cloneSettings.basemap.paints).forEach(([name, props]) => {
-        if (!(name in basemap.paints)) {
-          basemap.paints[name] = props
-        }
-      })
-    }
-
-    const sources = config.sources ??= cloneConfig.sources
-    sources.basemap ??= cloneConfig.sources.basemap
-    sources.terrain ??= cloneConfig.sources.terrain
 
     const options = {
       container,
-      pitch: bookmark.pitch ??= cloneSettings.bookmark.pitch,
-      bearing: bookmark.bearing ??= cloneSettings.bookmark.bearing,
+      pitch: bookmark.pitch,
+      bearing: bookmark.bearing,
       ...(extent.name == 'centroid' ? {
-        zoom: extent.params.zoom ??= cloneCentroid.params.zoom,
-        center: Array('lng', 'lat').map(i => extent.params[i] ??= cloneCentroid.params[i]),
+        zoom: extent.params.zoom,
+        center: Array('lng', 'lat').map(i => extent.params[i]),
       } : {}),
       maxZoom: 22,
       maxPitch: 75,
-      interactive: !(settings.locked ??= cloneSettings.locked),
+      interactive: !settings.locked,
       hash: false,
       style: {
         version: 8,
-        sources,
+        sources: config.sources,
         ...(basemap.render ? {
           layers: [{
             id: 'basemap',
@@ -287,11 +246,67 @@ export default class Map extends maplibregl.Map {
     this.configRemoveLayer()
     this.configFitBounds()
     
-    window.map = this
+    // window.map = this
   }
   
-  static normalizeConfig() {
+  static normalizeConfig(config) {
+    const cloneConfig = structuredClone(defaultConfig)
+    if (!config) {
+      return cloneConfig
+    }
 
+    const sources = config.sources ??= cloneConfig.sources
+    sources.basemap ??= cloneConfig.sources.basemap
+    sources.terrain ??= cloneConfig.sources.terrain
+
+    const cloneTheme = cloneConfig.themes.find(theme => theme.active)
+    const cloneSettings = cloneTheme.settings
+    const cloneCentroid = cloneSettings.bookmark.extents.find(props => props.name == 'centroid')
+
+    let theme = (config.themes ??= []).find(theme => theme.active)
+    if (!theme) {
+      theme = config.themes[0] ??= cloneTheme
+      theme.active = true
+    }
+
+    const settings = theme.settings ??= cloneSettings
+    settings.locked ??= cloneSettings.locked
+
+    const bookmark = settings.bookmark ??= cloneSettings.bookmark
+    bookmark.pitch ??= cloneSettings.bookmark.pitch
+    bookmark.bearing ??= cloneSettings.bookmark.bearing
+    
+    const extent = bookmark.extents.find(props => props.active)
+    if (extent) {
+      const centroidExtent = bookmark.extents.find(props => props.name == 'centroid')
+      if (centroidExtent) {
+        centroidExtent.params.zoom ??= cloneCentroid.params.zoom
+        Array('lng', 'lat').forEach(i => centroidExtent.params[i] ??= cloneCentroid.params[i])
+      } else {
+        bookmark.extents.push(cloneCentroid)
+      }
+    } else {
+      bookmark.extents = cloneSettings.bookmark.extents
+    }
+
+    const basemap = settings.basemap ??= cloneSettings.basemap
+    basemap.render ??= cloneSettings.basemap.render
+    basemap.theme ??= cloneSettings.basemap.theme
+    basemap.color ??= cloneSettings.basemap.color
+    
+    const basemapTheme = (basemap.theme == 'dark' || (
+      basemap.theme == 'auto' && Alpine.store('displaySettings').darkModeIsOn
+    )) ? 'dark' : 'default'
+    const paints = basemap.paints[basemapTheme]
+    if (paints && Object.keys(basemap.paints).includes(basemapTheme)) {
+      paints.basemap ??= cloneSettings.basemap.paints[basemapTheme].basemap
+      paints.sky ??= cloneSettings.basemap.paints[basemapTheme].sky
+    } else {
+      basemap.theme = cloneSettings.basemap.theme
+      basemap.paints = cloneSettings.basemap.paints
+    }
+
+    return config
   }
 
   configAddLayer() {
