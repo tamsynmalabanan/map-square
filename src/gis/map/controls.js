@@ -1,5 +1,7 @@
 import maplibregl from 'maplibre-gl';
 import * as svg from '../../svg.js';
+import FitToWorldControl from './fitToWorld.js';
+import { PlaceSearchControl } from './placeSearch.js';
 
 export default class HandleControls {
     constructor(map) {
@@ -12,6 +14,17 @@ export default class HandleControls {
 
         this._map._ms.controls = Object.fromEntries(
             Object.entries({
+                placeSearch: {
+                    constructor: PlaceSearchControl,
+                    elements: {
+                        '.maplibregl-ctrl-place-search': {}
+                    },
+                    params: {
+                        active: true,
+                        position: 'top-left',
+                        order: 1,
+                    },
+                },
                 nav: {
                     constructor: maplibregl.NavigationControl,
                     elements: {
@@ -38,7 +51,9 @@ export default class HandleControls {
                 terrain: {
                     constructor: maplibregl.TerrainControl,
                     elements: {
-                        '.maplibregl-ctrl-terrain': {}
+                        '.maplibregl-ctrl-terrain': {
+                            innerHTML: '<span class="maplibregl-ctrl-icon dark:invert" aria-hidden="true"></span>'
+                        }
                     },
                     params: {
                         active: true,
@@ -50,10 +65,23 @@ export default class HandleControls {
                         },
                     },
                 },
+                fitToWorld: {
+                    constructor: FitToWorldControl,
+                    elements: {
+                        '.maplibregl-ctrl-fit-to-world': {}
+                    },
+                    params: {
+                        active: true,
+                        position: 'top-left',
+                        order: 4,
+                    },
+                },
                 geolocate: {
                     constructor: maplibregl.GeolocateControl,
                     elements: {
-                        '.maplibregl-ctrl-geolocate': {}
+                        '.maplibregl-ctrl-geolocate': {
+                            innerHTML: '<span class="maplibregl-ctrl-icon dark:invert" aria-hidden="true"></span>'
+                        },
                     },
                     params: {
                         active: true,
@@ -86,6 +114,19 @@ export default class HandleControls {
                         }
                     },
                 },
+                fullscreen: {
+                    constructor: maplibregl.FullscreenControl,
+                    elements: {
+                        '.maplibregl-ctrl-fullscreen': {
+                            innerHTML: '<span class="maplibregl-ctrl-icon dark:invert" aria-hidden="true"></span>',
+                        }
+                    },
+                    params: {
+                        active: true,
+                        position: 'bottom-right',
+                        order: 3,
+                    },
+                },
             }).map(([name, props]) => {
                 const params = this._map._ms.theme.settings.controls[name] ??= props.params
                 return [name, {...props, params}]
@@ -96,7 +137,7 @@ export default class HandleControls {
                 const control = new props.constructor(params.options)
                 this._map.addControl(control, params.position)
 
-                const container = control._container
+                const container = control._controlContainer ?? control._container
                 container.classList.add('border-2!', 'border-gray-500/50!', 'dark:text-white!')
                 container.setAttribute(':class', `{['bg-'+color+'-100/100! dark:bg-'+color+'-950/100!']: true}`)
 

@@ -10,7 +10,7 @@ export default (options={}) => {
       <div class='flex flex-nowrap justify-start items-start gap-3'>
         ${button({
             icon: svg.moonMini,
-            title: 'Dark Mode',
+            label: 'Dark Mode',
             attrs: `@click="$store.displaySettings.toggleDarkMode()"`,
             highlightExp: `$store.displaySettings.darkModeIsOn`,
             classStr: `text-xs border-2 text-nowrap`,
@@ -18,7 +18,7 @@ export default (options={}) => {
         <div x-data="{open:false}">
           ${button({
             icon: svg.swatchMini,
-            title: 'Color Scheme',
+            label: 'Color Scheme',
             attrs: `
               :class="{['bg-'+color+'-500/100!']: true}"
               x-ref="button"

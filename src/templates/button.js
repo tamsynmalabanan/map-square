@@ -1,6 +1,7 @@
 import Alpine from 'alpinejs';
 
 export default ({
+  label='',
   title='',
   icon='',
   classStr='',
@@ -12,12 +13,13 @@ export default ({
   return `
     <button
       ${attrs}
+      title="${title ?? label}"
       x-data
       x-id="['button']" 
       :id="$id('button')"
       :class="{
         ['bg-'+color+'-500/50!']: ${highlightExp},
-        ['bg-'+color+'-100/100! dark:bg-'+color+'-950/100! hover:bg-'+color+'-500/50!']: !(${highlightExp}),
+        ['bg-'+color+'-100/100! dark:bg-'+color+'-950/100! hover:bg-'+color+'-500/50!']: !(${highlightExp})
       }"
       class="
         flex 
@@ -34,7 +36,7 @@ export default ({
       "
     >
       ${icon} 
-      ${title !== '' ? `<span class="${collapsible && icon && `hidden sm:block`}">${title}</span>` : ''}
+      ${label !== '' ? `<span class="${collapsible && icon && `hidden sm:block`}">${label}</span>` : ''}
     </button>
   `
 }

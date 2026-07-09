@@ -26,7 +26,7 @@ export default ({
         >
           ${tabs.map((tab, index) => button({
               icon: tab.icon,
-              title: tab.title,
+              label: tab.label,
               collapsible: true,
               attrs: `:id="$id('tabs', 'toggles')+'-'+${index}" @click="active = ${index}"`,
               highlightExp: `active == ${index}`,

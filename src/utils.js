@@ -1,6 +1,9 @@
+export const removeWhitespace = (str) => {
+    return str.replace(/\s{2,}/g, ' ').trim();
+}
 export const strToEl = (str) => {
     const div = document.createElement('div');
-    div.innerHTML = str.replace(/\s{2,}/g, ' ').trim();
+    div.innerHTML = removeWhitespace(str);
     return div.firstElementChild;
 }
 
@@ -18,9 +21,6 @@ export const randomId = (prefix=undefined, suffix=undefined) => {
 
 export const appendBinding = (el, attr, exp) => {
     const existingBinding = el.getAttribute(attr)
-    el.setAttribute(attr, (
-        existingBinding 
-        ? existingBinding.replace('}', `, ${exp}}`) 
-        : `{${exp}}`
-    ))
+    const cleanExp = removeWhitespace(existingBinding ? existingBinding.replace('}', `, ${exp}}`): `{${exp}}`)
+    el.setAttribute(attr, cleanExp)
 }

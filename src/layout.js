@@ -20,8 +20,8 @@ export default function registerLayout() {
         origin: 'bottom.left',
         collapsible: true,
         content: tabs({active: 0, tabs:[
-            {title: 'Maps', icon: svg.mapMini, content: 'map content'},
-            {title: 'Options', icon: svg.adjustmentsHorizontalMini, content: dashboardOptions()},
+            {label: 'Maps', icon: svg.mapMini, content: 'map content'},
+            {label: 'Options', icon: svg.adjustmentsHorizontalMini, content: dashboardOptions()},
         ]})
     })))
 }

@@ -1,4 +1,4 @@
-import Map from '../gis/map.js';
+import Map from '../gis/map/map.js';
 import Alpine from 'alpinejs';
 
 Alpine.data('mapApp', ({

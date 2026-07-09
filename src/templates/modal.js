@@ -20,7 +20,7 @@ export default ({
   return `
     <div x-id="['modal']" x-data="modalApp({'open':${open}})" class="${classStr}">
       ${button({
-        title, 
+        label: title, 
         icon, 
         collapsible,
         attrs: `@click="toggle"`,
