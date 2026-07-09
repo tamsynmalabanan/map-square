@@ -15,3 +15,12 @@ export const randomId = (prefix=undefined, suffix=undefined) => {
         suffix
     ).filter(Boolean).join('-')
 }
+
+export const appendBinding = (el, attr, exp) => {
+    const existingBinding = el.getAttribute(attr)
+    el.setAttribute(attr, (
+        existingBinding 
+        ? existingBinding.replace('}', `, ${exp}}`) 
+        : `{${exp}}`
+    ))
+}

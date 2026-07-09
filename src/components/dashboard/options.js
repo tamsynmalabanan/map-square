@@ -9,7 +9,7 @@ export default (options={}) => {
     >
       <div class='flex flex-nowrap justify-start items-start gap-3'>
         ${button({
-            icon: icons.moonMini,
+            icon: svg.moonMini,
             title: 'Dark Mode',
             attrs: `@click="$store.displaySettings.toggleDarkMode()"`,
             highlightExp: `$store.displaySettings.darkModeIsOn`,
@@ -17,7 +17,7 @@ export default (options={}) => {
         })}
         <div x-data="{open:false}">
           ${button({
-            icon: icons.swatchMini,
+            icon: svg.swatchMini,
             title: 'Color Scheme',
             attrs: `
               :class="{['bg-'+color+'-500/100!']: true}"
@@ -38,8 +38,8 @@ export default (options={}) => {
                 attrs: `
                   :class="{
                     ['bg-${color}-500/100!']: true,
-                    ['border-gray-950 dark:border-gray-50']: color == '${color}',
-                    ['border-gray-500/50']: color != '${color}',
+                    ['border-gray-950/100! dark:border-gray-100/100!']: color == '${color}',
+                    ['border-gray-500/50!']: color != '${color}',
                   }"
                   @click="$store.displaySettings.changeColorScheme('${color}')"
                 `,

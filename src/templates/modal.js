@@ -34,7 +34,7 @@ export default ({
           x-show="open" 
           x-transition.origin.${origin}
           :class="{
-            ['bg-'+color+'-50/50! dark:bg-'+color+'-950/50!']: true,
+            ['bg-'+color+'-100/50! dark:bg-'+color+'-950/50!']: true,
           }"
           class="z-10 absolute top-0 left-0 size-full flex items-center justify-center"
         >
@@ -42,7 +42,7 @@ export default ({
             :id="$id('modal')" 
             @click.outside="toggle" 
             :class="{
-              ['bg-'+color+'-50/100! dark:bg-'+color+'-950/100!']: true,
+              ['bg-'+color+'-100/100! dark:bg-'+color+'-950/100!']: true,
             }"
             class="
               dark:text-white
@@ -63,7 +63,7 @@ export default ({
                 <h1>${title}</h1>
               </div>
               ${button({
-                icon: icons.xMini,
+                icon: svg.xMini,
                 attrs: `@click="toggle"`,
               })}
             </div>

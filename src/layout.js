@@ -16,12 +16,12 @@ export default function registerLayout() {
         open: false,
         title: 'Dashboard',
         classStr: "absolute bottom-0 left-0 m-[10px]",
-        icon: icons.walletSolid,
+        icon: svg.walletSolid,
         origin: 'bottom.left',
         collapsible: true,
         content: tabs({active: 0, tabs:[
-            {title: 'Maps', icon: icons.mapMini, content: 'map content'},
-            {title: 'Options', icon: icons.adjustmentsHorizontalMini, content: dashboardOptions()},
+            {title: 'Maps', icon: svg.mapMini, content: 'map content'},
+            {title: 'Options', icon: svg.adjustmentsHorizontalMini, content: dashboardOptions()},
         ]})
     })))
 }

@@ -36,7 +36,7 @@ const defaultConfig = {
       unit: 'metric',
       precision: 1000000,
       projection: 'mercator',
-      terrain: false,
+      terrain: true,
       bookmark: {
         extents: [{
           active: true,
@@ -339,7 +339,7 @@ export default class Map extends maplibregl.Map {
     const originalFitBounds = this.fitBounds.bind(this)
 
     this.fitBounds = (bounds, options) => {
-      if (this.theme.settings.locked) {
+      if (this._ms.theme.settings.locked) {
         return alert('map view is locked.')
       }
       return originalFitBounds(bounds, options)

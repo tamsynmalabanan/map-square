@@ -6,8 +6,8 @@ window.utils = utils;
 import * as gisUtils from './gis/utils.js'; 
 window.gisUtils = gisUtils;
 
-import * as icons from './icons.js'; 
-window.icons = icons;
+import * as svg from './svg.js'; 
+window.svg = svg;
 
 import Alpine from 'alpinejs'
 window.Alpine = Alpine;
