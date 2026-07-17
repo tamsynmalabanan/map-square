@@ -13,4 +13,16 @@ export default function registerData() {
             })
         }
     }))
+    
+    Alpine.data('toggleGroup', (open=false) => ({
+        open,
+
+        toggle() {
+            this.open = !this.open
+        },
+
+        close() {
+            this.open = false
+        }
+    }))
 }

@@ -24,3 +24,18 @@ export const appendBinding = (el, attr, exp) => {
     const cleanExp = removeWhitespace(existingBinding ? existingBinding.replace('}', `, ${exp}}`): `{${exp}}`)
     el.setAttribute(attr, cleanExp)
 }
+
+export const observeElement = (el, callback = () => {}, timeout = 100) => {
+    let timer
+
+    const observer = new MutationObserver(mutations => {
+        clearTimeout(timer)
+        timer = setTimeout(() => {
+            callback(mutations, el)
+        }, timeout)
+    })
+
+    observer.observe(el, { childList: true, subtree: true, characterData: true, attributes: true })
+    
+    return observer
+}

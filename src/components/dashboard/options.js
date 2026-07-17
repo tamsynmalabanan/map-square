@@ -15,21 +15,21 @@ export default (options={}) => {
             highlightExp: `$store.displaySettings.darkModeIsOn`,
             classStr: `text-xs border-2 text-nowrap`,
         })}
-        <div x-data="{open:false}">
+        <div x-data="toggleGroup">
           ${button({
             icon: svg.swatchMini,
             label: 'Color Scheme',
             attrs: `
               :class="{['bg-'+color+'-500/100!']: true}"
               x-ref="button"
-              @click="open = !open"
+              @click="toggle"
               `,
               classStr: `text-xs border-2 text-nowrap`,
             })}
           <div 
-          x-show="open" 
+            x-show="open" 
             x-anchor="$refs.button"
-            @click.outside="open = false"
+            @click.outside="close"
             :class="{['bg-'+color+'-500/10!']: true}"
             class='mt-2 flex gap-2 p-2 border-2 border-gray-500/50 rounded'
           >

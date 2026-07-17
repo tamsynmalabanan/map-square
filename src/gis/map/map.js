@@ -30,6 +30,7 @@ export default class Map extends maplibregl.Map {
       maxPitch: 75,
       interactive: !settings.locked,
       hash: false,
+      attributionControl: false,
       style: {
         version: 8,
         sources: config.sources,

@@ -107,10 +107,10 @@ export default class HandleControls {
                     params: {
                         active: true,
                         position: 'bottom-right',
-                        order: 1,
+                        order: 2,
                         options: {
                             unit: this._map._ms.theme.settings.unit,
-                            maxWidth: 100,
+                            maxWidth: 200,
                         }
                     },
                 },
@@ -127,13 +127,40 @@ export default class HandleControls {
                         order: 3,
                     },
                 },
+                attribution: {
+                    constructor: maplibregl.AttributionControl,
+                    elements: {
+                        '.maplibregl-ctrl-attrib-button': {
+                            addClass: ['dark:invert', 'focus:shadow-none!'],
+                        },
+                        '.maplibregl-ctrl-attrib-inner': {
+                            classBindings: [`['hover:bg-'+color+'-500/50!']: false`],
+                        },
+                    },
+                    handler: (control) => {
+                        utils.observeElement(control._innerContainer, (mutations, el) => {
+                            Array(el.querySelectorAll('a').forEach(a => {
+                                a.classList.add('dark:text-white!')
+                            }))
+                        })
+                    },
+                    params: {
+                        active: true,
+                        position: 'bottom-right',
+                        order: 1,
+                        options: {
+                            compact: true,
+                            customAttribution: '',
+                        },
+                    },
+                },
             }).map(([name, props]) => {
                 const params = this._map._ms.theme.settings.controls[name] ??= props.params
                 return [name, {...props, params}]
             }).sort((a, b) => a[1].params.order - b[1].params.order).map(([name, props]) => {
                 const params = props.params
                 if (!params.active) return
-            
+
                 const control = new props.constructor(params.options)
                 this._map.addControl(control, params.position)
 
