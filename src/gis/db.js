@@ -24,7 +24,7 @@ export const getGISDBObjectStore = (e, name, write=false) => {
 
 export const getGISDBKeys = async (name) => {
     return new Promise(async (resolve, reject) => {
-        const request = requestDB()
+        const request = requestGISDB()
         request.onsuccess = (e) => {
             const objectStore = getGISDBObjectStore(e, name)
             const keysRequest = objectStore?.getAllKeys()
@@ -39,7 +39,7 @@ export const getGISDBKeys = async (name) => {
 export const saveToGISDB = async (name, content) => {
     const id = content.id ??= utils.randomId()
 
-    const request = requestDB()
+    const request = requestGISDB()
     
     request.onsuccess = async (e) => {
         const objectStore = getGISDBObjectStore(e, name, true)
@@ -51,7 +51,7 @@ export const saveToGISDB = async (name, content) => {
 
 export const getFromGISDB = async (name, id) => {
     return new Promise((resolve, reject) => {
-        const request = requestDB()
+        const request = requestGISDB()
   
         request.onsuccess = (e) => {
             const objectStore = getGISDBObjectStore(e, name)
@@ -74,7 +74,7 @@ export const getFromGISDB = async (name, id) => {
 }
 
 export const deleteFromGISDB = (name, id) => {
-    const request = requestDB()
+    const request = requestGISDB()
     
     request.onsuccess = (e) => {
         const objectStore = getGISDBObjectStore(e, name, true)
@@ -88,7 +88,7 @@ export const deleteFromGISDB = (name, id) => {
 }
 
 export const clearGISDB = (names=objectStoreNames) => {
-    const request = requestDB()
+    const request = requestGISDB()
     
     request.onsuccess = (e) => {
         const db = e.target.result
