@@ -17,7 +17,8 @@ export default class HandleControls {
                 placeSearch: {
                     constructor: PlaceSearchControl,
                     elements: {
-                        '.maplibregl-ctrl-place-search': {}
+                        '.maplibregl-ctrl-place-search': {
+                        }
                     },
                     params: {
                         active: true,
@@ -130,11 +131,11 @@ export default class HandleControls {
                 attribution: {
                     constructor: maplibregl.AttributionControl,
                     elements: {
+                        '.maplibregl-ctrl-attrib': {
+                        },
                         '.maplibregl-ctrl-attrib-button': {
                             addClass: ['dark:invert', 'focus:shadow-none!'],
-                        },
-                        '.maplibregl-ctrl-attrib-inner': {
-                            classBindings: [`['hover:bg-'+color+'-500/50!']: false`],
+                            classBindings: [`['hover:bg-'+color+'-500/50!']: false`]
                         },
                     },
                     handler: (control) => {
@@ -164,7 +165,7 @@ export default class HandleControls {
                 const control = new props.constructor(params.options)
                 this._map.addControl(control, params.position)
 
-                const container = control._controlContainer ?? control._container
+                const container = control._msContainer = control._controlContainer ?? control._container
                 container.classList.add('border-2!', 'border-gray-500/50!', 'dark:text-white!')
                 container.setAttribute(':class', `{['bg-'+color+'-100/100! dark:bg-'+color+'-950/100!']: true}`)
 
@@ -172,8 +173,14 @@ export default class HandleControls {
                     const el = container.querySelector(selector) ?? container.parentElement.querySelector(selector)
                     if(!el) return
 
-                    if (params.innerHTML) el.innerHTML = params.innerHTML
-                    Array(`['hover:bg-'+color+'-500/50!']: true`, ...(params.classBindings??[])).forEach(exp => {
+                    if (params.innerHTML) {
+                        el.innerHTML = params.innerHTML
+                    }
+                    
+                    Array(
+                        ...(el.tagName.toLowerCase() == 'button' ? [`['hover:bg-'+color+'-500/50!']: true`] : []), 
+                        ...(params.classBindings??[])
+                    ).forEach(exp => {
                         utils.appendBinding(el, ':class', exp)
                     })
 

@@ -1,4 +1,5 @@
 import button from "../../templates/button.js"
+import * as turf from '@turf/turf'
 
 export class PlaceSearchControl {
     constructor(options) {
@@ -8,7 +9,7 @@ export class PlaceSearchControl {
     onAdd(map) {
         this._map = map
         const container = this._container = document.createElement('div')
-        container.classList.add('maplibregl-ctrl','maplibregl-ctrl-group', 'flex', 'flex-nowrap')
+        container.classList.add('maplibregl-ctrl','maplibregl-ctrl-group', 'flex', 'flex-nowrap', 'items-center')
         container.setAttribute('x-data', 'toggleGroup')
 
         container.innerHTML = button({
@@ -25,7 +26,7 @@ export class PlaceSearchControl {
         container.appendChild(form)
 
         const input = document.createElement('input')
-        input.classList.add('mx-2', 'focus:outline-none', 'rounded', 'px-2')
+        input.classList.add('mx-1', 'focus:outline-none', 'rounded', 'px-2')
         input.setAttribute('type', 'search')
         input.setAttribute('name', 'placeSearch')
         input.setAttribute('placeholder', 'Search place...')
@@ -40,16 +41,28 @@ export class PlaceSearchControl {
             if (value.length < 3) return
             
             timer = setTimeout(async() => {
-                await this.runPlaceSearch()
+                await this.runPlaceSearch(value)
             }, 1000);
         })
         
         return container
     }
     
-    async runPlaceSearch() {
-        console.log('execute place search')
+    async runPlaceSearch(place) {
+        const map = this._map
+        
+        let data
 
+        const coords = gisUtils.isLngLatString(place)
+        
+        if (coords) {
+            map.flyTo({center: coords, zoom: Math.max(11, map.getZoom())})
+            data = turf.featureCollection([turf.point(coords)])
+        } else {
+            console.log(place)
+        }
+
+        console.log(data)
     }
 
     onRemove() {
