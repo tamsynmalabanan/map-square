@@ -37,7 +37,7 @@ export const getGISDBKeys = async (name) => {
 }
 
 export const saveToGISDB = async (name, content) => {
-    const id = content.id ??= utils.randomId()
+    const id = content.id ??= await utils.hashJSON(content)
 
     const request = requestGISDB()
     

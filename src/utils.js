@@ -39,3 +39,29 @@ export const observeElement = (el, callback = () => {}, timeout = 100) => {
     
     return observer
 }
+
+export const sortObjectKeys = (obj) => {
+    if (obj && typeof obj === 'object' && !Array.isArray(obj)) {
+        return Object.keys(obj).sort().reduce((acc, key) => {
+            acc[key] = sortObjectKeys(obj[key])
+            return acc
+        }, {})
+    } else if (Array.isArray(obj)) {
+        return obj.map(sortObjectKeys)
+    }
+
+    return obj
+}
+
+export const canonicalize = (obj) => {
+    return JSON.stringify(sortObjectKeys(obj))
+}
+
+export const hashJSON = async (obj) => {
+    const jsonStr = canonicalize(obj)
+    const encoder = new TextEncoder()
+    const data = encoder.encode(jsonStr)
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data)
+    const hashArray = Array.from(new Uint8Array(hashBuffer))
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
+}
