@@ -1,5 +1,6 @@
 import button from "../../templates/button.js"
 import * as turf from '@turf/turf'
+import { searchNominatimOSM } from "../data.js"
 
 export class PlaceSearchControl {
     constructor(options) {
@@ -59,7 +60,7 @@ export class PlaceSearchControl {
             map.flyTo({center: coords, zoom: Math.max(11, map.getZoom())})
             data = turf.featureCollection([turf.point(coords)])
         } else {
-            console.log(place)
+            data = await searchNominatimOSM(place)
         }
 
         console.log(data)

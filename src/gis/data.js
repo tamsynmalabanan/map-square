@@ -1,27 +1,32 @@
-export const searchNominatimOSM = async (place) => {
+import { saveToGISDB } from "./db"
+
+export const searchNominatimOSM = async (place, {
+    abortController, abortEvents,
+}={}) => {
     if (typeof place != 'string') return
-    if (place.length < 3) return    
-    place = utils.removeWhitespace(place).toLowerCase()
+    if (place.length < 3) return
 
-    const url = 'https://nominatim.openstreetmap.org/search'
-    const getParams = {q, format: 'geojson', limit: params.limit ?? 1000}
+    const q = utils.removeWhitespace(place).toLowerCase()
+    const url = utils.pushURLParams('https://nominatim.openstreetmap.org/search', {
+        q, format: 'geojson', limit: 1000
+    })
 
-    const id = await hashJSON({url, ...getParams})
-    const geojson = (await getGISDBData(id))?.data
+    const id = await utils.hashJSON({url})
+    const data = (await gisDB.getFromGISDB('data', id))?.data
     
-    if (geojson?.features?.length) {
-        return geojson
+    if (data?.features?.length) {
+        return data
     }
 
-    return await customFetch(pushURLParams(url, getParams), {
+    return await utils.customFetch(url, {
         id,
         abortController,
         abortEvents,
         callback: async (response) => {
-            const data = await parseJSONResponse(response, {id})
+            const data = await utils.parseJSONResponse(response, {id})
             if (data?.features?.length) {
-                await normalizeGeoJSON(data)
-                updateGISDBData(id, {data})
+                await gisUtils.normalizeGeoJSON(data)
+                saveToGISDB('data', {id, data, type: 'place search', name: `Place search for "${q}"`})
             }
             return data
         }
