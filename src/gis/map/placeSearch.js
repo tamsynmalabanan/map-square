@@ -1,6 +1,8 @@
 import button from "../../templates/button.js"
 import * as turf from '@turf/turf'
 import { searchNominatimOSM } from "../data.js"
+import { createAbortController } from "../../utils.js"
+import { create } from "lodash"
 
 export class PlaceSearchControl {
     constructor(options) {
@@ -37,6 +39,7 @@ export class PlaceSearchControl {
         let timer
         input.addEventListener('input', () => {
             clearTimeout(timer)
+            map.stop()
             
             const value = input.value.trim()
             if (value.length < 3) return
@@ -50,6 +53,14 @@ export class PlaceSearchControl {
     }
     
     async runPlaceSearch(place) {
+        // clear existing place search features if any
+
+        const controller = createAbortController({
+            name: 'Place search',
+            events: [[this._container, ['input']]]
+        })
+        const {signal} = controller
+
         const map = this._map
         
         let data
@@ -60,10 +71,15 @@ export class PlaceSearchControl {
             map.flyTo({center: coords, zoom: Math.max(11, map.getZoom())})
             data = turf.featureCollection([turf.point(coords)])
         } else {
-            data = await searchNominatimOSM(place)
+            data = await searchNominatimOSM(place, {signal})
         }
-
-        console.log(data)
+        
+        const features = data?.features ?? []
+        if (features?.length == 0) return
+        
+        const bbox = turf.bbox(turf.featureCollection(features.map(f => f.bbox ? turf.bboxPolygon(f.bbox) : f)))
+        if (signal.aborted) return
+        map.fitBounds(bbox, {padding:100, maxZoom:Math.max(11, map.getZoom())})
     }
 
     onRemove() {

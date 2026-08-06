@@ -76,14 +76,12 @@ export const pushURLParams = (url, params) => {
     return decodeURIComponent(urlObj.toString())
 }
 
-export const customFetchMap = new Map()
+export const activeFetches = new Map()
 
 export const customFetch = async (url, {
     params = {},
-    timeout = 60000,
-    abortController = new AbortController(),
-    abortEvents = [],
-    callback = (response) => response,
+    signal,
+    callback,
 } = {}) => {
     params.headers ??= {}
     params.headers['User-Agent'] ??= 'Map Square/1.0 (admin@mapsquare.com)'
@@ -91,23 +89,21 @@ export const customFetch = async (url, {
     const cleanUrl = url.replaceAll('http:', 'https:')
     const id = params.id ?? await utils.hashJSON({cleanUrl, params})
     
-    if (customFetchMap.has(id)) {
-        const response = (await customFetchMap.get(id)).clone()
+    if (activeFetches.has(id)) {
+        const response = (await activeFetches.get(id)).clone()
         return callback(response)
     }
-    
-    const abortFetch = () => abortController.abort('Ran fetch timeout.')
-    const timer = setTimeout(abortFetch, timeout)
-    abortEvents.forEach(([element, types]) => {
-        types.forEach(type => {
-            element.addEventListener(type, abortFetch)
-        })
-    })
 
+    let controller
+    if (!signal) {
+        controller = createAbortController({name: 'Fetch', timeout: 60000})
+        signal = controller.signal
+    }
+    
     const fetchPromise = fetch(cleanUrl, {
         ...params, 
-        signal: abortController.signal,
         cache: 'no-store',
+        signal,
     }).then(async response => {
         if (!response.ok) {
             throw new Error(`Fetch failed: ${response.status} ${response.statusText}`)
@@ -116,29 +112,22 @@ export const customFetch = async (url, {
     }).catch(error => {
         throw error
     }).finally(() => {
-        clearTimeout(timer)
-   
-        abortEvents.forEach(([element, types]) => {
-            types.forEach(type => {
-                element.removeEventListener(type, abortFetch)
-            })
-        })
-   
-        setTimeout(() => customFetchMap.delete(id), 2000)
+        controller?.close()
+        setTimeout(() => activeFetches.delete(id), 2000)
     })
 
-    customFetchMap.set(id, fetchPromise)
+    activeFetches.set(id, fetchPromise)
     const response = (await fetchPromise).clone()
-    return callback(response)
+    return callback ? callback(response) : response
 }
 
-export const parseJSONResponseMap = new Map()
+export const activeJSONParsing = new Map()
 
 export const parseJSONResponse = async (response, {
     id, timeout = 60000,
 } = {}) => {
-    if (id && parseJSONResponseMap.has(id)) {
-        return parseJSONResponseMap.get(id)
+    if (id && activeJSONParsing.has(id)) {
+        return activeJSONParsing.get(id)
     }
 
     const reader = response.body.getReader()
@@ -168,13 +157,13 @@ export const parseJSONResponse = async (response, {
         } finally {
             reader.releaseLock()
             if (id) {
-                setTimeout(() => parseJSONResponseMap.delete(id), 2000)
+                setTimeout(() => activeJSONParsing.delete(id), 2000)
             }
         }
     })()
 
     if (id) {
-        parseJSONResponseMap.set(id, parsePromise)
+        activeJSONParsing.set(id, parsePromise)
     }
 
     return parsePromise
@@ -195,4 +184,44 @@ export const parseXML = (xmlString) => {
     }
 
     return [namespace, rootElement]
+}
+
+export const createAbortController = ({
+    name='Process',
+    handler, 
+    timeout, 
+    events,
+}={}) => {
+    const controller = new AbortController()
+    const {signal} = controller
+
+    const abort = (message='unknown') => {
+        return () => {
+            if (!signal.aborted) {
+                controller.abort(`${name} aborted: ${message}`)
+            }
+        }
+    }
+
+    controller.close = abort(`completed`)
+
+    if (typeof handler === 'function') {
+        signal.addEventListener("abort", handler)
+    }
+    
+    if (typeof timeout === 'number') {
+        const timeoutAbort = abort(`exceeded timeout (${timeout} ms)`)
+        const timer = setTimeout(timeoutAbort, timeout)
+        signal.addEventListener('abort', () => clearTimeout(timer))
+    }
+    
+    if (Array.isArray(events)) {
+        events.forEach(([el, types]) => types.forEach(type => {
+            const eventAbort = abort(`${el.id || el.tagName} ${type}`)
+            el.addEventListener(type, eventAbort)
+            signal.addEventListener('abort', () => el.removeEventListener(type, eventAbort))
+        }))
+    }
+    
+    return controller
 }

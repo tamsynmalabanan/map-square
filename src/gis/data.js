@@ -1,14 +1,13 @@
 import { saveToGISDB } from "./db"
 
-export const searchNominatimOSM = async (place, {
-    abortController, abortEvents,
-}={}) => {
+export const searchNominatimOSM = async (place, {signal}={}) => {
     if (typeof place != 'string') return
+
+    place = utils.removeWhitespace(place).toLowerCase()
     if (place.length < 3) return
 
-    const q = utils.removeWhitespace(place).toLowerCase()
     const url = utils.pushURLParams('https://nominatim.openstreetmap.org/search', {
-        q, format: 'geojson', limit: 1000
+        q: place, format: 'geojson', limit: 1000
     })
 
     const id = await utils.hashJSON({url})
@@ -18,17 +17,12 @@ export const searchNominatimOSM = async (place, {
         return data
     }
 
-    return await utils.customFetch(url, {
-        id,
-        abortController,
-        abortEvents,
-        callback: async (response) => {
-            const data = await utils.parseJSONResponse(response, {id})
-            if (data?.features?.length) {
-                await gisUtils.normalizeGeoJSON(data)
-                saveToGISDB('data', {id, data, group: 'Searched Places', name: q})
-            }
-            return data
+    return await utils.customFetch(url, {id, signal, callback: async (response) => {
+        const data = await utils.parseJSONResponse(response, {id})
+        if (data?.features?.length) {
+            await gisUtils.normalizeGeoJSON(data)
+            saveToGISDB('data', {id, data, group: 'Searched Places', name: place})
         }
-    }).catch(error => {})
+        return data
+    }}).catch(error => {})
 }

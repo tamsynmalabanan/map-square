@@ -165,7 +165,7 @@ export default class HandleControls {
                 const control = new props.constructor(params.options)
                 this._map.addControl(control, params.position)
 
-                const container = control._msContainer = control._controlContainer ?? control._container
+                const container = control._controlContainer = control._controlContainer ?? control._container
                 container.classList.add('border-2!', 'border-gray-500/50!', 'dark:text-white!')
                 container.setAttribute(':class', `{['bg-'+color+'-100/100! dark:bg-'+color+'-950/100!']: true}`)
 
@@ -179,12 +179,19 @@ export default class HandleControls {
                     
                     Array(
                         ...(el.tagName.toLowerCase() == 'button' ? [`['hover:bg-'+color+'-500/50!']: true`] : []), 
-                        ...(params.classBindings??[])
+                        ...(params.classBindings ?? [])
                     ).forEach(exp => {
                         utils.appendBinding(el, ':class', exp)
                     })
-
-                    el.classList.add('grid', 'place-items-center', 'dark:border-gray-100/10!', ...(params.addClass??[]))
+                    
+                    el.classList.add(
+                        'grid', 
+                        'place-items-center', 
+                        'dark:border-gray-100/10!', 
+                        'focus:rounded-none!', 
+                        'hover:rounded-none!', 
+                        ...(params.addClass??[])
+                    )
                     el.classList.remove(...(params.removeClass??[]))
                 })
 
