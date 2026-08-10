@@ -2,7 +2,6 @@ import button from "../../templates/button.js"
 import * as turf from '@turf/turf'
 import { searchNominatimOSM } from "../data.js"
 import { createAbortController } from "../../utils.js"
-import { create } from "lodash"
 
 export class PlaceSearchControl {
     constructor(options) {
@@ -29,17 +28,17 @@ export class PlaceSearchControl {
         container.appendChild(form)
 
         const input = document.createElement('input')
-        input.classList.add('mx-1', 'focus:outline-none', 'rounded', 'px-2')
+        input.classList.add('focus:outline-none', 'rounded', 'px-2')
         input.setAttribute('type', 'search')
         input.setAttribute('name', 'placeSearch')
         input.setAttribute('placeholder', 'Search place...')
-        input.setAttribute(':class', `{['bg-'+color+'-500/10!']: true}`)
         form.appendChild(input)
-        
+
         let timer
         input.addEventListener('input', () => {
             clearTimeout(timer)
             map.stop()
+            map.getSource('placeSearch')?.setData(turf.featureCollection([]))
             
             const value = input.value.trim()
             if (value.length < 3) return
@@ -53,22 +52,20 @@ export class PlaceSearchControl {
     }
     
     async runPlaceSearch(place) {
-        // clear existing place search features if any
-
+        const map = this._map
+        
         const controller = createAbortController({
             name: 'Place search',
             events: [[this._container, ['input']]]
         })
         const {signal} = controller
 
-        const map = this._map
         
         let data
 
         const coords = gisUtils.isLngLatString(place)
         
         if (coords) {
-            map.flyTo({center: coords, zoom: Math.max(11, map.getZoom())})
             data = turf.featureCollection([turf.point(coords)])
         } else {
             data = await searchNominatimOSM(place, {signal})
@@ -78,8 +75,32 @@ export class PlaceSearchControl {
         if (features?.length == 0) return
         
         const bbox = turf.bbox(turf.featureCollection(features.map(f => f.bbox ? turf.bboxPolygon(f.bbox) : f)))
+        
         if (signal.aborted) return
         map.fitBounds(bbox, {padding:100, maxZoom:Math.max(11, map.getZoom())})
+
+        const source = map.getSource('placeSearch')
+        if (!source) return
+
+        source.setData(data)
+        const legendControl = map._ms.controls.legend
+        const layers = legendControl.addGeoJSONLayers(source.id, {
+            properties: this.layerProperties ??= {
+                metadata: {
+                    name: 'default',
+                    params: {
+                        style: 'default',
+                        styles: {
+                            default: [
+                                legendControl.getVectorGroupParams({
+                                    color: `hsl(0, 100%, 50%)`
+                                }),
+                            ]
+                        }
+                    }
+                }
+            }
+        })
     }
 
     onRemove() {

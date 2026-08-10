@@ -19,6 +19,40 @@ export const randomId = (prefix=undefined, suffix=undefined) => {
     ).filter(Boolean).join('-')
 }
 
+export const randomColor = () => {
+    return `hsla(${Math.floor(Math.random() * 361)}, 100%, 50%, 1)`
+}
+
+export const parseNumber = (string) => {
+    const regex = /\d+(\.\d+)?/;
+    const match = string.match(regex);
+    return match?.length ? parseFloat(match[0]) : null
+}
+
+export const hslaColor = (color='hsla(0, 0%, 100%, 1)') => {
+    if (typeof color !== 'string' || !color.startsWith('hsl')) return
+    
+    const [h,s,l,a] = color.split(',').map(str => parseNumber(str))
+    
+    const obj = {
+        h: h || 1,
+        s,
+        l,
+        a: a ?? 1,
+    }
+
+    obj.toString = ({
+        h=obj.h,
+        s=obj.s,
+        l=obj.l,
+        a=obj.a,
+    }={}) => {
+        return `hsla(${h}, ${s}%, ${l}%, ${a})`
+    }
+    
+    return obj
+}
+
 export const appendBinding = (el, attr, exp) => {
     const existingBinding = el.getAttribute(attr)
     const cleanExp = removeWhitespace(existingBinding ? existingBinding.replace('}', `, ${exp}}`): `{${exp}}`)

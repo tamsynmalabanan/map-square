@@ -17,6 +17,12 @@ export default function registerData() {
     Alpine.data('toggleGroup', (open=false) => ({
         open,
 
+        init() {
+            this.$watch('open', value => {
+                this.$dispatch('toggled', { open: value })
+            })
+        },
+
         toggle() {
             this.open = !this.open
         },

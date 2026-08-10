@@ -2,6 +2,7 @@ import maplibregl from 'maplibre-gl';
 import * as svg from '../../svg.js';
 import FitToWorldControl from './fitToWorld.js';
 import { PlaceSearchControl } from './placeSearch.js';
+import { LegendControl } from './legend.js';
 
 export default class HandleControls {
     constructor(map) {
@@ -97,12 +98,26 @@ export default class HandleControls {
                         },
                     },
                 },
+
+                legend: {
+                    constructor: LegendControl,
+                    elements: {
+                        '.maplibregl-ctrl-legend': {},
+                        '.maplibregl-ctrl-legend-close': {},
+                    },
+                    params: {
+                        active: true,
+                        position: 'top-right',
+                        order: 1,
+                    },
+                },
+                
                 scalebar: {
                     constructor: maplibregl.ScaleControl,
                     elements: {
                         '.maplibregl-ctrl-scale': {
                             addClass: ['border-gray-950/100!', 'dark:border-gray-100/100!'],
-                            removeClass: ['border-2!', 'dark:border-gray-100/10!', 'border-gray-500/50!'],
+                            removeClass: ['border-1!', 'dark:border-gray-100/10!', 'border-gray-500/50!'],
                         }
                     },
                     params: {
@@ -166,7 +181,7 @@ export default class HandleControls {
                 this._map.addControl(control, params.position)
 
                 const container = control._controlContainer = control._controlContainer ?? control._container
-                container.classList.add('border-2!', 'border-gray-500/50!', 'dark:text-white!')
+                container.classList.add('border-1!', 'border-gray-500/50!', 'dark:text-white!', 'rounded!')
                 container.setAttribute(':class', `{['bg-'+color+'-100/100! dark:bg-'+color+'-950/100!']: true}`)
 
                 Object.entries(props.elements ??= {}).forEach(([selector, params]) => {
@@ -188,6 +203,7 @@ export default class HandleControls {
                         'grid', 
                         'place-items-center', 
                         'dark:border-gray-100/10!', 
+                        'rounded-none!', 
                         'focus:rounded-none!', 
                         'hover:rounded-none!', 
                         ...(params.addClass??[])

@@ -4,6 +4,8 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import * as utils from '../../utils.js'; 
 import * as gisUtils from '../utils.js'; 
 import HandleControls from './controls.js';
+import * as turf from '@turf/turf'
+
 
 export default class Map extends maplibregl.Map {
   constructor(container, config=null) {
@@ -84,6 +86,10 @@ export default class Map extends maplibregl.Map {
             attribution: 'Terrain Tiles © Mapzen, <a href="https://registry.opendata.aws/terrain-tiles/" target="_blank">Registry of Open Data on AWS</a>',
             encoding: 'terrarium' 
         },
+        placeSearch: {
+          type: 'geojson',
+          data: turf.featureCollection([])
+        }
       },
       themes: [{
         active: true,
