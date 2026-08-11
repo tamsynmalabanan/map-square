@@ -40,9 +40,10 @@ export class SettingsControl {
                 attrs: `x-data="dynamicBtn(active=${params.active})" @click="toggle"`,
                 highlightExp: 'active',
             }))
-            params.init?.(menuBtn)
             menuBtn.addEventListener('toggled', params.handler)
             menu.appendChild(menuBtn)
+            
+            map.once('load', params.init)
         })
 
         const nav = document.createElement('div')
@@ -72,7 +73,7 @@ export class SettingsControl {
                 title: 'Toggle 3D globe',
                 icon: '🌍',
                 active: settings.projection === 'globe',
-                init: (button) => {
+                init: () => {
                     map.setProjection({type:settings.projection})
                 },
                 handler: (event) => {
@@ -84,10 +85,13 @@ export class SettingsControl {
             {
                 title: 'Toggle hillshade',
                 icon: '🏔️',
-                init: (button) => {
+                active: settings.hillshade.render,
+                init: () => {
+                    this.configHillshade()
                 },
                 handler: (event) => {
-                    console.log('hillshade toggled')
+                    settings.hillshade.render = !settings.hillshade.render
+                    this.configHillshade()
                 },
             },
             {
@@ -100,5 +104,31 @@ export class SettingsControl {
                 },
             },
         ]
+    }
+
+    configHillshade(){
+        const map = this._map
+        const settings = map._ms.theme.settings
+        const hillshade = settings.hillshade
+        
+        if (map.getLayer('hillshade')) {
+            map.removeLayer('hillshade')
+        }
+ 
+        const source = map.getTerrain()?.source
+        if (source && hillshade.render) {
+            const method = hillshade.methods.find(i => i.active)
+            map.addLayer({
+                id: 'hillshade',
+                type: 'hillshade',
+                source,
+                paint: {
+                    'hillshade-method': method.name,
+                    'hillshade-exaggeration': hillshade.exaggeration,
+                    'hillshade-accent-color': hillshade.accent,
+                    ...method.params
+                }
+            }, map._ms.controls.legend.getBeforeId('hillshade'))
+        }
     }
 }

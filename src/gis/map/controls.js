@@ -68,9 +68,17 @@ export default class HandleControls {
                         },
                     },
                     handler: (control) => {
-                        if (control._map._ms.theme.settings.terrain) {
-                            control._controlContainer.querySelector('.maplibregl-ctrl-terrain')?.click()
-                        }
+                        const map = control._map
+                        const settings = map._ms.theme.settings
+                        const button = control._controlContainer.querySelector('button')
+                        
+                        button.addEventListener('click', (e) => {
+                            settings.terrain = !settings.terrain
+                            map._ms.controls.settings?.configHillshade()
+                        })
+
+                        if (!settings.terrain) return
+                        button?.click()
                     }
                 },
                 fitToWorld: {
