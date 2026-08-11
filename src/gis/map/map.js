@@ -16,9 +16,7 @@ export default class Map extends maplibregl.Map {
     const bookmark = settings.bookmark
     const extent = bookmark.extents.find(props => props.active)
     const basemap = settings.basemap
-    const paints = basemap.paints[(basemap.theme == 'dark' || (
-      basemap.theme == 'auto' && Alpine.store('displaySettings').darkModeIsOn
-    )) ? 'dark' : 'default']
+    const paints = basemap.paints[Map.getTheme(basemap.theme)]
 
     const options = {
       container,
@@ -37,14 +35,16 @@ export default class Map extends maplibregl.Map {
         version: 8,
         sources: config.sources,
         ...(basemap.render ? {
-          layers: [{
-            id: 'basemap',
-            type: 'raster',
-            source: 'basemap',
-            paint: paints.basemap
-          }],
+          layers: [
+            {
+              id: 'basemap',
+              type: 'raster',
+              source: 'basemap',
+              paint: paints.basemap
+            },
+          ],
           sky: paints.sky
-        } : {})
+        } : {layers: []})
       },
     }
 
@@ -99,7 +99,7 @@ export default class Map extends maplibregl.Map {
           unit: 'metric',
           precision: 1000000,
           projection: 'globe', // 'mercator',
-          terrain: true,
+          terrain: false,
           bookmark: {
             extents: [{
               active: true,
@@ -129,7 +129,6 @@ export default class Map extends maplibregl.Map {
           basemap: {
             render: true,
             theme: 'auto',
-            color: 'auto',
             paints: {
               default: {
                 basemap: {
@@ -148,7 +147,7 @@ export default class Map extends maplibregl.Map {
                   "fog-ground-blend": 0.5,
                   "horizon-fog-blend": 0.8,
                   "sky-horizon-blend": 0.8,
-                  "atmosphere-blend": 0.8
+                  "atmosphere-blend": 0.8 
                 },
               },
               dark: {
@@ -310,9 +309,7 @@ export default class Map extends maplibregl.Map {
     basemap.theme ??= cloneSettings.basemap.theme
     basemap.color ??= cloneSettings.basemap.color
     
-    const basemapTheme = (basemap.theme == 'dark' || (
-      basemap.theme == 'auto' && Alpine.store('displaySettings').darkModeIsOn
-    )) ? 'dark' : 'default'
+    const basemapTheme = Map.getTheme(basemap.theme)
     const paints = basemap.paints[basemapTheme]
     if (paints && Object.keys(basemap.paints).includes(basemapTheme)) {
       paints.basemap ??= cloneSettings.basemap.paints[basemapTheme].basemap
@@ -323,6 +320,12 @@ export default class Map extends maplibregl.Map {
     }
 
     return config
+  }
+
+  static getTheme(theme) {
+    return (theme == 'dark' || (
+      theme == 'auto' && Alpine.store('displaySettings').darkMode
+    )) ? 'dark' : 'default'
   }
 
   configAddLayer() {

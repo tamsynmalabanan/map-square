@@ -1,5 +1,6 @@
 // hillshade
 
+import Alpine from "alpinejs";
 import button from "../../templates/button.js"
 import modal from '../../templates/modal.js'; 
 
@@ -42,21 +43,23 @@ export class SettingsControl {
             }))
             menuBtn.addEventListener('toggled', params.handler)
             menu.appendChild(menuBtn)
-            
-            map.once('load', params.init)
         })
-
+        
         const nav = document.createElement('div')
         nav.classList.add('grid', 'justify-items-stretch')
         content.appendChild(nav)
-
+        
         nav.appendChild(utils.strToEl(button({
             title: 'Collapse settings',
             icon: svg.xMini,
             classStr: 'maplibregl-ctrl-close justify-self-end',
             attrs: `@click='toggle' x-show='open'`
         })))
-
+        
+        map.once('load', () => {
+            this.applySettings()
+        })
+        
         return container
     }
     
@@ -68,28 +71,34 @@ export class SettingsControl {
     getMenuButtons() {
         const map = this._map
         const settings = map._ms.theme.settings
+
         return [
             {
                 title: 'Toggle 3D globe',
                 icon: '🌍',
                 active: settings.projection === 'globe',
-                init: () => {
-                    map.setProjection({type:settings.projection})
-                },
                 handler: (event) => {
                     const type = event.detail.active ? 'globe' : 'mercator'
-                    settings.projection = type
+                    map._ms.theme.settings.projection = type
                     map.setProjection({type})
+                },
+            },
+            {
+                title: 'Toggle basemap',
+                icon: '🗺️',
+                active: settings.basemap.render,
+                handler: (event) => {
+                    const settings = map._ms.theme.settings
+                    settings.basemap.render = !settings.basemap.render
+                    this.configBasemap()
                 },
             },
             {
                 title: 'Toggle hillshade',
                 icon: '🏔️',
                 active: settings.hillshade.render,
-                init: () => {
-                    this.configHillshade()
-                },
                 handler: (event) => {
+                    const settings = map._ms.theme.settings
                     settings.hillshade.render = !settings.hillshade.render
                     this.configHillshade()
                 },
@@ -97,9 +106,8 @@ export class SettingsControl {
             {
                 title: 'Open settings',
                 icon: svg.cog8ToothMini,
-                init: (button) => {
-                },
-                handler: (button) => {
+                active: false,
+                handler: (event) => {
                     console.log('open settings')
                 },
             },
@@ -129,6 +137,64 @@ export class SettingsControl {
                     ...method.params
                 }
             }, map._ms.controls.legend.getBeforeId('hillshade'))
+        }
+    }
+
+    configBasemap() {
+        const map = this._map
+        const id = 'basemap'
+        
+        if (map.getLayer(id)) {
+            map.removeLayer(id)
+        }
+        
+        if (map.getSource(id)) {
+            map.removeSource(id)
+        }
+        
+        const style = structuredClone(map.getStyle())
+        if (style.sky) {
+            delete style.sky
+            map.setStyle(style)
+        }
+
+        const basemap = map._ms.theme.settings.basemap
+        if (!basemap.render) return
+        
+        const paints = basemap.paints[map.constructor.getTheme(basemap.theme)]
+        style.sky = paints.sky
+        map.setStyle(style)
+        
+        const source = map._ms.config.sources.basemap
+        if (source.tiles.length) {
+            map.addSource(id, source)
+            map.addLayer({
+                id: 'basemap',
+                type: 'raster',
+                source: 'basemap',
+                paint: paints.basemap
+            }, map._ms.controls.legend.getBeforeId('basemap'))
+        }
+    }
+
+    applySettings() {
+        const map = this._map
+        const settings = map._ms.theme.settings
+        const controls = map._ms.controls
+
+        this.configBasemap()
+        document.addEventListener('darkModeToggled', (e) => {
+            if (settings.basemap.theme == 'auto') {
+                this.configBasemap()
+            }
+        })
+
+        map.setProjection({type:settings.projection})
+        
+        if (settings.terrain) {
+            controls.terrain._controlContainer
+            .querySelector('.maplibregl-ctrl-terrain')
+            ?.click()
         }
     }
 }

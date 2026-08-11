@@ -12,9 +12,11 @@ export default class HandleControls {
     }
 
     addControls() {
+        const map = this._map
+
         this.removeControls()
 
-        this._map._ms.controls = Object.fromEntries(
+        map._ms.controls = Object.fromEntries(
             Object.entries({
                 placeSearch: {
                     constructor: PlaceSearchControl,
@@ -68,17 +70,11 @@ export default class HandleControls {
                         },
                     },
                     handler: (control) => {
-                        const map = control._map
-                        const settings = map._ms.theme.settings
-                        const button = control._controlContainer.querySelector('button')
-                        
-                        button.addEventListener('click', (e) => {
+                        control._controlContainer.querySelector('button').addEventListener('click', (e) => {
+                            const settings = map._ms.theme.settings
                             settings.terrain = !settings.terrain
                             map._ms.controls.settings?.configHillshade()
                         })
-
-                        if (!settings.terrain) return
-                        button?.click()
                     }
                 },
                 fitToWorld: {

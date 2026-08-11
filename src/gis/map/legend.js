@@ -124,7 +124,7 @@ export class LegendControl {
                     visibility,
                 },
                 paint: {
-                    'background-color': Alpine.store('displaySettings').darkModeIsOn ? 'black' : 'white',
+                    'background-color': Alpine.store('displaySettings').darkMode ? 'black' : 'white',
                     'background-pattern': pattern,
                     'background-opacity': opacity/4,
                 }

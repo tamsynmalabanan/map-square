@@ -12,7 +12,7 @@ export default (options={}) => {
             icon: svg.moonMini,
             label: 'Dark Mode',
             attrs: `@click="$store.displaySettings.toggleDarkMode()"`,
-            highlightExp: `$store.displaySettings.darkModeIsOn`,
+            highlightExp: `$store.displaySettings.darkMode`,
             classStr: `text-xs border-2 text-nowrap`,
         })}
         <div x-data="toggleGroup">

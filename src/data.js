@@ -7,7 +7,7 @@ export default function registerData() {
         init() {
             Alpine.bind(this.$el, {
                 ':class': `{
-                    'dark': $store.displaySettings.darkModeIsOn,
+                    'dark': $store.displaySettings.darkMode,
                     ['h-screen w-screen']: true,
                 }`
             })
