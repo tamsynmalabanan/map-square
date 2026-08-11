@@ -8,7 +8,6 @@ export default ({
   attrs='',
   collapsible=false,
   highlightExp=false,
-  classBindings='',
 }={}) => {
   return `
     <button

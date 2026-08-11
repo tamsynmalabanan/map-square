@@ -3,6 +3,7 @@ import * as svg from '../../svg.js';
 import FitToWorldControl from './fitToWorld.js';
 import { PlaceSearchControl } from './placeSearch.js';
 import { LegendControl } from './legend.js';
+import { SettingsControl } from './settings.js';
 
 export default class HandleControls {
     constructor(map) {
@@ -66,6 +67,11 @@ export default class HandleControls {
                             exaggeration:1,
                         },
                     },
+                    handler: (control) => {
+                        if (control._map._ms.theme.settings.terrain) {
+                            control._controlContainer.querySelector('.maplibregl-ctrl-terrain')?.click()
+                        }
+                    }
                 },
                 fitToWorld: {
                     constructor: FitToWorldControl,
@@ -103,7 +109,6 @@ export default class HandleControls {
                     constructor: LegendControl,
                     elements: {
                         '.maplibregl-ctrl-legend': {},
-                        '.maplibregl-ctrl-legend-close': {},
                     },
                     params: {
                         active: true,
@@ -112,6 +117,31 @@ export default class HandleControls {
                     },
                 },
                 
+
+                settings: {
+                    constructor: SettingsControl,
+                    elements: {
+                        '.maplibregl-ctrl-settings': {},
+                    },
+                    params: {
+                        active: true,
+                        position: 'bottom-right',
+                        order: 4,
+                    },
+                },
+                fullscreen: {
+                    constructor: maplibregl.FullscreenControl,
+                    elements: {
+                        '.maplibregl-ctrl-fullscreen': {
+                            innerHTML: '<span class="maplibregl-ctrl-icon dark:invert" aria-hidden="true"></span>',
+                        }
+                    },
+                    params: {
+                        active: true,
+                        position: 'bottom-right',
+                        order: 3,
+                    },
+                },
                 scalebar: {
                     constructor: maplibregl.ScaleControl,
                     elements: {
@@ -128,19 +158,6 @@ export default class HandleControls {
                             unit: this._map._ms.theme.settings.unit,
                             maxWidth: 200,
                         }
-                    },
-                },
-                fullscreen: {
-                    constructor: maplibregl.FullscreenControl,
-                    elements: {
-                        '.maplibregl-ctrl-fullscreen': {
-                            innerHTML: '<span class="maplibregl-ctrl-icon dark:invert" aria-hidden="true"></span>',
-                        }
-                    },
-                    params: {
-                        active: true,
-                        position: 'bottom-right',
-                        order: 3,
                     },
                 },
                 attribution: {
@@ -208,7 +225,18 @@ export default class HandleControls {
                         'hover:rounded-none!', 
                         ...(params.addClass??[])
                     )
+
                     el.classList.remove(...(params.removeClass??[]))
+                })
+
+                Array.from(container.querySelectorAll('.maplibregl-ctrl-close')).forEach(el => {
+                    el.classList.add(
+                        'grid', 
+                        'place-items-center', 
+                        'm-1',
+                        'size-[15px]!',
+                        'rounded-none!', 
+                    )
                 })
 
                 props.handler?.(control)

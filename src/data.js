@@ -31,4 +31,26 @@ export default function registerData() {
             this.open = false
         }
     }))
+    
+    Alpine.data('dynamicBtn', (active=false) => ({
+        active,
+
+        init() {
+            this.$watch('active', value => {
+                this.$dispatch('toggled', { active: value })
+            })
+        },
+
+        toggle() {
+            this.active = !this.active
+        },
+
+        activate() {
+            this.active = true
+        },
+
+        deactivate() {
+            this.active = false
+        }
+    }))
 }
