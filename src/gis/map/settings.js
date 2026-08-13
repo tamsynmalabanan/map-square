@@ -145,12 +145,12 @@ export class SettingsControl {
             if (map.getLayer(i)) {
                 map.removeLayer(i)
             }
+
+            if (map.getSource(i)) {
+                map.removeSource(i)
+            }
         })
         
-        if (map.getSource('basemap')) {
-            map.removeSource('basemap')
-        }
-
         const style = structuredClone(map.getStyle())
         if (style.sky) {
             delete style.sky
@@ -182,6 +182,8 @@ export class SettingsControl {
         const settings = map._ms.theme.settings
         const controls = map._ms.controls
 
+        map.setProjection({type:settings.projection})
+        
         this.configBasemap()
         document.addEventListener('darkModeToggled', (e) => {
             if (settings.basemap.theme == 'auto') {
@@ -189,12 +191,8 @@ export class SettingsControl {
             }
         })
 
-        map.setProjection({type:settings.projection})
-        
-        if (settings.terrain) {
-            controls.terrain._controlContainer
-            .querySelector('.maplibregl-ctrl-terrain')
-            ?.click()
+        if (settings.terrain && !controls.terrain.isEnabled()) {
+            controls.terrain.toggleTerrain()
         }
     }
 }

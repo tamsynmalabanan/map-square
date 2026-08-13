@@ -70,11 +70,22 @@ export default class HandleControls {
                         },
                     },
                     handler: (control) => {
-                        control._controlContainer.querySelector('button').addEventListener('click', (e) => {
+                        const button = control.getContainer().querySelector('button')
+                        
+                        control.isEnabled = () => {
+                            return button.classList.contains('maplibregl-ctrl-terrain-enabled')
+                        }
+
+                        control.toggleTerrain = () => {
+                            button.click()
+                        }
+
+                        button.addEventListener('click', (e) => {
                             const settings = map._ms.theme.settings
                             settings.terrain = !settings.terrain
                             map._ms.controls.settings?.configHillshade()
                         })
+                        
                     }
                 },
                 fitToWorld: {
@@ -201,9 +212,13 @@ export default class HandleControls {
                 const control = new props.constructor(params.options)
                 this._map.addControl(control, params.position)
 
-                const container = control._controlContainer = control._controlContainer ?? control._container
+                const container = control._controlContainer ?? control._container
                 container.classList.add('border-1!', 'border-gray-500/50!', 'dark:text-white!', 'rounded!')
                 container.setAttribute(':class', `{['bg-'+color+'-100/100! dark:bg-'+color+'-950/100!']: true}`)
+
+                control.getContainer = () => {
+                    return container
+                }
 
                 Object.entries(props.elements ??= {}).forEach(([selector, params]) => {
                     const el = container.querySelector(selector) ?? container.parentElement.querySelector(selector)
