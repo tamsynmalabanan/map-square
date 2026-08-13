@@ -15,14 +15,15 @@ export default function registerStores() {
         },
 
         colorScheme: Alpine.$persist('teal'),
+        
+        colorOptions: {
+            'yellow': '#f0b100',
+            'teal': '#00bba7',
+            'blue': '#2b7fff',
+            'pink': '#f6339a',
+            'gray': '#6a7282',
+        }
 
-        colorOptions: [
-            'yellow',
-            'teal',
-            'blue',
-            'pink',
-            'gray',
-        ]
 
         // colors: [
         //     'red', 'orange', 'amber',

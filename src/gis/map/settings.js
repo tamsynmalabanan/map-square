@@ -159,7 +159,8 @@ export class SettingsControl {
         const basemap = map._ms.theme.settings.basemap
         if (!basemap.render) return
         
-        const paints = basemap.paints[map.constructor.getTheme(basemap.theme)]
+        const theme = map.constructor.getTheme(basemap.theme)
+        const paints = basemap.paints[theme]
         style.sky = paints.sky
         map.setStyle(style)
         

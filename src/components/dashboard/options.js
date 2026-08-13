@@ -33,7 +33,7 @@ export default (options={}) => {
             :class="{['bg-'+color+'-500/10!']: true}"
             class='mt-2 flex gap-2 p-2 border-2 border-gray-500/50 rounded'
           >
-            ${Alpine.store('displaySettings').colorOptions.map(color => {
+            ${Object.keys(Alpine.store('displaySettings').colorOptions).map(color => {
               return button({
                 attrs: `
                   :class="{
