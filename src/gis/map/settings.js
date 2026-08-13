@@ -1,5 +1,3 @@
-// hillshade
-
 import Alpine from "alpinejs";
 import button from "../../templates/button.js"
 import modal from '../../templates/modal.js'; 

@@ -1,3 +1,4 @@
+import { indexOf } from "lodash"
 import button from "../../templates/button.js"
 
 export class LegendControl {
@@ -57,6 +58,7 @@ export class LegendControl {
     getBaseLayerNames() {
         return [
             'basemap',
+            'mask',
             'hillshade', 
         ]
     }
@@ -73,20 +75,29 @@ export class LegendControl {
 
     getBeforeId(layerName, beforeId) {
         const layerIds = this._map.getStyle().layers.map(l => l.id)
-
-        if (layerName === 'basemap') {
-            return layerIds[0]
+        
+        if (typeof beforeId === 'string') {
+            const layerIdMatch = layerIds.find(id => id.startsWith(beforeId))
+            if (layerIdMatch) {
+                return layerIdMatch
+            }
         }
 
-        if (layerName === 'hillshade') {
-            return layerIds.find(id => id !== 'basemap')
+        let baseLayers = this.getBaseLayerNames()
+        const baseIndex = baseLayers.indexOf(layerName)
+        if (baseIndex !== -1) {
+            baseLayers = baseLayers.splice(0, baseIndex+1)
+            return layerIds.find(id => !baseLayers.includes(id))
         }
 
         let systemOverlays = this.getSystemOverlayNames()
-        const layerMatch = systemOverlays.find(i => layerName.startsWith(i))
-        if (layerMatch) systemOverlays = systemOverlays.splice(systemOverlays.indexOf(layerMatch) + 1)
+        const overlayMatch = systemOverlays.find(i => layerName.startsWith(i))
+        if (overlayMatch) {
+            const overlayIndex = systemOverlays.indexOf(overlayMatch)
+            systemOverlays = systemOverlays.splice(overlayIndex+1)
+        }
 
-        return layerIds.find(id => id.startsWith(beforeId) || systemOverlays.find(i => id.startsWith(i)))
+        return layerIds.find(id => systemOverlays.find(i => id.startsWith(i)))
     }
 
     getVectorTypeParams({color=utils.randomColor()}={}) {
