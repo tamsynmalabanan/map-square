@@ -22,8 +22,15 @@ export default function registerStores() {
             'blue': '#2b7fff',
             'pink': '#f6339a',
             'gray': '#6a7282',
-        }
+        },
 
+        get hexColor() {
+            return this.colorOptions[this.colorScheme]
+        },
+
+        get hslaColor() {
+            return utils.hslaColor(utils.hexToHSLA(this.hexColor))   
+        }
 
         // colors: [
         //     'red', 'orange', 'amber',

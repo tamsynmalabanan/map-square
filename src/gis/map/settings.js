@@ -140,16 +140,17 @@ export class SettingsControl {
 
     configBasemap() {
         const map = this._map
-        const id = 'basemap'
         
-        if (map.getLayer(id)) {
-            map.removeLayer(id)
+        Array('basemap', 'mask').forEach(i => {
+            if (map.getLayer(i)) {
+                map.removeLayer(i)
+            }
+        })
+        
+        if (map.getSource('basemap')) {
+            map.removeSource('basemap')
         }
-        
-        if (map.getSource(id)) {
-            map.removeSource(id)
-        }
-        
+
         const style = structuredClone(map.getStyle())
         if (style.sky) {
             delete style.sky
@@ -166,7 +167,7 @@ export class SettingsControl {
         
         const source = map._ms.config.sources.basemap
         if (source.tiles.length) {
-            map.addSource(id, source)
+            map.addSource('basemap', source)
             map.addLayer({
                 id: 'basemap',
                 type: 'raster',

@@ -153,12 +153,12 @@ export default class Map extends maplibregl.Map {
               dark: {
                 basemap: {
                   'raster-resampling': 'linear',
-                  'raster-opacity': 1, // 0 to 1
-                  'raster-hue-rotate': 0, // 0 to 360
-                  'raster-brightness-min': 0, // 0 to 1
-                  'raster-brightness-max': 0.005, // 0 to 1
-                  'raster-saturation': -1, // -1 to 1
-                  'raster-contrast': 0.995, // -1 to 1
+                  'raster-opacity': 1,
+                  'raster-hue-rotate': 0,
+                  'raster-brightness-min': 0,
+                  'raster-brightness-max': 0.0075,
+                  'raster-saturation': -0.75,
+                  'raster-contrast': 0.975,
                 },
                 sky: {
                   "sky-color": "#02294b",
