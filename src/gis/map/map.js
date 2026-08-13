@@ -156,7 +156,7 @@ export default class Map extends maplibregl.Map {
                   'raster-opacity': 1,
                   'raster-hue-rotate': 0,
                   'raster-brightness-min': 0,
-                  'raster-brightness-max': 0.0075,
+                  'raster-brightness-max': 0.01,
                   'raster-saturation': -0.75,
                   'raster-contrast': 0.975,
                 },
