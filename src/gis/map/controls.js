@@ -53,41 +53,6 @@ export default class HandleControls {
                         },
                     },
                 },
-                terrain: {
-                    constructor: maplibregl.TerrainControl,
-                    elements: {
-                        '.maplibregl-ctrl-terrain': {
-                            innerHTML: '<span class="maplibregl-ctrl-icon dark:invert" aria-hidden="true"></span>'
-                        }
-                    },
-                    params: {
-                        active: true,
-                        position: 'top-left',
-                        order: 3,
-                        options: {
-                            source:'terrain',
-                            exaggeration:1,
-                        },
-                    },
-                    handler: (control) => {
-                        const button = control.getContainer().querySelector('button')
-                        
-                        control.isEnabled = () => {
-                            return button.classList.contains('maplibregl-ctrl-terrain-enabled')
-                        }
-
-                        control.toggleTerrain = () => {
-                            button.click()
-                        }
-
-                        button.addEventListener('click', (e) => {
-                            const settings = map._ms.theme.settings
-                            settings.terrain = !settings.terrain
-                            map._ms.controls.settings?.configHillshade()
-                        })
-                        
-                    }
-                },
                 fitToWorld: {
                     constructor: FitToWorldControl,
                     elements: {
@@ -141,8 +106,43 @@ export default class HandleControls {
                     params: {
                         active: true,
                         position: 'bottom-right',
-                        order: 4,
+                        order: 5,
                     },
+                },
+                terrain: {
+                    constructor: maplibregl.TerrainControl,
+                    elements: {
+                        '.maplibregl-ctrl-terrain': {
+                            innerHTML: '<span class="maplibregl-ctrl-icon dark:invert" aria-hidden="true"></span>'
+                        }
+                    },
+                    params: {
+                        active: true,
+                        position: 'bottom-right',
+                        order: 4,
+                        options: {
+                            source:'terrain',
+                            exaggeration:1,
+                        },
+                    },
+                    handler: (control) => {
+                        const button = control.getContainer().querySelector('button')
+                        
+                        control.isEnabled = () => {
+                            return button.classList.contains('maplibregl-ctrl-terrain-enabled')
+                        }
+
+                        control.toggleTerrain = () => {
+                            button.click()
+                        }
+
+                        button.addEventListener('click', (e) => {
+                            const settings = map._ms.theme.settings
+                            settings.terrain = !settings.terrain
+                            map._ms.controls.settings?.configHillshade()
+                        })
+                        
+                    }
                 },
                 fullscreen: {
                     constructor: maplibregl.FullscreenControl,

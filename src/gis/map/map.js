@@ -7,7 +7,7 @@ import HandleControls from './controls.js';
 import * as turf from '@turf/turf'
 
 
-export default class Map extends maplibregl.Map {
+export default class Map extends maplibregl.Map { 
   constructor(container, config=null) {
     config = Map.normalizeConfig(config)
     
@@ -60,7 +60,7 @@ export default class Map extends maplibregl.Map {
 
     this.configAddLayer()
     this.configRemoveLayer()
-    this.configFitBounds()
+    this.configMobilityFns()
     
     window.map = this
   }
@@ -108,28 +108,31 @@ export default class Map extends maplibregl.Map {
           projection: 'mercator', // mercator or globe,
           terrain: false,
           bookmark: {
-            extents: [{
-              active: true,
-              name: 'centroid',
-              title: 'Centroid',
-              params: {
-                zoom: 1,
-                lng: 0,
-                lat: 3,
-              },
-            }, {
-              active: false,
-              name: 'bbox',
-              title: 'Bounding Box',
-              params: {
-                w: -140,
-                s: -70,
-                e: 160,
-                n: 90,
-                padding: 0,
-                maxZoom: 1,
+            extents: [
+              {
+                active: true,
+                name: 'centroid',
+                title: 'Centroid',
+                params: {
+                  zoom: 1,
+                  lng: 0,
+                  lat: 3,
+                },
+              }, 
+              {
+                active: false,
+                name: 'bbox',
+                title: 'Bounding Box',
+                params: {
+                  w: -140,
+                  s: -70,
+                  e: 160,
+                  n: 90,
+                  padding: 0,
+                  maxZoom: 1,
+                }
               }
-            }],
+            ],
             pitch: 0,
             bearing: 0,
           },  
@@ -358,18 +361,52 @@ export default class Map extends maplibregl.Map {
   }
   }
 
-  configFitBounds() {
-    const originalFitBounds = this.fitBounds.bind(this)
-
-    this.fitBounds = (bounds, options) => {
-      if (this._ms.theme.settings.locked) {
-        return alert('map view is locked.')
+  configMobilityFns() {
+    Array(
+      'fitBounds',
+      'setZoom',
+      'setCenter',
+      'setPitch',
+      'setBearing',
+    ).forEach(i => {
+      const original = this[i].bind(this)
+  
+      this[i] = (value, options) => {
+        if (this._ms.theme.settings.locked) {
+          return alert('map view is locked.')
+        }
+        return original(value, options)
       }
-      return originalFitBounds(bounds, options)
-    }
+    })
   }
 
   getBbox() {
     return this.getBounds().toArray().flatMap(i => i)
+  }
+
+  lock() {
+    this.scrollZoom.disable();
+    this.doubleClickZoom.disable();
+    this.dragPan.disable();
+    this.keyboard.disable();
+    this.touchZoomRotate.disable();
+
+    this.getContainer()
+    .querySelector(`.maplibregl-ctrl-top-left`)
+    .querySelectorAll('button')
+    .forEach(btn => btn.disabled = true)
+  }
+
+  unlock() {
+    this.scrollZoom.enable();
+    this.doubleClickZoom.enable();
+    this.dragPan.enable();
+    this.keyboard.enable();
+    this.touchZoomRotate.enable();
+
+    this.getContainer()
+    .querySelector(`.maplibregl-ctrl-top-left`)
+    .querySelectorAll('button')
+    .forEach(btn => btn.disabled = false)
   }
 }

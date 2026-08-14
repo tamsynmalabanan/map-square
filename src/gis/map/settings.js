@@ -38,7 +38,7 @@ export class SettingsControl {
             menu.appendChild(groupContainer)
             
             const header = document.createElement('div')    
-            header.classList.add('flex', 'flex-nowrap', 'justify-between', 'gap-1')
+            header.classList.add('flex', 'flex-nowrap', 'justify-between', 'gap-1', 'cursor-pointer')
             header.setAttribute('@click', `toggle(${index})`)
             groupContainer.appendChild(header)
 
@@ -136,6 +136,17 @@ export class SettingsControl {
                         },
                     },
                     {
+                        title: 'Toggle interactivity',
+                        icon: '🔒',
+                        active: settings.locked,
+                        handler: (event) => {
+                            const settings = map._ms.theme.settings
+                            const value = !settings.locked
+                            settings.locked = value
+                            value ? map.lock() : map.unlock()
+                        },
+                    },
+                    {
                         title: 'Open settings',
                         icon: svg.cog8ToothMini,
                         active: null,
@@ -153,9 +164,7 @@ export class SettingsControl {
                         icon: '🔍',
                         active: null,
                         handler: (event) => {
-                            // const settings = map._ms.theme.settings
-                            // settings.hillshade.render = !settings.hillshade.render
-                            // this.configHillshade()
+                            this.goToBookmark()
                         },
                     },
                 ]
@@ -244,5 +253,40 @@ export class SettingsControl {
         if (settings.terrain && !controls.terrain.isEnabled()) {
             controls.terrain.toggleTerrain()
         }
+    
+        if (settings.bookmark.extents.find(i => i.active).name !== 'centroid') {
+            this.goToBookmark()
+        }
+        
+        if (settings.locked) {
+            map.lock()
+        }
+    }
+
+    goToBookmark() {
+        const map = this._map
+        const settings = map._ms.theme.settings
+    
+        if (settings.locked) return
+
+        const bookmark = settings.bookmark
+        const extent = bookmark.extents.find(i => i.active)
+
+        if (extent.name === 'centroid') {
+            map.setZoom(extent.params.zoom)
+            map.setCenter(Array('lng','lat').map(i => extent.params[i]))
+        } 
+        
+        if (extent.name === 'bbox') {
+            const bbox = gisUtils.normalizeBbox(Array('w','s','e','n').map(i => extent.params[i]))
+            map.fitBounds(bbox, {
+                padding: extent.params.padding,
+                maxZoom: extent.params.maxZoom,
+                duration: 0
+            })
+        }
+
+        map.setPitch(bookmark.pitch)
+        map.setBearing(bookmark.bearing)
     }
 }
