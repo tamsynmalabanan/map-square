@@ -28,19 +28,50 @@ export class SettingsControl {
         container.appendChild(content)
 
         const menu = document.createElement('div')
-        menu.classList.add('m-1', 'flex', 'flex-wrap', 'gap-1')
+        menu.classList.add('m-1', 'flex', 'flex-col', 'gap-2')
+        menu.setAttribute('x-data', `accordionGroup({activeKey:'settingsActive', activeValue:0})`)
         content.appendChild(menu)
 
-        this.getMenuButtons().forEach(params => {
-            const menuBtn = utils.strToEl(button({
-                title: params.title,
-                icon: params.icon,
-                classStr: 'grid place-items-center border-none! rounded-none!',
-                attrs: `x-data="dynamicBtn(active=${params.active})" @click="toggle"`,
-                highlightExp: 'active',
-            }))
-            menuBtn.addEventListener('toggled', params.handler)
-            menu.appendChild(menuBtn)
+        this.getMenuButtons().forEach((group, index) => {
+            const groupContainer = document.createElement('div')
+            groupContainer.classList.add('flex', 'flex-col', 'gap-1')
+            menu.appendChild(groupContainer)
+            
+            const header = document.createElement('div')    
+            header.classList.add('flex', 'flex-nowrap', 'justify-between', 'gap-1')
+            header.setAttribute('@click', `toggle(${index})`)
+            groupContainer.appendChild(header)
+
+            const label = document.createElement('span')
+            label.innerText = group.label
+            header.appendChild(label)
+
+            const collapse = document.createElement('span')
+            collapse.setAttribute('x-html', `isActive(${index}) ? svg.chevronUpMini : svg.chevronDownMini`)
+            header.appendChild(collapse)
+            
+            const buttonsContainer = document.createElement('div')
+            buttonsContainer.classList.add('flex', 'flex-wrap', 'justify-items-start', 'gap-1')
+            buttonsContainer.setAttribute('x-show', `isActive(${index})`)
+            groupContainer.appendChild(buttonsContainer)
+
+            group.buttons.forEach((params, index) => {
+                const activeKey = typeof params.active === 'boolean' ? `active${index}` : false
+                const menuBtn = utils.strToEl(button({
+                    title: params.title,
+                    icon: params.icon,
+                    classStr: 'grid place-items-center border-none! rounded-none!',
+                    ...( activeKey ? {
+                        attrs: `x-data="dynamicBtn({
+                            activeKey:'${activeKey}',
+                            activeValue:${params.active}
+                        })" @click="toggle"`,
+                        highlightExp: activeKey,
+                    } : {})
+                }))
+                menuBtn.addEventListener(activeKey ? 'toggled' : 'click', params.handler)
+                buttonsContainer.appendChild(menuBtn)
+            })
         })
         
         const nav = document.createElement('div')
@@ -72,43 +103,63 @@ export class SettingsControl {
 
         return [
             {
-                title: 'Toggle 3D globe',
-                icon: '🌍',
-                active: settings.projection === 'globe',
-                handler: (event) => {
-                    const type = event.detail.active ? 'globe' : 'mercator'
-                    map._ms.theme.settings.projection = type
-                    map.setProjection({type})
-                },
+                label: 'Quick Menu',
+                buttons: [
+                    {
+                        title: 'Toggle 3D globe',
+                        icon: '🌍',
+                        active: settings.projection === 'globe',
+                        handler: (event) => {
+                            const type = event.detail.active ? 'globe' : 'mercator'
+                            map._ms.theme.settings.projection = type
+                            map.setProjection({type})
+                        },
+                    },
+                    {
+                        title: 'Toggle basemap',
+                        icon: '🗺️',
+                        active: settings.basemap.render,
+                        handler: (event) => {
+                            const settings = map._ms.theme.settings
+                            settings.basemap.render = !settings.basemap.render
+                            this.configBasemap()
+                        },
+                    },
+                    {
+                        title: 'Toggle hillshade',
+                        icon: '🏔️',
+                        active: settings.hillshade.render,
+                        handler: (event) => {
+                            const settings = map._ms.theme.settings
+                            settings.hillshade.render = !settings.hillshade.render
+                            this.configHillshade()
+                        },
+                    },
+                    {
+                        title: 'Open settings',
+                        icon: svg.cog8ToothMini,
+                        active: null,
+                        handler: (event) => {
+                            console.log('open settings')
+                        },
+                    },
+                ]
             },
             {
-                title: 'Toggle basemap',
-                icon: '🗺️',
-                active: settings.basemap.render,
-                handler: (event) => {
-                    const settings = map._ms.theme.settings
-                    settings.basemap.render = !settings.basemap.render
-                    this.configBasemap()
-                },
-            },
-            {
-                title: 'Toggle hillshade',
-                icon: '🏔️',
-                active: settings.hillshade.render,
-                handler: (event) => {
-                    const settings = map._ms.theme.settings
-                    settings.hillshade.render = !settings.hillshade.render
-                    this.configHillshade()
-                },
-            },
-            {
-                title: 'Open settings',
-                icon: svg.cog8ToothMini,
-                active: false,
-                handler: (event) => {
-                    console.log('open settings')
-                },
-            },
+                label: 'Bookmark',
+                buttons: [
+                    {
+                        title: 'Zoom to bookmarked view',
+                        icon: '🔍',
+                        active: null,
+                        handler: (event) => {
+                            // const settings = map._ms.theme.settings
+                            // settings.hillshade.render = !settings.hillshade.render
+                            // this.configHillshade()
+                        },
+                    },
+                ]
+            }
         ]
     }
 
@@ -186,9 +237,8 @@ export class SettingsControl {
         
         this.configBasemap()
         document.addEventListener('darkModeToggled', (e) => {
-            if (settings.basemap.theme == 'auto') {
-                this.configBasemap()
-            }
+            if (settings.basemap.theme !== 'auto') return
+            this.configBasemap()
         })
 
         if (settings.terrain && !controls.terrain.isEnabled()) {

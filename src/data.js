@@ -1,3 +1,5 @@
+import { invert, parseInt } from "lodash"
+
 export default function registerData() {
     Alpine.data('app', () => ({
         get color() {
@@ -14,43 +16,62 @@ export default function registerData() {
         }
     }))
     
-    Alpine.data('toggleGroup', (open=false) => ({
-        open,
+    Alpine.data('toggleGroup', ({openKey='open', openValue=false}={}) => ({
+        [openKey]: openValue,
 
         init() {
-            this.$watch('open', value => {
+            this.$watch(openKey, value => {
                 this.$dispatch('toggled', { open: value })
             })
         },
 
         toggle() {
-            this.open = !this.open
+            this[openKey] = !this[openKey]
         },
 
         close() {
-            this.open = false
+            this[openKey] = false
         }
     }))
     
-    Alpine.data('dynamicBtn', (active=false) => ({
-        active,
+    Alpine.data('accordionGroup', ({activeKey='active', activeValue=-1}={}) => ({
+        [activeKey]: parseInt(activeValue),
 
         init() {
-            this.$watch('active', value => {
+            this.$watch(activeKey, value => {
+                this.$dispatch('toggled', { active: value })
+            })
+        },
+
+        toggle(value) {
+            const intValue = parseInt(value)
+            this[activeKey] = this.isActive(intValue) ? -1 : intValue
+        },
+
+        isActive(value) {
+            return (this[activeKey] || parseInt(activeValue)) === parseInt(value)
+        }
+    }))
+    
+    Alpine.data('dynamicBtn', ({activeKey='active', activeValue=false}) => ({
+        [activeKey]: activeValue,
+
+        init() {
+            this.$watch(activeKey, value => {
                 this.$dispatch('toggled', { active: value })
             })
         },
 
         toggle() {
-            this.active = !this.active
+            this[activeKey] = !this[activeKey]
         },
 
         activate() {
-            this.active = true
+            this[activeKey] = true
         },
 
         deactivate() {
-            this.active = false
+            this[activeKey] = false
         }
     }))
 }

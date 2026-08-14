@@ -11,7 +11,9 @@ export default class Map extends maplibregl.Map {
   constructor(container, config=null) {
     config = Map.normalizeConfig(config)
     
-    const theme = config.themes.find(theme => theme.active)
+    const theme = config.themes.find(theme => theme.active) || config.themes[0]
+    theme.active = true
+
     const settings = theme.settings
     const bookmark = settings.bookmark
     const extent = bookmark.extents.find(props => props.active)
@@ -64,12 +66,17 @@ export default class Map extends maplibregl.Map {
   }
   
   static getDefaultConfig() {
+    const date = (new Date()).toDateString()
+
     return {
       id: utils.randomId(),
+      autosave: true,
       metadata: {
         title: 'Untitled Map',
         abstract: '',
         author: '',
+        dateCreated: date,
+        dateUpdated: date,
       },
       sources: {
         basemap: {
@@ -92,8 +99,8 @@ export default class Map extends maplibregl.Map {
         }
       },
       themes: [{
-        active: true,
         id: utils.randomId(),
+        active: true,
         settings: {
           locked: false,
           unit: 'metric', // 
@@ -224,11 +231,14 @@ export default class Map extends maplibregl.Map {
           controls: {}
         },
         metadata: {
-          title: 'Untitled Map',
+          title: 'Untitled Theme',
           abstract: '',
+          author: '',
+          dateCreated: date,
+          dateUpdated: date,
         },
-        legend: [] 
-        // legend should be a nested array and objects of groups and layers
+        layers: [] 
+        // layers should be a nested array and objects of groups and layers
         // [
         //   {
         //     type: 'group', 
