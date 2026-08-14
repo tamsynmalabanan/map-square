@@ -86,7 +86,7 @@ export class SettingsControl {
         })))
         
         map.once('load', () => {
-            this.applySettings()
+            this.applyMapSettings()
         })
         
         return container
@@ -167,9 +167,88 @@ export class SettingsControl {
                             this.goToBookmark()
                         },
                     },
+                    {
+                        title: 'Set new bookmarked view',
+                        icon: '🔖',
+                        active: null,
+                        handler: (event) => {
+                            this.updateBookmark(map.getView())
+                        },
+                    },
+                    {
+                        title: 'Toggle bookmark method',
+                        icon: (
+                            settings.bookmark.extents.find(i => i.active).name === 'centroid'
+                            ? '📍' : '🖼️'
+                        ),
+                        active: null,
+                        handler: (event) => {
+                            const extents = map._ms.theme.settings.bookmark.extents
+                            extents.forEach(i => i.active = !i.active)
+                            event.target.innerHTML = (
+                                extents.find(i => i.active).name === 'centroid'
+                                ? '📍' : '🖼️'
+                            )
+                        },
+                    },
                 ]
             }
         ]
+    }
+
+    goToBookmark() {
+        const map = this._map
+        const settings = map._ms.theme.settings
+    
+        if (settings.locked) return
+
+        const bookmark = settings.bookmark
+        const extent = bookmark.extents.find(i => i.active)
+
+        if (extent.name === 'centroid') {
+            map.setZoom(extent.params.zoom)
+            map.setCenter(Array('lng','lat').map(i => extent.params[i]))
+        } 
+        
+        if (extent.name === 'bbox') {
+            map.fitBounds(Array('w','s','e','n').map(i => extent.params[i]), {
+                padding: extent.params.padding,
+                maxZoom: extent.params.maxZoom,
+                duration: 0
+            })
+        }
+
+        map.setPitch(bookmark.pitch)
+        map.setBearing(bookmark.bearing)
+    }
+
+    updateBookmark({
+        zoom,lng,lat,
+        w,s,e,n,
+        padding,maxZoom,
+        pitch,bearing
+    }={}) {
+        const bookmark = map._ms.theme.settings.bookmark
+
+        const bbox = bookmark.extents.find(i => i.name == 'bbox')
+        bbox.params = {
+            w: w || bbox.params.w,
+            s: s || bbox.params.s,
+            e: e || bbox.params.e,
+            n: n || bbox.params.n,
+            padding: padding || bbox.params.padding,
+            maxZoom: maxZoom || bbox.params.maxZoom,
+        }
+
+        const centroid = bookmark.extents.find(i => i.name == 'centroid')
+        centroid.params = {
+            zoom: zoom || centroid.params.zoom,
+            lng: lng || centroid.params.lng,
+            lat: lat || centroid.params.lat,
+        }
+        
+        bookmark.pitch = pitch || bookmark.pitch
+        bookmark.bearing = bearing || bookmark.bearing
     }
 
     configHillshade(){
@@ -237,56 +316,35 @@ export class SettingsControl {
         }
     }
 
-    applySettings() {
+    applyMapSettings() {
+        const map = this._map
+        const ms = map._ms
+
+        document.addEventListener('darkModeToggled', (e) => {
+            if (ms.theme.settings.basemap.theme !== 'auto') return
+            this.configBasemap()
+        })
+
+        this.applyThemeSettings()
+    }
+
+    applyThemeSettings() {
         const map = this._map
         const settings = map._ms.theme.settings
         const controls = map._ms.controls
 
         map.setProjection({type:settings.projection})
-        
+    
+        this.goToBookmark()
+
         this.configBasemap()
-        document.addEventListener('darkModeToggled', (e) => {
-            if (settings.basemap.theme !== 'auto') return
-            this.configBasemap()
-        })
 
         if (settings.terrain && !controls.terrain.isEnabled()) {
             controls.terrain.toggleTerrain()
         }
-    
-        if (settings.bookmark.extents.find(i => i.active).name !== 'centroid') {
-            this.goToBookmark()
-        }
-        
+            
         if (settings.locked) {
             map.lock()
         }
-    }
-
-    goToBookmark() {
-        const map = this._map
-        const settings = map._ms.theme.settings
-    
-        if (settings.locked) return
-
-        const bookmark = settings.bookmark
-        const extent = bookmark.extents.find(i => i.active)
-
-        if (extent.name === 'centroid') {
-            map.setZoom(extent.params.zoom)
-            map.setCenter(Array('lng','lat').map(i => extent.params[i]))
-        } 
-        
-        if (extent.name === 'bbox') {
-            const bbox = gisUtils.normalizeBbox(Array('w','s','e','n').map(i => extent.params[i]))
-            map.fitBounds(bbox, {
-                padding: extent.params.padding,
-                maxZoom: extent.params.maxZoom,
-                duration: 0
-            })
-        }
-
-        map.setPitch(bookmark.pitch)
-        map.setBearing(bookmark.bearing)
     }
 }

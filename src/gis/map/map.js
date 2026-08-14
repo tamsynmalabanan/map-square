@@ -22,31 +22,14 @@ export default class Map extends maplibregl.Map {
 
     const options = {
       container,
-      pitch: bookmark.pitch,
-      bearing: bookmark.bearing,
-      ...(extent.name == 'centroid' ? {
-        zoom: extent.params.zoom,
-        center: Array('lng', 'lat').map(i => extent.params[i]),
-      } : {}),
       maxZoom: 22,
       maxPitch: 75,
-      interactive: !settings.locked,
       hash: false,
       attributionControl: false,
       style: {
         version: 8,
         sources: config.sources,
-        ...(basemap.render ? {
-          layers: [
-            {
-              id: 'basemap',
-              type: 'raster',
-              source: 'basemap',
-              paint: paints.basemap
-            },
-          ],
-          sky: paints.sky
-        } : {layers: []})
+        layers: theme.layers
       },
     }
 
@@ -129,7 +112,7 @@ export default class Map extends maplibregl.Map {
                   e: 160,
                   n: 90,
                   padding: 0,
-                  maxZoom: 1,
+                  maxZoom: 22,
                 }
               }
             ],
@@ -241,37 +224,6 @@ export default class Map extends maplibregl.Map {
           dateUpdated: date,
         },
         layers: [] 
-        // layers should be a nested array and objects of groups and layers
-        // [
-        //   {
-        //     type: 'group', 
-        //     params: {
-        //       title: '', 
-        //       contents: [
-        //         {
-        //           type: 'group',
-        //           params: {
-        //             title: '',
-        //             contents: [
-        //               {
-        //                 type: 'layer',
-        //                 params: {
-        //                   title: '',
-        //                 }
-        //               }
-        //             ]
-        //           }
-        //         },
-        //         {
-        //           type: 'layer',
-        //           params: {
-        //             title: ''
-        //           }
-        //         }
-        //       ]
-        //     }
-        //   }
-        // ]
       }]
     }
   }
@@ -382,6 +334,22 @@ export default class Map extends maplibregl.Map {
 
   getBbox() {
     return this.getBounds().toArray().flatMap(i => i)
+  }
+
+  getView() {
+    const center = this.getCenter()
+    const bounds = this.getBounds()
+    return {
+        zoom: this.getZoom(),
+        lng: center.lng,
+        lat: center.lat,
+        w: bounds.getWest(),
+        s: bounds.getSouth(),
+        e: bounds.getEast(),
+        n: bounds.getNorth(),
+        pitch: this.getPitch(),
+        bearing: this.getBearing()
+    }
   }
 
   lock() {
