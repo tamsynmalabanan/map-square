@@ -237,7 +237,10 @@ export class SettingsControl {
     }
 
     configScaleBarUnit(value) {
-        this._map._ms.controls.scalebar.setUnit(value)
+        const map = this._map
+        const settings = map._ms.theme.settings
+        settings.unit = value
+        map._ms.controls.scalebar.setUnit(value)
     }
 
     goToBookmark() {
@@ -379,6 +382,8 @@ export class SettingsControl {
 
         map.setProjection({type:settings.projection})
     
+        this.configScaleBarUnit(settings.unit)
+
         this.goToBookmark()
 
         this.configBasemap()

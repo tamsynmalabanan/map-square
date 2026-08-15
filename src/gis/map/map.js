@@ -86,7 +86,7 @@ export default class Map extends maplibregl.Map {
         active: true,
         settings: {
           locked: false,
-          unit: 'metric', // 
+          unit: 'metric', // metric, imperial, nautical
           precision: 1000000,
           projection: 'mercator', // mercator or globe,
           terrain: false,
