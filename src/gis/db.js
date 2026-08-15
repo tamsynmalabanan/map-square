@@ -87,6 +87,8 @@ export const deleteFromGISDB = (name, id) => {
     request.onerror = (e) => {}
 }
 
+
+// NOTE
 export const clearGISDB = (names=objectStoreNames) => {
     const request = requestGISDB()
     
