@@ -16,62 +16,88 @@ export default function registerData() {
         }
     }))
     
-    Alpine.data('toggleGroup', ({openKey='open', openValue=false}={}) => ({
-        [openKey]: openValue,
+    Alpine.data('collapseGroup', ({key='collapsed', value=true}={}) => ({
+        [key]: value,
 
         init() {
-            this.$watch(openKey, value => {
-                this.$dispatch('toggled', { open: value })
+            this.$watch(key, value => {
+                this.$dispatch('collapseToggled', {key, value})
             })
         },
 
-        toggle() {
-            this[openKey] = !this[openKey]
+        toggleCollapse({targetKey=key}={}) {
+            if (targetKey !== key) return
+            this[key] = !this[key]
         },
-
-        close() {
-            this[openKey] = false
+        
+        closeCollapse({targetKey=key}={}) {
+            if (targetKey !== key) return
+            this[key] = true
         }
     }))
     
-    Alpine.data('accordionGroup', ({activeKey='active', activeValue=-1}={}) => ({
-        [activeKey]: parseInt(activeValue),
+    Alpine.data('accordionGroup', ({key='section', value=null}={}) => ({
+        [key]: value,
 
         init() {
-            this.$watch(activeKey, value => {
-                this.$dispatch('toggled', { active: value })
+            this.$watch(key, value => {
+                this.$dispatch('accordionToggled', {key, value})
             })
         },
 
-        toggle(value) {
-            const intValue = parseInt(value)
-            this[activeKey] = this.isActive(intValue) ? -1 : intValue
+        toggleAccordion(value, {targetKey=key}={}) {
+            if (targetKey !== key) return
+            this[key] = this.isActiveSection(value) ? null : value
         },
 
-        isActive(value) {
-            return (this[activeKey] || parseInt(activeValue)) === parseInt(value)
+        isActiveSection(value2, {targetKey=key}={}) {
+            if (targetKey !== key) return
+            return (this[key] || value) === value2
         }
     }))
     
-    Alpine.data('dynamicBtn', ({activeKey='active', activeValue=false}) => ({
-        [activeKey]: activeValue,
+    Alpine.data('highlightButton', ({key='highlight', value=false}={}) => ({
+        [key]: value,
 
         init() {
-            this.$watch(activeKey, value => {
-                this.$dispatch('toggled', { active: value })
+            this.$watch(key, value => {
+                this.$dispatch('highlightToggled', {key, value})
             })
         },
 
-        toggle() {
-            this[activeKey] = !this[activeKey]
+        toggleHighlight({targetKey=key}={}) {
+            if (targetKey !== key) return
+            this[key] = !this[key]
         },
 
-        activate() {
-            this[activeKey] = true
+        activate({targetKey=key}={}) {
+            if (targetKey !== key) return
+            this[key] = true
         },
 
-        deactivate() {
-            this[activeKey] = false
+        deactivate({targetKey=key}={}) {
+            if (targetKey !== key) return
+            this[key] = false
+        }
+    }))
+
+    Alpine.data('radioGroup', ({key='value', value=null}={}) => ({
+        [key]: value,
+
+        init() {
+            this.$watch(key, value => {
+                this.$dispatch('radioToggled', {key, value})
+            })
+        },
+
+        toggleRadio(value, {targetKey=key}={}) {
+            if (targetKey !== key) return
+            this[key] = value
+        },
+
+        isRadioValue(value2, {targetKey=key}={}) {
+            if (targetKey !== key) return
+            return (this[key] || value) === value2
         }
     }))
 }

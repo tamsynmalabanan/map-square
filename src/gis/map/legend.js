@@ -10,18 +10,18 @@ export class LegendControl {
         
         const container = this._container = document.createElement('div')
         container.classList.add('maplibregl-ctrl','maplibregl-ctrl-group')
-        container.setAttribute('x-data', 'toggleGroup')
+        container.setAttribute('x-data', 'collapseGroup')
 
         container.innerHTML = button({
             title: 'Legend',
             icon: svg.square3Stack3dMini,
             classStr: 'maplibregl-ctrl-legend',
-            attrs: `@click='toggle' x-show='!open'`
+            attrs: `@click='toggleCollapse' x-show='collapsed'`
         })
 
         const content = document.createElement('div')
         content.classList.add('flex', 'flex-col')
-        content.setAttribute('x-show', 'open')
+        content.setAttribute('x-show', '!collapsed')
         container.appendChild(content)
         
         const nav = document.createElement('div')
@@ -32,7 +32,7 @@ export class LegendControl {
             title: 'Collapse legend',
             icon: svg.xMini,
             classStr: 'maplibregl-ctrl-close justify-self-end',
-            attrs: `@click='toggle' x-show='open'`
+            attrs: `@click='toggleCollapse' x-show='!collapsed'`
         })))
 
         const layers = document.createElement('div')

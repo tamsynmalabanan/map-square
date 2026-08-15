@@ -12,19 +12,19 @@ export class PlaceSearchControl {
         this._map = map
         const container = this._container = document.createElement('div')
         container.classList.add('maplibregl-ctrl','maplibregl-ctrl-group', 'flex', 'flex-nowrap', 'items-center')
-        container.setAttribute('x-data', 'toggleGroup')
+        container.setAttribute('x-data', 'collapseGroup')
 
         container.innerHTML = button({
             title: 'Place Search',
             icon: svg.magnifyingGlassMini,
             classStr: 'maplibregl-ctrl-place-search',
-            attrs: `@click='toggle'`
+            attrs: `@click='toggleCollapse'`
         })
 
         const form = document.createElement('div')
         form.classList.add('grid', 'place-items-center')
-        form.setAttribute('x-show', 'open')
-        form.setAttribute('@click.outside', 'close')
+        form.setAttribute('x-show', '!collapsed')
+        form.setAttribute('@click.outside', 'closeCollapse')
         container.appendChild(form)
 
         const input = document.createElement('input')
