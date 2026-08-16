@@ -49,10 +49,10 @@ export default function registerData() {
             if (targetKey !== key) return
             this[key] = this.isActiveSection(value) ? null : value
         },
-
-        isActiveSection(value2, {targetKey=key}={}) {
+        
+        isActiveSection(value, {targetKey=key}={}) {
             if (targetKey !== key) return
-            return (this[key] || value) === value2
+            return this[key] === value
         }
     }))
     
