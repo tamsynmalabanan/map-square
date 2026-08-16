@@ -24,7 +24,7 @@ export default ({
         flex 
         justify-center 
         items-center
-        border-gray-500/50
+        border-gray-500/10!
         gap-2 
         rounded 
         py-1

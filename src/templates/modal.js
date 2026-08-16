@@ -25,7 +25,7 @@ export default ({
         collapsible,
         attrs: `@click="toggle"`,
         highlightExp: `open`,
-        classStr: 'border-2'
+        classStr: 'border-2 shadow-xl'
       })}
       
       <template x-teleport="#app">

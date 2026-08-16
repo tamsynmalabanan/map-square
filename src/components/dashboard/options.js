@@ -31,15 +31,15 @@ export default (options={}) => {
             x-anchor="$refs.button"
             @click.outside="closeCollapse"
             :class="{['bg-'+color+'-500/10!']: true}"
-            class='mt-2 flex gap-2 p-2 border-2 border-gray-500/50 rounded'
+            class='mt-2 flex gap-2 p-2 border-2 border-gray-500/10! rounded'
           >
             ${Object.keys(Alpine.store('displaySettings').colorOptions).map(color => {
               return button({
                 attrs: `
                   :class="{
                     ['bg-${color}-500/100!']: true,
-                    ['border-gray-950/100! dark:border-gray-100/100!']: color == '${color}',
-                    ['border-gray-500/50!']: color != '${color}',
+                    ['border-gray-950/50! dark:border-gray-100/50!']: color == '${color}',
+                    ['border-gray-500/10!']: color != '${color}',
                   }"
                   @click="$store.displaySettings.changeColorScheme('${color}')"
                 `,
