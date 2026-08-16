@@ -65,6 +65,7 @@ export default ({
               ${button({
                 icon: svg.xMini,
                 attrs: `@click="toggle"`,
+                classStr: `size-[30px]!`
               })}
             </div>
             <div class="flex flex-col grow">${content}</div>
