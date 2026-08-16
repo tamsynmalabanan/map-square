@@ -6,7 +6,6 @@ import * as gisUtils from '../utils.js';
 import HandleControls from './controls.js';
 import * as turf from '@turf/turf'
 
-
 export default class Map extends maplibregl.Map { 
   constructor(container, config=null) {
     config = Map.normalizeConfig(config)
@@ -41,9 +40,11 @@ export default class Map extends maplibregl.Map {
 
     this._ms = {config, theme, controls: {}}
 
+    this.configAddSource()
+    this.configRemoveSource()
     this.configAddLayer()
     this.configRemoveLayer()
-    this.configMobilityFns()
+    this.configMovementFns()
     
     window.map = this
   }
@@ -53,7 +54,7 @@ export default class Map extends maplibregl.Map {
 
     return {
       id: utils.randomId(),
-      autosave: true,
+      autosave: false,
       metadata: {
         title: 'Untitled Map',
         abstract: '',
@@ -293,6 +294,26 @@ export default class Map extends maplibregl.Map {
     )) ? 'dark' : 'default'
   }
 
+  configAddSource() {
+    const original = this.addSource.bind(this)
+
+    this.addSource = (sourceId, params) => {
+      const source = original(sourceId, params)
+      this.fire('sourceadded', { source })
+      return source
+    }
+  }
+
+  configRemoveSource() {
+    const original = this.removeSource.bind(this)
+
+    this.removeSource = (sourceId) => {
+      const result = original(sourceId)
+      this.fire('sourceremoved', { sourceId })
+      return result
+    }
+  }
+
   configAddLayer() {
     const originalAddLayer = this.addLayer.bind(this)
 
@@ -310,10 +331,10 @@ export default class Map extends maplibregl.Map {
       const result = originalRemoveLayer(layerId)
       this.fire('layerremoved', { layerId })
       return result
-  }
+    }
   }
 
-  configMobilityFns() {
+  configMovementFns() {
     Array(
       'fitBounds',
       'setZoom',

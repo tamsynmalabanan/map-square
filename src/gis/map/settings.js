@@ -372,6 +372,26 @@ export class SettingsControl {
             this.configBasemap()
         })
 
+        let sourceTimer
+        Array('sourceadded', 'sourceremoved').forEach(i => {
+            map.on(i, () => {
+                clearTimeout(sourceTimer)
+                sourceTimer = setTimeout(() => {
+                    ms.config.sources = map.getStyle().sources
+                }, 1000);
+            })
+        })
+
+        let layerTimer
+        Array('layeradded', 'layerremoved').forEach(i => {
+            map.on(i, () => {
+                clearTimeout(layerTimer)
+                layerTimer = setTimeout(() => {
+                    ms.theme.layers = map.getStyle().layers
+                }, 1000);
+            })
+        })
+
         this.applyThemeSettings()
     }
 
