@@ -213,8 +213,10 @@ export default class HandleControls {
                 this._map.addControl(control, params.position)
 
                 const container = control._controlContainer ?? control._container
-                container.classList.add('border-1!', 'border-gray-500/50!', 'dark:text-white!', 'rounded!')
-                container.setAttribute(':class', `{['bg-'+color+'-100/100! dark:bg-'+color+'-950/100!']: true}`)
+                container.classList.add('dark:text-white!')
+                container.setAttribute(':class', `{
+                    ['bg-'+color+'-100/100! dark:bg-'+color+'-950/100!']: true,
+                }`)
 
                 control.getContainer = () => {
                     return container
@@ -229,7 +231,9 @@ export default class HandleControls {
                     }
                     
                     Array(
-                        ...(el.tagName.toLowerCase() == 'button' ? [`['hover:bg-'+color+'-500/50!']: true`] : []), 
+                        ...(el.tagName.toLowerCase() == 'button' ? [
+                            `['hover:bg-'+color+'-500/50! rounded! focus:rounded! hover:rounded!']: true`,
+                        ] : []), 
                         ...(params.classBindings ?? [])
                     ).forEach(exp => {
                         utils.appendBinding(el, ':class', exp)
@@ -239,9 +243,6 @@ export default class HandleControls {
                         'grid', 
                         'place-items-center', 
                         'dark:border-gray-100/10!', 
-                        'rounded-none!', 
-                        'focus:rounded-none!', 
-                        'hover:rounded-none!', 
                         ...(params.addClass??[])
                     )
 
@@ -249,13 +250,7 @@ export default class HandleControls {
                 })
 
                 Array.from(container.querySelectorAll('.maplibregl-ctrl-close')).forEach(el => {
-                    el.classList.add(
-                        'grid', 
-                        'place-items-center', 
-                        'm-1',
-                        'size-[15px]!',
-                        'rounded-none!', 
-                    )
+                    el.classList.add('grid', 'place-items-center', 'm-1', 'size-[15px]!')
                 })
 
                 props.handler?.(control)

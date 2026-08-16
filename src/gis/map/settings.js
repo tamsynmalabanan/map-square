@@ -67,7 +67,7 @@ export class SettingsControl {
                 const menuBtn = utils.strToEl(button({
                     title: params.title,
                     icon: params.icon,
-                    classStr: 'grid place-items-center border-none! rounded-none!',
+                    classStr: 'grid place-items-center border-none!',
                     ...( dynamicBtn ? {
                         attrs: `
                             x-data="highlightButton({
