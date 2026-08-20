@@ -3,7 +3,7 @@ import * as turf from '@turf/turf'
 import { searchNominatimOSM } from "../data.js"
 import { createAbortController } from "../../utils.js"
 
-export class PlaceSearchControl {
+export default class PlaceSearchControl {
     constructor(options) {
     
     }
@@ -35,17 +35,20 @@ export class PlaceSearchControl {
         form.appendChild(input)
 
         let timer
-        input.addEventListener('input', () => {
-            clearTimeout(timer)
-            map.stop()
-            map.getSource('placeSearch')?.setData(turf.featureCollection([]))
-            
-            const value = input.value.trim()
-            if (value.length < 3) return
-            
-            timer = setTimeout(async() => {
-                await this.runPlaceSearch(value)
-            }, 1000);
+        Array('input', 'keydown').forEach(i => {
+            input.addEventListener(i, () => {
+                clearTimeout(timer)
+                
+                map.stop()
+                map.getSource('placeSearch')?.setData(turf.featureCollection([]))
+                
+                const value = input.value.trim()
+                if (value.length < 3) return
+                
+                timer = setTimeout(async() => {
+                    await this.runPlaceSearch(value)
+                }, 1000);
+            })
         })
         
         return container
@@ -77,7 +80,9 @@ export class PlaceSearchControl {
         const bbox = turf.bbox(turf.featureCollection(features.map(f => f.bbox ? turf.bboxPolygon(f.bbox) : f)))
         
         if (signal.aborted) return
-        map.fitBounds(bbox, {padding:100, maxZoom:Math.max(11, map.getZoom())})
+        try {
+            map.fitBounds(bbox, {padding:100, maxZoom:Math.max(11, map.getZoom())})
+        } catch {}
 
         const source = map.getSource('placeSearch')
         if (!source) return

@@ -6,11 +6,12 @@ import {default as dashboardOptions} from './components/dashboard/options.js';
 
 
 export default function registerLayout() {
-    const app = document.querySelector('#app');
+    const app = document.querySelector('#app')
 
-    // NOTE: if there are get params for source and url, check firts if source-url config is already in indexeddb else download
-    const config = {}
-    app.appendChild(utils.strToEl(map({config})))
+    const params = new URLSearchParams(window.location.search)
+    app.appendChild(utils.strToEl(map({params: Object.fromEntries(Array(
+        'source', 'id', 'url'
+    ).map(i => [i, params.get(i)]))})))
 
     app.appendChild(utils.strToEl(modal({
         open: false,

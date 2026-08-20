@@ -17,6 +17,8 @@ export default function registerData() {
     }))
     
     Alpine.data('collapseGroup', ({key='collapsed', value=true}={}) => ({
+        key: key,
+
         [key]: value,
 
         init() {
@@ -30,13 +32,20 @@ export default function registerData() {
             this[key] = !this[key]
         },
         
+        openCollapse({targetKey=key}={}) {
+            if (targetKey !== key) return
+            this[key] = false
+        },
+        
         closeCollapse({targetKey=key}={}) {
             if (targetKey !== key) return
             this[key] = true
-        }
+        },
     }))
     
     Alpine.data('accordionGroup', ({key='section', value=null}={}) => ({
+        key: key,
+
         [key]: value,
 
         init() {
@@ -57,41 +66,43 @@ export default function registerData() {
     }))
     
     Alpine.data('highlightButton', ({key='highlight', value=false}={}) => ({
+        key: key,
+
         [key]: value,
+
+        previousValue: !value,
 
         init() {
             this.$watch(key, value => {
+                if (value === this.previousValue) return
                 this.$dispatch('highlightToggled', {key, value})
             })
         },
 
         toggleHighlight({targetKey=key}={}) {
             if (targetKey !== key) return
+            this.previousValue = this[key]
             this[key] = !this[key]
         },
-
-        activate({targetKey=key}={}) {
-            if (targetKey !== key) return
-            this[key] = true
-        },
-
-        deactivate({targetKey=key}={}) {
-            if (targetKey !== key) return
-            this[key] = false
-        }
     }))
 
     Alpine.data('radioGroup', ({key='value', value=null}={}) => ({
+        key: key,
+
         [key]: value,
+
+        previousValue: null,
 
         init() {
             this.$watch(key, value => {
+                if (value === this.previousValue) return
                 this.$dispatch('radioToggled', {key, value})
             })
         },
 
         toggleRadio(value, {targetKey=key}={}) {
             if (targetKey !== key) return
+            this.previousValue = this[key]
             this[key] = value
         },
 

@@ -1,9 +1,11 @@
 import maplibregl from 'maplibre-gl';
 import * as svg from '../../svg.js';
 import FitToWorldControl from './fitToWorld.js';
-import { PlaceSearchControl } from './placeSearch.js';
+import PlaceSearchControl from './placeSearch.js';
+import MetadataControl from './metadata.js';
 import { LegendControl } from './legend.js';
 import { SettingsControl } from './settings.js';
+import { SaveControl } from './save.js';
 
 export default class HandleControls {
     constructor(map) {
@@ -18,6 +20,29 @@ export default class HandleControls {
 
         map._ms.controls = Object.fromEntries(
             Object.entries({
+                metadata: {
+                    constructor: MetadataControl,
+                    elements: {
+                    },
+                    params: {
+                        active: true,
+                        position: 'top-left',
+                        order: 0,
+                    },
+                },
+                legend: {
+                    constructor: LegendControl,
+                    elements: {
+                        '.maplibregl-ctrl-legend': {},
+                    },
+                    params: {
+                        active: true,
+                        position: 'top-left',
+                        order: 1,
+                    },
+                },
+            
+
                 placeSearch: {
                     constructor: PlaceSearchControl,
                     elements: {
@@ -26,7 +51,7 @@ export default class HandleControls {
                     },
                     params: {
                         active: true,
-                        position: 'top-left',
+                        position: 'top-right',
                         order: 1,
                     },
                 },
@@ -44,69 +69,13 @@ export default class HandleControls {
                     },
                     params: {
                         active: true,
-                        position: 'top-left',
+                        position: 'top-right',
                         order: 2,
                         options: {
                             visualizePitch: true,
                             showZoom: true,
                             showCompass: true,
                         },
-                    },
-                },
-                fitToWorld: {
-                    constructor: FitToWorldControl,
-                    elements: {
-                        '.maplibregl-ctrl-fit-to-world': {}
-                    },
-                    params: {
-                        active: true,
-                        position: 'top-left',
-                        order: 4,
-                    },
-                },
-                geolocate: {
-                    constructor: maplibregl.GeolocateControl,
-                    elements: {
-                        '.maplibregl-ctrl-geolocate': {
-                            innerHTML: '<span class="maplibregl-ctrl-icon dark:invert" aria-hidden="true"></span>'
-                        },
-                    },
-                    params: {
-                        active: true,
-                        position: 'top-left',
-                        order: 5,
-                        options: {
-                            positionOptions: {
-                                enableHighAccuracy: true
-                            },
-                            trackUserLocation: true,
-                            showUserHeading: true,
-                        },
-                    },
-                },
-
-                legend: {
-                    constructor: LegendControl,
-                    elements: {
-                        '.maplibregl-ctrl-legend': {},
-                    },
-                    params: {
-                        active: true,
-                        position: 'top-right',
-                        order: 1,
-                    },
-                },
-                
-
-                settings: {
-                    constructor: SettingsControl,
-                    elements: {
-                        '.maplibregl-ctrl-settings': {},
-                    },
-                    params: {
-                        active: true,
-                        position: 'bottom-right',
-                        order: 5,
                     },
                 },
                 terrain: {
@@ -118,8 +87,8 @@ export default class HandleControls {
                     },
                     params: {
                         active: true,
-                        position: 'bottom-right',
-                        order: 4,
+                        position: 'top-right',
+                        order: 3,
                         options: {
                             source:'terrain',
                             exaggeration:1,
@@ -144,12 +113,66 @@ export default class HandleControls {
                         
                     }
                 },
+                fitToWorld: {
+                    constructor: FitToWorldControl,
+                    elements: {
+                        '.maplibregl-ctrl-fit-to-world': {}
+                    },
+                    params: {
+                        active: true,
+                        position: 'top-right',
+                        order: 4,
+                    },
+                },
+                geolocate: {
+                    constructor: maplibregl.GeolocateControl,
+                    elements: {
+                        '.maplibregl-ctrl-geolocate': {
+                            innerHTML: '<span class="maplibregl-ctrl-icon dark:invert" aria-hidden="true"></span>'
+                        },
+                    },
+                    params: {
+                        active: true,
+                        position: 'top-right',
+                        order: 5,
+                        options: {
+                            positionOptions: {
+                                enableHighAccuracy: true
+                            },
+                            trackUserLocation: true,
+                            showUserHeading: true,
+                        },
+                    },
+                },
                 fullscreen: {
                     constructor: maplibregl.FullscreenControl,
                     elements: {
                         '.maplibregl-ctrl-fullscreen': {
                             innerHTML: '<span class="maplibregl-ctrl-icon dark:invert" aria-hidden="true"></span>',
                         }
+                    },
+                    params: {
+                        active: true,
+                        position: 'top-right',
+                        order: 6,
+                    },
+                },
+                
+                save: {
+                    constructor: SaveControl,
+                    elements: {
+                        '.maplibregl-ctrl-save': {},
+                    },
+                    params: {
+                        active: true,
+                        position: 'bottom-right',
+                        order: 4,
+                    },
+                },
+                settings: {
+                    constructor: SettingsControl,
+                    elements: {
+                        '.maplibregl-ctrl-settings': {},
                     },
                     params: {
                         active: true,
@@ -191,6 +214,8 @@ export default class HandleControls {
                                 a.classList.add('dark:text-white!')
                             }))
                         })
+
+                        control.getContainer().style.maxWidth = `70vw`
                     },
                     params: {
                         active: true,

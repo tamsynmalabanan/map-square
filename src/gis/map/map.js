@@ -5,6 +5,7 @@ import * as utils from '../../utils.js';
 import * as gisUtils from '../utils.js'; 
 import HandleControls from './controls.js';
 import * as turf from '@turf/turf'
+import { getGISDBKeys } from '../db.js';
 
 export default class Map extends maplibregl.Map { 
   constructor(container, config=null) {
@@ -27,8 +28,8 @@ export default class Map extends maplibregl.Map {
       attributionControl: false,
       style: {
         version: 8,
-        sources: config.sources,
-        layers: theme.layers
+        sources: structuredClone(config.sources),
+        layers: structuredClone(theme.layers)
       },
     }
 
@@ -48,12 +49,25 @@ export default class Map extends maplibregl.Map {
     
     window.map = this
   }
+
+  static async create(container, params=null) {
+    let config
+
+    console.log(params)
+    if (params.source && params.id) {
+      const localMaps = await gisDB.getGISDBKeys('maps')
+      console.log(localMaps)
+
+      // if source is not local remove id
+    }
+
+    return new Map(container, config)
+  }
   
   static getDefaultConfig() {
     const date = (new Date()).toDateString()
 
     return {
-      id: utils.randomId(),
       autosave: false,
       metadata: {
         title: 'Untitled Map',
@@ -341,14 +355,18 @@ export default class Map extends maplibregl.Map {
       'setCenter',
       'setPitch',
       'setBearing',
+      'zoomIn',
+      'zoomOut',
+      'setProjection',
     ).forEach(i => {
       const original = this[i].bind(this)
   
       this[i] = (value, options) => {
         if (this._ms.theme.settings.locked) {
-          return alert('map view is locked.')
+          throw new Error('Map is locked')
+        } else {
+          return original(value, options)
         }
-        return original(value, options)
       }
     })
   }
@@ -380,10 +398,10 @@ export default class Map extends maplibregl.Map {
     this.keyboard.disable();
     this.touchZoomRotate.disable();
 
-    this.getContainer()
-    .querySelector(`.maplibregl-ctrl-top-left`)
-    .querySelectorAll('button')
-    .forEach(btn => btn.disabled = true)
+    // this.getContainer()
+    // .querySelector(`.maplibregl-ctrl-top-left`)
+    // .querySelectorAll('button')
+    // .forEach(btn => btn.disabled = true)
   }
 
   unlock() {
@@ -393,9 +411,9 @@ export default class Map extends maplibregl.Map {
     this.keyboard.enable();
     this.touchZoomRotate.enable();
 
-    this.getContainer()
-    .querySelector(`.maplibregl-ctrl-top-left`)
-    .querySelectorAll('button')
-    .forEach(btn => btn.disabled = false)
+    // this.getContainer()
+    // .querySelector(`.maplibregl-ctrl-top-left`)
+    // .querySelectorAll('button')
+    // .forEach(btn => btn.disabled = false)
   }
 }

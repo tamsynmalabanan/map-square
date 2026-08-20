@@ -15,7 +15,7 @@ export class SettingsControl {
         container.setAttribute('x-data', 'collapseGroup')
 
         container.innerHTML = button({
-            title: 'Legend',
+            title: 'Settings',
             icon: svg.cog8ToothMini,
             classStr: 'maplibregl-ctrl-settings',
             attrs: `@click='toggleCollapse' x-show='collapsed'`
@@ -67,7 +67,7 @@ export class SettingsControl {
                 const menuBtn = utils.strToEl(button({
                     title: params.title,
                     icon: params.icon,
-                    classStr: 'grid place-items-center border-none!',
+                    classStr: 'grid place-items-center border-none! focus:rounded!',
                     ...( dynamicBtn ? {
                         attrs: `
                             x-data="highlightButton({
@@ -83,11 +83,19 @@ export class SettingsControl {
                         highlightExp: `isRadioValue('${params.value}')`,
                     } : {}),
                 }))
-                menuBtn.addEventListener(dynamicBtn ? 'highlightToggled' : 'click', params.handler)
+                menuBtn.addEventListener(dynamicBtn ? 'highlightToggled' : 'click', (event) => {
+                    try {
+                        params.handler(event)
+                    } catch {
+                        if (!dynamicBtn && !group.radio) return
+                        const data = Alpine.$data(menuBtn)
+                        data[data.key] = data.previousValue
+                    }
+                })
                 buttonsContainer.appendChild(menuBtn)
             })
         })
-        
+
         const nav = document.createElement('div')
         nav.classList.add('grid', 'justify-items-stretch')
         content.appendChild(nav)
@@ -97,7 +105,7 @@ export class SettingsControl {
             icon: svg.xMini,
             classStr: 'maplibregl-ctrl-close justify-self-end',
             attrs: `@click='closeCollapse' x-show='!collapsed'`
-        })))
+        })))    
         
         map.once('load', () => {
             this.applyMapSettings()
@@ -125,8 +133,8 @@ export class SettingsControl {
                         highlight: settings.projection === 'globe',
                         handler: (event) => {
                             const type = event.detail.value ? 'globe' : 'mercator'
-                            map._ms.theme.settings.projection = type
                             map.setProjection({type})
+                            map._ms.theme.settings.projection = type
                         },
                     },
                     {
@@ -331,10 +339,6 @@ export class SettingsControl {
             if (map.getLayer(i)) {
                 map.removeLayer(i)
             }
-
-            if (map.getSource(i)) {
-                map.removeSource(i)
-            }
         })
         
         const style = structuredClone(map.getStyle())
@@ -351,9 +355,8 @@ export class SettingsControl {
         style.sky = paints.sky
         map.setStyle(style)
         
-        const source = map._ms.config.sources.basemap
-        if (source.tiles.length) {
-            map.addSource('basemap', source)
+        const source = map.getSource('basemap')
+        if (source?.tiles?.length) {
             map.addLayer({
                 id: 'basemap',
                 type: 'raster',

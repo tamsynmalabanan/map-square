@@ -31,7 +31,7 @@ export class LegendControl {
         nav.appendChild(utils.strToEl(button({
             title: 'Collapse legend',
             icon: svg.xMini,
-            classStr: 'maplibregl-ctrl-close justify-self-end',
+            classStr: 'maplibregl-ctrl-close justify-self-start',
             attrs: `@click='toggleCollapse' x-show='!collapsed'`
         })))
 
