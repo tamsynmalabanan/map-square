@@ -88,7 +88,7 @@ export default class PlaceSearchControl {
         if (!source) return
 
         source.setData(data)
-        const legendControl = map._ms.controls.legend
+        const legendControl = map.getControls('legend')
         const layers = legendControl.addGeoJSONLayers(source.id, {
             properties: this.layerProperties ??= {
                 metadata: {

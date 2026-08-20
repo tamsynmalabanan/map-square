@@ -33,7 +33,14 @@ export default class Map extends maplibregl.Map {
       this.handlers['handleControls'] = new HandleControls(this)
     })
 
-    this._ms = {config, theme, controls: {}}
+    this._ms = {config, theme}
+    this.getConfig = () => this._ms.config
+    this.getTheme = () => this.getConfig().themes.find(i => i.active)
+    this.getControls = (name) => {
+      const controls = this._ms.controls ??= {}
+      if (name) return controls[name]
+      return controls
+    }
 
     this.configAddSource()
     this.configRemoveSource()
@@ -353,7 +360,7 @@ export default class Map extends maplibregl.Map {
       const original = this[i].bind(this)
   
       this[i] = (value, options) => {
-        if (this._ms.theme.settings.locked) {
+        if (this.getTheme().settings.locked) {
           throw new Error('Map is locked')
         } else {
           return original(value, options)
@@ -399,7 +406,7 @@ export default class Map extends maplibregl.Map {
   }
 
   updateConfig(property, value, {theme}={}) {
-    const config = this._ms.config
+    const config = this.getConfig()
 
     let target = theme || config
 

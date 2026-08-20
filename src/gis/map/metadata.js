@@ -5,7 +5,7 @@ import Map from './map.js'
 export default class MetadataControl {
   onAdd(map) {
     this._map = map
-    const config = map._ms.config
+    const config = map.getConfig()
     const metadata = config.metadata
     
     const container = this._container = document.createElement('div')

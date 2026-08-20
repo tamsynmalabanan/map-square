@@ -121,7 +121,7 @@ export class SettingsControl {
     
     getMenuButtons() {
         const map = this._map
-        const settings = map._ms.theme.settings
+        const settings = map.getTheme().settings
 
         return [
             {
@@ -134,7 +134,7 @@ export class SettingsControl {
                         handler: (event) => {
                             const type = event.detail.value ? 'globe' : 'mercator'
                             map.setProjection({type})
-                            map.updateConfig(['settings', 'projection'], type, {theme: map._ms.theme})
+                            map.updateConfig(['settings', 'projection'], type, {theme: map.getTheme()})
                         },
                     },
                     {
@@ -146,7 +146,7 @@ export class SettingsControl {
                                 'settings', 
                                 'basemap', 
                                 'render'
-                            ], event.detail.value, {theme: map._ms.theme})
+                            ], event.detail.value, {theme: map.getTheme()})
                             this.configBasemap()
                         },
                     },
@@ -159,7 +159,7 @@ export class SettingsControl {
                                 'settings', 
                                 'hillshade', 
                                 'render'
-                            ], event.detail.value, {theme: map._ms.theme})
+                            ], event.detail.value, {theme: map.getTheme()})
                             this.configHillshade()
                         },
                     },
@@ -173,7 +173,7 @@ export class SettingsControl {
                             map.updateConfig([
                                 'settings', 
                                 'locked', 
-                            ], value, {theme: map._ms.theme})
+                            ], value, {theme: map.getTheme()})
                             value ? map.lock() : map.unlock()
                         },
                     },
@@ -214,7 +214,7 @@ export class SettingsControl {
                         ),
                         highlight: null,
                         handler: (event) => {
-                            const bookmark = map._ms.theme.settings.bookmark
+                            const bookmark = map.getTheme().settings.bookmark
                             const active = bookmark.active === 'centroid' ? 'bbox' : 'centroid'
                             event.target.innerHTML = (
                                 active === 'centroid'
@@ -224,7 +224,7 @@ export class SettingsControl {
                                 'settings', 
                                 'bookmark', 
                                 'active',
-                            ], active, {theme: map._ms.theme})
+                            ], active, {theme: map.getTheme()})
                         },
                     },
                 ]
@@ -261,17 +261,17 @@ export class SettingsControl {
     configScaleBarUnit(value) {
         const map = this._map
         
-        map._ms.controls.scalebar.setUnit(value)
+        map.getControls('scalebar').setUnit(value)
 
         map.updateConfig([
             'settings', 
             'unit', 
-        ], value, {theme: map._ms.theme})
+        ], value, {theme: map.getTheme()})
     }
 
     goToBookmark() {
         const map = this._map
-        const settings = map._ms.theme.settings
+        const settings = map.getTheme().settings
     
         if (settings.locked) return
 
@@ -302,7 +302,7 @@ export class SettingsControl {
         pitch,bearing
     }={}) {
         const map = this._map
-        const theme = map._ms.theme
+        const theme = map.getTheme()
         const bookmark = theme.settings.bookmark
 
         const bbox = bookmark.extents.bbox
@@ -349,7 +349,7 @@ export class SettingsControl {
 
     configHillshade(){
         const map = this._map
-        const settings = map._ms.theme.settings
+        const settings = map.getTheme().settings
         const hillshade = settings.hillshade
         
         if (map.getLayer('hillshade')) {
@@ -369,7 +369,7 @@ export class SettingsControl {
                     'hillshade-accent-color': hillshade.accent,
                     ...method.params
                 }
-            }, map._ms.controls.legend.getBeforeId('hillshade'))
+            }, map.getControls('legend').getBeforeId('hillshade'))
         }
     }
 
@@ -388,7 +388,7 @@ export class SettingsControl {
             map.setStyle(style)
         }
 
-        const basemap = map._ms.theme.settings.basemap
+        const basemap = map.getTheme().settings.basemap
         if (!basemap.render) return
         
         const theme = map.constructor.getTheme(basemap.theme)
@@ -403,16 +403,15 @@ export class SettingsControl {
                 type: 'raster',
                 source: 'basemap',
                 paint: paints.basemap
-            }, map._ms.controls.legend.getBeforeId('basemap'))
+            }, map.getControls('legend').getBeforeId('basemap'))
         }
     }
 
     applyMapSettings() {
         const map = this._map
-        const ms = map._ms
 
         document.addEventListener('darkModeToggled', (e) => {
-            if (ms.theme.settings.basemap.theme !== 'auto') return
+            if (map.getTheme().settings.basemap.theme !== 'auto') return
             this.configBasemap()
         })
 
@@ -421,7 +420,7 @@ export class SettingsControl {
             map.on(i, () => {
                 clearTimeout(sourceTimer)
                 sourceTimer = setTimeout(() => {
-                    ms.config.sources = map.getStyle().sources
+                    map.getConfig().sources = map.getStyle().sources
                 }, 1000);
             })
         })
@@ -431,7 +430,7 @@ export class SettingsControl {
             map.on(i, () => {
                 clearTimeout(layerTimer)
                 layerTimer = setTimeout(() => {
-                    ms.theme.layers = map.getStyle().layers
+                    map.getTheme().layers = map.getStyle().layers
                 }, 1000);
             })
         })
@@ -441,8 +440,8 @@ export class SettingsControl {
 
     applyThemeSettings() {
         const map = this._map
-        const settings = map._ms.theme.settings
-        const controls = map._ms.controls
+        const settings = map.getTheme().settings
+        const controls = map.getControls()
 
         map.setProjection({type:settings.projection})
     

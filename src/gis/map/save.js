@@ -113,9 +113,9 @@ export class SaveControl {
     
     getMenuButtons() {
         const map = this._map
-        const ms = map._ms
-        const config = ms.config
-        const settings = ms.theme.settings
+        const config = map.getConfig()
+        const theme = map.getTheme()
+        const settings = theme.settings
 
         return [
             {

@@ -106,9 +106,9 @@ export default class HandleControls {
                         }
 
                         button.addEventListener('click', (e) => {
-                            const settings = map._ms.theme.settings
+                            const settings = map.getTheme().settings
                             settings.terrain = !settings.terrain
-                            map._ms.controls.settings?.configHillshade()
+                            map.getControls('settings')?.configHillshade()
                         })
                         
                     }
@@ -193,7 +193,7 @@ export default class HandleControls {
                         position: 'bottom-right',
                         order: 2,
                         options: {
-                            unit: this._map._ms.theme.settings.unit,
+                            unit: this._map.getTheme().settings.unit,
                             maxWidth: 200,
                         }
                     },
@@ -228,7 +228,7 @@ export default class HandleControls {
                     },
                 },
             }).map(([name, props]) => {
-                const params = this._map._ms.theme.settings.controls[name] ??= props.params
+                const params = this._map.getTheme().settings.controls[name] ??= props.params
                 return [name, {...props, params}]
             }).sort((a, b) => a[1].params.order - b[1].params.order).map(([name, props]) => {
                 const params = props.params
@@ -286,12 +286,15 @@ export default class HandleControls {
     }
 
     removeControls() {
-        if (Object.keys(this._map._ms.controls).length === 0) return
+        const map = this._map
+
+        const controls = map.getControls()
+        if (Object.keys(controls).length === 0) return
         
-        Object.values(this._map._ms.controls).forEach(control => {
-            this._map.removeControl(control)
+        Object.values(controls).forEach(control => {
+            map.removeControl(control)
         })
 
-        this._map._ms.controls = {}
+        map._ms.controls = {}
     }
 }
