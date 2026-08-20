@@ -3,4 +3,3 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @source inline("{bg,dark:bg,hover:bg,scrollbar-track,scrollbar-thumb}-{yellow,teal,blue,pink,gray}-{100,500,950}/{10,50,90,100}!");
-
