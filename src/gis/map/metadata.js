@@ -5,27 +5,34 @@ import Map from './map.js'
 export default class MetadataControl {
   onAdd(map) {
     this._map = map
-    const metadata = map._ms.config.metadata
+    const config = map._ms.config
+    const metadata = config.metadata
     
     const container = this._container = document.createElement('div')
     container.style.maxWidth = `80vw`
-    container.classList.add('maplibregl-ctrl','maplibregl-ctrl-group', 'flex', 'flex-col', 'gap-3')
+    container.setAttribute('x-data', 'collapseGroup')
+    container.setAttribute('@click.outside', 'closeCollapse')
+    container.classList.add('maplibregl-ctrl','maplibregl-ctrl-group', 'flex', 'flex-col', 'gap-3', 'ps-2', 'py-1', 'pe-1')
+
+    const currentMetadata = document.createElement('div')
+    currentMetadata.setAttribute('x-show', 'collapsed')
+    container.appendChild(currentMetadata)
 
     const titleContainer = document.createElement('div')
-    titleContainer.setAttribute('x-data', 'collapseGroup')
-    titleContainer.setAttribute('@click.outside', 'closeCollapse')
-    titleContainer.classList.add('ps-2')
-    container.appendChild(titleContainer)
+    currentMetadata.appendChild(titleContainer)
 
-    const titleCurrent = document.createElement('div')
-    titleCurrent.setAttribute('x-show', 'collapsed')
-    titleContainer.appendChild(titleCurrent)
-    
     const titleSpan = document.createElement('span')
-    titleCurrent.appendChild(titleSpan)
+    titleContainer.appendChild(titleSpan)
     titleSpan.style.maxHeight = `10vh`
     titleSpan.style.maxWidth = `60vw`
-    titleSpan.classList.add('word-break', 'text-wrap', 'truncate', 'text-ellipsis', 'overflow-auto', 'font-bold')
+    titleSpan.classList.add(
+      'word-break', 
+      'text-wrap', 
+      'truncate', 
+      'text-ellipsis', 
+      'overflow-auto', 
+      'font-bold'
+    )
     titleSpan.setAttribute(':class', `{
       ['scrollbar-thumb-'+color+'-500/10!']: true  
     }`)
@@ -35,11 +42,33 @@ export default class MetadataControl {
       icon: svg.pencilSquareMini,
       attrs: `@click="toggleCollapse"`
     }))
-    titleCurrent.appendChild(editBtn)
+    titleContainer.appendChild(editBtn)
+
+    const detailsContainer = document.createElement('div')
+    detailsContainer.classList.add('flex', 'flex-col', 'gap-1')
+    currentMetadata.appendChild(detailsContainer)
+
+    const authorSpan = document.createElement('span')
+    detailsContainer.appendChild(authorSpan)
     
+    const createdSpan = document.createElement('span')
+    detailsContainer.appendChild(createdSpan)
+    
+    const updatedSpan = document.createElement('span')
+    detailsContainer.appendChild(updatedSpan)
+    
+    if (config.id) {
+      authorSpan.innerText = `Created by ${metadata.author}`  
+      createdSpan.innerText = `Created ${metadata.dateCreated.toDateString()}`  
+      updatedSpan.innerText = `Updated ${utils.formatRelativeDate(metadata.dateUpdated)}`  
+    }
+
+    const metadataForm = document.createElement('div')
+    metadataForm.setAttribute('x-show', '!collapsed')
+    container.appendChild(metadataForm)
+
     const titleForm = document.createElement('div')
-    titleForm.setAttribute('x-show', '!collapsed')
-    titleContainer.appendChild(titleForm)
+    metadataForm.appendChild(titleForm)
 
     const titleInput = document.createElement('input')
     titleForm.appendChild(titleInput)
@@ -58,7 +87,11 @@ export default class MetadataControl {
       titleSpan.innerHTML = metadata.title = value !== '' ? value : metadata.title
     })
 
-    Array(titleCurrent, titleForm).forEach(i => {
+    Array(currentMetadata, metadataForm).forEach(i => {
+      i.classList.add('flex', 'flex-col')
+    })
+
+    Array(titleContainer, titleForm).forEach(i => {
       i.classList.add('flex', 'flex-nowrap', 'text-xl', 'gap-2')
     })
 

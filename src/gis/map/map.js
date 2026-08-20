@@ -65,16 +65,16 @@ export default class Map extends maplibregl.Map {
   }
   
   static getDefaultConfig() {
-    const date = (new Date()).toDateString()
+    const date = new Date()
 
     return {
       autosave: false,
       metadata: {
         title: 'Untitled Map',
         abstract: '',
-        author: '',
-        dateCreated: date,
-        dateUpdated: date,
+        author: 'Unknown Author',
+        dateCreated: null,
+        dateUpdated: null,
       },
       sources: {
         basemap: {
