@@ -65,7 +65,7 @@ export default class Map extends maplibregl.Map {
   }
   
   static getDefaultConfig() {
-    const date = new Date()
+    const date = (new Date()).toDateString()
 
     return {
       autosave: false,
@@ -73,8 +73,8 @@ export default class Map extends maplibregl.Map {
         title: 'Untitled Map',
         abstract: '',
         author: 'Unknown Author',
-        dateCreated: null,
-        dateUpdated: null,
+        dateCreated: date,
+        dateUpdated: date,
       },
       sources: {
         basemap: {
@@ -415,5 +415,32 @@ export default class Map extends maplibregl.Map {
     // .querySelector(`.maplibregl-ctrl-top-left`)
     // .querySelectorAll('button')
     // .forEach(btn => btn.disabled = false)
+  }
+
+  updateConfig(property, value, {themeId}={}) {
+    const config = this._ms.config
+
+    const theme = config.themes.find(i => i.id === themeId)
+
+    let target = theme || config
+
+    property.slice(0, -1).forEach(name => {
+      target = target[name]
+    })
+
+    const propertyName = property[property.length-1]
+    if (target[propertyName] === value) return
+
+    target[propertyName] = value
+
+    const date = new Date()
+    config.metadata.dateUpdated = date
+    if (theme) {
+      theme.metadata.dateUpdated = date
+    }
+
+    if (config.autosave) {
+      console.log('autosave config to indexdb')
+    }
   }
 }

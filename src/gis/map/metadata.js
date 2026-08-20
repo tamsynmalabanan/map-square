@@ -59,8 +59,8 @@ export default class MetadataControl {
     
     if (config.id) {
       authorSpan.innerText = `Created by ${metadata.author}`  
-      createdSpan.innerText = `Created ${metadata.dateCreated.toDateString()}`  
-      updatedSpan.innerText = `Updated ${utils.formatRelativeDate(metadata.dateUpdated)}`  
+      createdSpan.innerText = `Created ${metadata.dateCreated}`  
+      updatedSpan.innerText = `Updated ${metadata.dateUpdated}`  
     }
 
     const metadataForm = document.createElement('div')
