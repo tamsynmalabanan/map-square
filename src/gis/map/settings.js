@@ -420,7 +420,7 @@ export class SettingsControl {
             map.on(i, () => {
                 clearTimeout(sourceTimer)
                 sourceTimer = setTimeout(() => {
-                    map.getConfig().sources = map.getStyle().sources
+                    map.updateConfig(['sources'], map.getStyle().sources)
                 }, 1000);
             })
         })
@@ -430,7 +430,7 @@ export class SettingsControl {
             map.on(i, () => {
                 clearTimeout(layerTimer)
                 layerTimer = setTimeout(() => {
-                    map.getTheme().layers = map.getStyle().layers
+                    map.updateConfig(['layers'], map.getStyle().layers, {theme: map.getTheme()})
                 }, 1000);
             })
         })

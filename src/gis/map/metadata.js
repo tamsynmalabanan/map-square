@@ -102,7 +102,17 @@ export default class MetadataControl {
       i.classList.add('grid', 'place-items-center', 'opacity-25', 'hover:opacity-100', 'rounded!')
     })
 
+    this.configDisplayUpdate()
+
     return container
+  }
+
+  configDisplayUpdate() {
+    Array('themeUpdated', 'configUpdated').forEach(i => {
+      this._map.on(i, (e) => {
+        console.log(e)
+      })
+    })
   }
 
   onRemove() {

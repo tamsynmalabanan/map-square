@@ -69,6 +69,7 @@ export default class Map extends maplibregl.Map {
     const date = (new Date()).toDateString()
 
     return {
+      id: null,
       autosave: false,
       metadata: {
         title: 'Untitled Map',
@@ -415,18 +416,24 @@ export default class Map extends maplibregl.Map {
     })
 
     const propertyName = property[property.length-1]
-    if (target[propertyName] === value) return
+    
+    if (target[propertyName] !== value) {
+      target[propertyName] = value
+  
+      const date = (new Date()).toDateString()
+      config.metadata.dateUpdated = date
+      if (theme) {
+        theme.metadata.dateUpdated = date
+      }
 
-    target[propertyName] = value
-
-    const date = (new Date()).toDateString()
-    config.metadata.dateUpdated = date
-    if (theme) {
-      theme.metadata.dateUpdated = date
+      this.fire(theme ? 'themeUpdated' : 'configUpdated', {details: {property, value}})
+      
+      if (config.autosave) {
+        console.log('autosave config to indexdb')
+        this.fire('configSaved', {details: {property, value}})
+      }
     }
 
-    if (config.autosave) {
-      console.log('autosave config to indexdb')
-    }
+    return value
   }
 }

@@ -126,14 +126,13 @@ export class SaveControl {
                         icon: '💾',
                         highlight: null,
                         handler: (event) => {
-                            // config.id = utils.randomId()
-
-                            console.log(config)
-
-
+                            map.updateConfig(['id'], utils.randomId())
+                            
                             event.target.parentElement.querySelectorAll('button').forEach(btn => {
                                 btn.disabled = false
                             })
+
+                            console.log('save new map to indexdb, updated metadata display')
                         },
                     },
                     {
@@ -151,7 +150,7 @@ export class SaveControl {
                         highlight: config.autosave && config.id,
                         disabled: !config.id,
                         handler: (event) => {
-                            console.log('toggle autosave')
+                            map.updateConfig(['autosave'], event.detail.value)
                         },
                     },
                 ]
