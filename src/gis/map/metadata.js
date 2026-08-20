@@ -84,7 +84,10 @@ export default class MetadataControl {
     titleForm.appendChild(saveBtn)
     saveBtn.addEventListener('click', () => {
       const value = utils.removeWhitespace(titleInput.value)
-      titleSpan.innerHTML = metadata.title = value !== '' ? value : metadata.title
+      if (value === '' || value === metadata.title) return
+      
+      titleSpan.innerHTML = value
+      map.updateConfig(['metadata', 'title'], value)
     })
 
     Array(currentMetadata, metadataForm).forEach(i => {

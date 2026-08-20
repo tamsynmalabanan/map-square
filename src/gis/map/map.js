@@ -14,12 +14,6 @@ export default class Map extends maplibregl.Map {
     const theme = config.themes.find(theme => theme.active) || config.themes[0]
     theme.active = true
 
-    const settings = theme.settings
-    const bookmark = settings.bookmark
-    const extent = bookmark.extents.find(props => props.active)
-    const basemap = settings.basemap
-    const paints = basemap.paints[Map.getTheme(basemap.theme)]
-
     const options = {
       container,
       maxZoom: 22,
@@ -106,20 +100,17 @@ export default class Map extends maplibregl.Map {
           projection: 'mercator', // mercator or globe,
           terrain: false,
           bookmark: {
-            extents: [
-              {
-                active: true,
-                name: 'centroid',
+            active: 'centroid',
+            extents: {
+              centroid: {
                 title: 'Centroid',
                 params: {
                   zoom: 1,
                   lng: 0,
                   lat: 3,
                 },
-              }, 
-              {
-                active: false,
-                name: 'bbox',
+              },
+              bbox: {
                 title: 'Bounding Box',
                 params: {
                   w: -140,
@@ -130,7 +121,7 @@ export default class Map extends maplibregl.Map {
                   maxZoom: 22,
                 }
               }
-            ],
+            },
             pitch: 0,
             bearing: 0,
           },  
@@ -256,7 +247,7 @@ export default class Map extends maplibregl.Map {
 
     const cloneTheme = cloneConfig.themes.find(theme => theme.active)
     const cloneSettings = cloneTheme.settings
-    const cloneCentroid = cloneSettings.bookmark.extents.find(props => props.name == 'centroid')
+    const cloneCentroid = cloneSettings.bookmark.extents.centroid
 
     let theme = (config.themes ??= []).find(theme => theme.active)
     if (!theme) {
@@ -271,14 +262,14 @@ export default class Map extends maplibregl.Map {
     bookmark.pitch ??= cloneSettings.bookmark.pitch
     bookmark.bearing ??= cloneSettings.bookmark.bearing
     
-    const extent = bookmark.extents.find(props => props.active)
+    const extent = bookmark.extents[bookmark.active]
     if (extent) {
-      const centroidExtent = bookmark.extents.find(props => props.name == 'centroid')
+      const centroidExtent = bookmark.extents.centroid
       if (centroidExtent) {
         centroidExtent.params.zoom ??= cloneCentroid.params.zoom
         Array('lng', 'lat').forEach(i => centroidExtent.params[i] ??= cloneCentroid.params[i])
       } else {
-        bookmark.extents.push(cloneCentroid)
+        bookmark.extents['centroid'] = cloneCentroid
       }
     } else {
       bookmark.extents = cloneSettings.bookmark.extents
@@ -397,11 +388,6 @@ export default class Map extends maplibregl.Map {
     this.dragPan.disable();
     this.keyboard.disable();
     this.touchZoomRotate.disable();
-
-    // this.getContainer()
-    // .querySelector(`.maplibregl-ctrl-top-left`)
-    // .querySelectorAll('button')
-    // .forEach(btn => btn.disabled = true)
   }
 
   unlock() {
@@ -410,17 +396,10 @@ export default class Map extends maplibregl.Map {
     this.dragPan.enable();
     this.keyboard.enable();
     this.touchZoomRotate.enable();
-
-    // this.getContainer()
-    // .querySelector(`.maplibregl-ctrl-top-left`)
-    // .querySelectorAll('button')
-    // .forEach(btn => btn.disabled = false)
   }
 
-  updateConfig(property, value, {themeId}={}) {
+  updateConfig(property, value, {theme}={}) {
     const config = this._ms.config
-
-    const theme = config.themes.find(i => i.id === themeId)
 
     let target = theme || config
 
@@ -433,7 +412,7 @@ export default class Map extends maplibregl.Map {
 
     target[propertyName] = value
 
-    const date = new Date()
+    const date = (new Date()).toDateString()
     config.metadata.dateUpdated = date
     if (theme) {
       theme.metadata.dateUpdated = date

@@ -18,9 +18,7 @@ export default class FitToWorldControl {
         this._map.setPitch(0)
         this._map.setBearing(0)
 
-        const {w,s,e,n} = Map.getDefaultConfig().themes[0].settings.bookmark.extents.find(i => {
-            return i.name == 'bbox'
-        }).params
+        const {w,s,e,n} = Map.getDefaultConfig().themes[0].settings.bookmark.extents.bbox.params
         this._map.fitBounds([[w,s],[e,n]])
     })
 

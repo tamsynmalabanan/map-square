@@ -134,7 +134,7 @@ export class SettingsControl {
                         handler: (event) => {
                             const type = event.detail.value ? 'globe' : 'mercator'
                             map.setProjection({type})
-                            map._ms.theme.settings.projection = type
+                            map.updateConfig(['settings', 'projection'], type, {theme: map._ms.theme})
                         },
                     },
                     {
@@ -142,8 +142,11 @@ export class SettingsControl {
                         icon: '🗺️',
                         highlight: settings.basemap.render,
                         handler: (event) => {
-                            const settings = map._ms.theme.settings
-                            settings.basemap.render = !settings.basemap.render
+                            map.updateConfig([
+                                'settings', 
+                                'basemap', 
+                                'render'
+                            ], event.detail.value, {theme: map._ms.theme})
                             this.configBasemap()
                         },
                     },
@@ -152,8 +155,11 @@ export class SettingsControl {
                         icon: '🏔️',
                         highlight: settings.hillshade.render,
                         handler: (event) => {
-                            const settings = map._ms.theme.settings
-                            settings.hillshade.render = !settings.hillshade.render
+                            map.updateConfig([
+                                'settings', 
+                                'hillshade', 
+                                'render'
+                            ], event.detail.value, {theme: map._ms.theme})
                             this.configHillshade()
                         },
                     },
@@ -162,9 +168,12 @@ export class SettingsControl {
                         icon: '🔒',
                         highlight: settings.locked,
                         handler: (event) => {
-                            const settings = map._ms.theme.settings
-                            const value = !settings.locked
+                            const value = event.detail.value
                             settings.locked = value
+                            map.updateConfig([
+                                'settings', 
+                                'locked', 
+                            ], value, {theme: map._ms.theme})
                             value ? map.lock() : map.unlock()
                         },
                     },
@@ -200,17 +209,22 @@ export class SettingsControl {
                     {
                         title: 'Toggle bookmark method',
                         icon: (
-                            settings.bookmark.extents.find(i => i.active).name === 'centroid'
+                            settings.bookmark.active === 'centroid'
                             ? '📍' : '🖼️'
                         ),
                         highlight: null,
                         handler: (event) => {
-                            const extents = map._ms.theme.settings.bookmark.extents
-                            extents.forEach(i => i.active = !i.active)
+                            const bookmark = map._ms.theme.settings.bookmark
+                            const active = bookmark.active === 'centroid' ? 'bbox' : 'centroid'
                             event.target.innerHTML = (
-                                extents.find(i => i.active).name === 'centroid'
+                                active === 'centroid'
                                 ? '📍' : '🖼️'
                             )
+                            map.updateConfig([
+                                'settings', 
+                                'bookmark', 
+                                'active',
+                            ], active, {theme: map._ms.theme})
                         },
                     },
                 ]
@@ -246,9 +260,13 @@ export class SettingsControl {
 
     configScaleBarUnit(value) {
         const map = this._map
-        const settings = map._ms.theme.settings
-        settings.unit = value
+        
         map._ms.controls.scalebar.setUnit(value)
+
+        map.updateConfig([
+            'settings', 
+            'unit', 
+        ], value, {theme: map._ms.theme})
     }
 
     goToBookmark() {
@@ -258,14 +276,14 @@ export class SettingsControl {
         if (settings.locked) return
 
         const bookmark = settings.bookmark
-        const extent = bookmark.extents.find(i => i.active)
+        const extent = bookmark.extents[bookmark.active]
 
-        if (extent.name === 'centroid') {
+        if (bookmark.active === 'centroid') {
             map.setZoom(extent.params.zoom)
             map.setCenter(Array('lng','lat').map(i => extent.params[i]))
         } 
         
-        if (extent.name === 'bbox') {
+        if (bookmark.active === 'bbox') {
             map.fitBounds(Array('w','s','e','n').map(i => extent.params[i]), {
                 padding: extent.params.padding,
                 maxZoom: extent.params.maxZoom,
@@ -283,27 +301,50 @@ export class SettingsControl {
         padding,maxZoom,
         pitch,bearing
     }={}) {
-        const bookmark = map._ms.theme.settings.bookmark
+        const map = this._map
+        const theme = map._ms.theme
+        const bookmark = theme.settings.bookmark
 
-        const bbox = bookmark.extents.find(i => i.name == 'bbox')
-        bbox.params = {
+        const bbox = bookmark.extents.bbox
+        map.updateConfig([
+            'settings', 
+            'bookmark', 
+            'extents',
+            'bbox',
+            'params',
+        ], {
             w: w || bbox.params.w,
             s: s || bbox.params.s,
             e: e || bbox.params.e,
             n: n || bbox.params.n,
             padding: padding || bbox.params.padding,
             maxZoom: maxZoom || bbox.params.maxZoom,
-        }
-
-        const centroid = bookmark.extents.find(i => i.name == 'centroid')
-        centroid.params = {
+        }, {theme})
+        
+        const centroid = bookmark.extents.centroid
+        map.updateConfig([
+            'settings', 
+            'bookmark', 
+            'extents',
+            'centroid',
+            'params',
+        ], {
             zoom: zoom || centroid.params.zoom,
             lng: lng || centroid.params.lng,
             lat: lat || centroid.params.lat,
-        }
+        }, {theme})
         
-        bookmark.pitch = pitch || bookmark.pitch
-        bookmark.bearing = bearing || bookmark.bearing
+        map.updateConfig([
+            'settings', 
+            'bookmark', 
+            'pitch',
+        ], pitch || bookmark.pitch, {theme})
+        
+        map.updateConfig([
+            'settings', 
+            'bookmark', 
+            'bearing',
+        ], bearing || bookmark.bearing, {theme})
     }
 
     configHillshade(){
