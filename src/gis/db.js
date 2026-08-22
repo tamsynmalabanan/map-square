@@ -38,15 +38,16 @@ export const getGISDBKeys = async (name) => {
 
 export const saveToGISDB = async (name, content) => {
     const id = content.id ??= await utils.hashJSON(content)
-
-    const request = requestGISDB()
     
-    request.onsuccess = async (e) => {
-        const objectStore = getGISDBObjectStore(e, name, true)
-        objectStore.put(content)
-    }
+    return new Promise((resolve, reject) => {
+        const request = requestGISDB()
 
-    return id
+        request.onsuccess = async (e) => {
+            const objectStore = getGISDBObjectStore(e, name, true)
+            objectStore.put(content)
+            resolve(id)
+        }
+    })
 }
 
 export const getFromGISDB = async (name, id) => {

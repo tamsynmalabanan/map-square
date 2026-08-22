@@ -139,7 +139,10 @@ export class SaveControl {
                         handler: async (event) => {
                             await map.updateConfig(['id'], utils.randomId())
                             await map.updateConfig(['metadata', 'dateCreated'], (new Date()).toDateString())
+                            
                             const id = await gisDB.saveToGISDB('maps', map.getConfig())
+
+                            if (!id) return
 
                             const url = new URL(utils.getBaseURL(window.location.href))
                             url.searchParams.set('source', 'local')
