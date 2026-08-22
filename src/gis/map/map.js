@@ -104,171 +104,90 @@ export default class Map extends maplibregl.Map {
       },
       controls: {
           metadata: {
-              elements: {
-              },
-              params: {
-                  active: true,
-                  position: 'top-left',
-                  order: 0,
-              },
+            active: true,
+            position: 'top-left',
+            order: 0,
           },
           legend: {
-              elements: {
-                  '.maplibregl-ctrl-legend': {},
-              },
-              params: {
-                  active: true,
-                  position: 'top-left',
-                  order: 1,
-              },
+            active: true,
+            position: 'top-left',
+            order: 1,
           },
 
           placeSearch: {
-              elements: {
-                  '.maplibregl-ctrl-place-search': {
-                  }
-              },
-              params: {
-                  active: true,
-                  position: 'top-right',
-                  order: 1,
-              },
+            active: true,
+            position: 'top-right',
+            order: 1,
           },
           nav: {
-              elements: {
-                  '.maplibregl-ctrl-zoom-in': {
-                      innerHTML: svg.plusMini,
-                  },
-                  '.maplibregl-ctrl-zoom-out': {
-                      innerHTML: svg.minusMini,
-                  },
-                  '.maplibregl-ctrl-compass': {
-                  },
-              },
-              params: {
-                  active: true,
-                  position: 'top-right',
-                  order: 2,
-                  options: {
-                      visualizePitch: true,
-                      showZoom: true,
-                      showCompass: true,
-                  },
-              },
+            active: true,
+            position: 'top-right',
+            order: 2,
+            options: {
+                visualizePitch: true,
+                showZoom: true,
+                showCompass: true,
+            },
           },
           terrain: {
-              elements: {
-                  '.maplibregl-ctrl-terrain': {
-                      innerHTML: '<span class="maplibregl-ctrl-icon dark:invert" aria-hidden="true"></span>'
-                  }
-              },
-              params: {
-                  active: true,
-                  position: 'top-right',
-                  order: 3,
-                  options: {
-                      source:'terrain',
-                      exaggeration:1,
-                  },
-              },
+            active: true,
+            position: 'top-right',
+            order: 3,
+            options: {
+                source:'terrain',
+                exaggeration:1,
+            },
           },
           fitToWorld: {
-              elements: {
-                  '.maplibregl-ctrl-fit-to-world': {}
-              },
-              params: {
-                  active: true,
-                  position: 'top-right',
-                  order: 4,
-              },
+            active: true,
+            position: 'top-right',
+            order: 4,
           },
           geolocate: {
-              elements: {
-                  '.maplibregl-ctrl-geolocate': {
-                      innerHTML: '<span class="maplibregl-ctrl-icon dark:invert" aria-hidden="true"></span>'
-                  },
-              },
-              params: {
-                  active: true,
-                  position: 'top-right',
-                  order: 5,
-                  options: {
-                      positionOptions: {
-                          enableHighAccuracy: true
-                      },
-                      trackUserLocation: true,
-                      showUserHeading: true,
-                  },
-              },
+            active: true,
+            position: 'top-right',
+            order: 5,
+            options: {
+                positionOptions: {
+                    enableHighAccuracy: true
+                },
+                trackUserLocation: true,
+                showUserHeading: true,
+            },
           },
           fullscreen: {
-              elements: {
-                  '.maplibregl-ctrl-fullscreen': {
-                      innerHTML: '<span class="maplibregl-ctrl-icon dark:invert" aria-hidden="true"></span>',
-                  }
-              },
-              params: {
-                  active: true,
-                  position: 'top-right',
-                  order: 6,
-              },
+            active: true,
+            position: 'top-right',
+            order: 6,
           },
           
           save: {
-              elements: {
-                  '.maplibregl-ctrl-save': {},
-              },
-              params: {
-                  active: true,
-                  position: 'bottom-right',
-                  order: 4,
-              },
+            active: true,
+            position: 'bottom-right',
+            order: 4,
           },
           settings: {
-              elements: {
-                  '.maplibregl-ctrl-settings': {},
-              },
-              params: {
-                  active: true,
-                  position: 'bottom-right',
-                  order: 3,
-              },
+            active: true,
+            position: 'bottom-right',
+            order: 3,
           },
           scalebar: {
-              elements: {
-                  '.maplibregl-ctrl-scale': {
-                      addClass: ['border-gray-950/100!', 'dark:border-gray-100/100!'],
-                      removeClass: ['border-1!', 'dark:border-gray-100/10!', 'border-gray-500/50!'],
-                  }
-              },
-              params: {
-                  active: true,
-                  position: 'bottom-right',
-                  order: 2,
-                  options: {
-                      unit: 'metric',
-                      maxWidth: 200,
-                  }
-              },
+            active: true,
+            position: 'bottom-right',
+            order: 2,
+            options: {
+                unit: 'metric',
+                maxWidth: 200,
+            }
           },
           attribution: {
-              elements: {
-                  '.maplibregl-ctrl-attrib': {
-                  },
-                  '.maplibregl-ctrl-attrib-button': {
-                      addClass: ['dark:invert', 'focus:shadow-none!'],
-                      classBindings: [`['enabled:hover:bg-'+color+'-500/50!']: false`]
-                  },
-              },
-              params: {
-                  active: true,
-                  position: 'bottom-right',
-                  order: 1,
-                  options: {
-                      compact: true,
-                      customAttribution: '',
-                  },
-              },
+            active: true,
+            position: 'bottom-right',
+            order: 1,
+            options: {
+                compact: true,
+                customAttribution: '',
+            },
           },
       },
       themes: [{

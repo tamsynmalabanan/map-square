@@ -17,6 +17,16 @@ export default class HandleControls {
         return {
             nav: {
                 constructor: maplibregl.NavigationControl,
+                elements: {
+                    '.maplibregl-ctrl-zoom-in': {
+                        innerHTML: svg.plusMini,
+                    },
+                    '.maplibregl-ctrl-zoom-out': {
+                        innerHTML: svg.minusMini,
+                    },
+                    '.maplibregl-ctrl-compass': {
+                    },
+                },
             },
             terrain: {
                 constructor: maplibregl.TerrainControl,
@@ -36,16 +46,37 @@ export default class HandleControls {
                         await map.updateConfig(['settings', 'terrain'], control.isEnabled(), {theme})
                         map.getControls('settings')?.configHillshade()
                     })
-                }
+                },
+                elements: {
+                    '.maplibregl-ctrl-terrain': {
+                        innerHTML: '<span class="maplibregl-ctrl-icon dark:invert" aria-hidden="true"></span>'
+                    }
+                },
             },
             geolocate: {
                 constructor: maplibregl.GeolocateControl,
+                elements: {
+                    '.maplibregl-ctrl-geolocate': {
+                        innerHTML: '<span class="maplibregl-ctrl-icon dark:invert" aria-hidden="true"></span>'
+                    },
+                },
             },
             fullscreen: {
                 constructor: maplibregl.FullscreenControl,
+                elements: {
+                    '.maplibregl-ctrl-fullscreen': {
+                        innerHTML: '<span class="maplibregl-ctrl-icon dark:invert" aria-hidden="true"></span>',
+                    }
+                },
             },
             scalebar: {
                 constructor: maplibregl.ScaleControl,
+                elements: {
+                    '.maplibregl-ctrl-scale': {
+                        addClass: ['border-gray-950/100!', 'dark:border-gray-100/100!'],
+                        removeClass: ['border-1!', 'dark:border-gray-100/10!', 'border-gray-500/50!'],
+                    }
+                },
             },
             attribution: {
                 constructor: maplibregl.AttributionControl,
@@ -58,6 +89,14 @@ export default class HandleControls {
 
                     control.getContainer().style.maxWidth = `70vw`
                 },
+                elements: {
+                    '.maplibregl-ctrl-attrib': {
+                    },
+                    '.maplibregl-ctrl-attrib-button': {
+                        addClass: ['dark:invert', 'focus:shadow-none!'],
+                        classBindings: [`['enabled:hover:bg-'+color+'-500/50!']: false`]
+                    },
+                },
             },
             
             metadata: {
@@ -65,18 +104,34 @@ export default class HandleControls {
             },
             legend: {
                 constructor: LegendControl,
+                elements: {
+                  '.maplibregl-ctrl-legend': {},
+                },
             },
             placeSearch: {
                 constructor: PlaceSearchControl,
+                elements: {
+                  '.maplibregl-ctrl-place-search': {
+                  }
+                },
             },
             fitToWorld: {
                 constructor: FitToWorldControl,
+                elements: {
+                    '.maplibregl-ctrl-fit-to-world': {}
+                },
             },
             save: {
                 constructor: SaveControl,
+                elements: {
+                    '.maplibregl-ctrl-save': {},
+                },
             },
             settings: {
-                constructor: SettingsControl
+                constructor: SettingsControl,
+                elements: {
+                    '.maplibregl-ctrl-settings': {},
+                },
             },
         }[name]
     }
@@ -87,18 +142,16 @@ export default class HandleControls {
         this.removeControls()
 
         const controls = Object.fromEntries(
-            Object.entries(map.getConfig().controls).map(([name, props]) => {
-                const params = this._map.getTheme().settings.controls[name] ??= props.params
-                return [name, {...props, params}]
-            }).sort((a, b) => a[1].params.order - b[1].params.order).map(([name, props]) => {
-                const params = props.params
-                if (!params.active) return
+            Object.entries(map.getConfig().controls)
+            .sort((a, b) => a[1].order - b[1].order)
+            .map(([name, props]) => {
+                if (!props.active) return
 
                 const config = this.getControlConfig(name)
                 if (!config) return
 
-                const control = new config.constructor(params.options)
-                this._map.addControl(control, params.position)
+                const control = new config.constructor(props.options)
+                this._map.addControl(control, props.position)
 
                 const container = control._controlContainer ?? control._container
                 container.classList.add('dark:text-white!')
@@ -110,7 +163,7 @@ export default class HandleControls {
                     return container
                 }
 
-                Object.entries(props.elements ??= {}).forEach(([selector, params]) => {
+                Object.entries(config.elements ??= {}).forEach(([selector, params]) => {
                     const el = container.querySelector(selector) ?? container.parentElement.querySelector(selector)
                     if(!el) return
 
