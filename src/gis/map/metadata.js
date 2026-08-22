@@ -95,11 +95,11 @@ export default class MetadataControl {
     })
 
     Array(titleContainer, titleForm).forEach(i => {
-      i.classList.add('flex', 'flex-nowrap', 'text-xl', 'gap-2')
+      i.classList.add('flex', 'flex-nowrap', 'justify-between', 'text-xl', 'gap-2')
     })
 
     Array(editBtn, saveBtn).forEach(i => {
-      i.classList.add('grid', 'place-items-center', 'opacity-25', 'hover:opacity-100', 'rounded!', 'justify-self-end')
+      i.classList.add('grid', 'place-items-center', 'opacity-25', 'hover:opacity-100', 'rounded!')
     })
 
     this.configDisplayUpdate()
