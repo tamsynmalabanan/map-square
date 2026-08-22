@@ -13,228 +13,91 @@ export default class HandleControls {
         this.addControls()
     }
 
+    getControlConfig(name) {
+        return {
+            nav: {
+                constructor: maplibregl.NavigationControl,
+            },
+            terrain: {
+                constructor: maplibregl.TerrainControl,
+                handler: (control) => {
+                    const button = control.getContainer().querySelector('button')
+                    
+                    control.isEnabled = () => {
+                        return button.classList.contains('maplibregl-ctrl-terrain-enabled')
+                    }
+
+                    control.toggleTerrain = () => {
+                        button.click()
+                    }
+
+                    button.addEventListener('click', async (e) => {
+                        const theme = map.getTheme()
+                        await map.updateConfig(['settings', 'terrain'], control.isEnabled(), {theme})
+                        map.getControls('settings')?.configHillshade()
+                    })
+                }
+            },
+            geolocate: {
+                constructor: maplibregl.GeolocateControl,
+            },
+            fullscreen: {
+                constructor: maplibregl.FullscreenControl,
+            },
+            scalebar: {
+                constructor: maplibregl.ScaleControl,
+            },
+            attribution: {
+                constructor: maplibregl.AttributionControl,
+                handler: (control) => {
+                    utils.observeElement(control._innerContainer, (mutations, el) => {
+                        Array(el.querySelectorAll('a').forEach(a => {
+                            a.classList.add('dark:text-white!')
+                        }))
+                    })
+
+                    control.getContainer().style.maxWidth = `70vw`
+                },
+            },
+            
+            metadata: {
+                constructor: MetadataControl,
+            },
+            legend: {
+                constructor: LegendControl,
+            },
+            placeSearch: {
+                constructor: PlaceSearchControl,
+            },
+            fitToWorld: {
+                constructor: FitToWorldControl,
+            },
+            save: {
+                constructor: SaveControl,
+            },
+            settings: {
+                constructor: SettingsControl
+            },
+        }[name]
+    }
+
     addControls() {
         const map = this._map
 
         this.removeControls()
 
         const controls = Object.fromEntries(
-            Object.entries({
-                metadata: {
-                    constructor: MetadataControl,
-                    elements: {
-                    },
-                    params: {
-                        active: true,
-                        position: 'top-left',
-                        order: 0,
-                    },
-                },
-                legend: {
-                    constructor: LegendControl,
-                    elements: {
-                        '.maplibregl-ctrl-legend': {},
-                    },
-                    params: {
-                        active: true,
-                        position: 'top-left',
-                        order: 1,
-                    },
-                },
-            
-
-                placeSearch: {
-                    constructor: PlaceSearchControl,
-                    elements: {
-                        '.maplibregl-ctrl-place-search': {
-                        }
-                    },
-                    params: {
-                        active: true,
-                        position: 'top-right',
-                        order: 1,
-                    },
-                },
-                nav: {
-                    constructor: maplibregl.NavigationControl,
-                    elements: {
-                        '.maplibregl-ctrl-zoom-in': {
-                            innerHTML: svg.plusMini,
-                        },
-                        '.maplibregl-ctrl-zoom-out': {
-                            innerHTML: svg.minusMini,
-                        },
-                        '.maplibregl-ctrl-compass': {
-                        },
-                    },
-                    params: {
-                        active: true,
-                        position: 'top-right',
-                        order: 2,
-                        options: {
-                            visualizePitch: true,
-                            showZoom: true,
-                            showCompass: true,
-                        },
-                    },
-                },
-                terrain: {
-                    constructor: maplibregl.TerrainControl,
-                    elements: {
-                        '.maplibregl-ctrl-terrain': {
-                            innerHTML: '<span class="maplibregl-ctrl-icon dark:invert" aria-hidden="true"></span>'
-                        }
-                    },
-                    params: {
-                        active: true,
-                        position: 'top-right',
-                        order: 3,
-                        options: {
-                            source:'terrain',
-                            exaggeration:1,
-                        },
-                    },
-                    handler: (control) => {
-                        const button = control.getContainer().querySelector('button')
-                        
-                        control.isEnabled = () => {
-                            return button.classList.contains('maplibregl-ctrl-terrain-enabled')
-                        }
-
-                        control.toggleTerrain = () => {
-                            button.click()
-                        }
-
-                        button.addEventListener('click', async (e) => {
-                            const theme = map.getTheme()
-                            await map.updateConfig(['settings', 'terrain'], control.isEnabled(), {theme})
-                            map.getControls('settings')?.configHillshade()
-                        })
-                        
-                    }
-                },
-                fitToWorld: {
-                    constructor: FitToWorldControl,
-                    elements: {
-                        '.maplibregl-ctrl-fit-to-world': {}
-                    },
-                    params: {
-                        active: true,
-                        position: 'top-right',
-                        order: 4,
-                    },
-                },
-                geolocate: {
-                    constructor: maplibregl.GeolocateControl,
-                    elements: {
-                        '.maplibregl-ctrl-geolocate': {
-                            innerHTML: '<span class="maplibregl-ctrl-icon dark:invert" aria-hidden="true"></span>'
-                        },
-                    },
-                    params: {
-                        active: true,
-                        position: 'top-right',
-                        order: 5,
-                        options: {
-                            positionOptions: {
-                                enableHighAccuracy: true
-                            },
-                            trackUserLocation: true,
-                            showUserHeading: true,
-                        },
-                    },
-                },
-                fullscreen: {
-                    constructor: maplibregl.FullscreenControl,
-                    elements: {
-                        '.maplibregl-ctrl-fullscreen': {
-                            innerHTML: '<span class="maplibregl-ctrl-icon dark:invert" aria-hidden="true"></span>',
-                        }
-                    },
-                    params: {
-                        active: true,
-                        position: 'top-right',
-                        order: 6,
-                    },
-                },
-                
-                save: {
-                    constructor: SaveControl,
-                    elements: {
-                        '.maplibregl-ctrl-save': {},
-                    },
-                    params: {
-                        active: true,
-                        position: 'bottom-right',
-                        order: 4,
-                    },
-                },
-                settings: {
-                    constructor: SettingsControl,
-                    elements: {
-                        '.maplibregl-ctrl-settings': {},
-                    },
-                    params: {
-                        active: true,
-                        position: 'bottom-right',
-                        order: 3,
-                    },
-                },
-                scalebar: {
-                    constructor: maplibregl.ScaleControl,
-                    elements: {
-                        '.maplibregl-ctrl-scale': {
-                            addClass: ['border-gray-950/100!', 'dark:border-gray-100/100!'],
-                            removeClass: ['border-1!', 'dark:border-gray-100/10!', 'border-gray-500/50!'],
-                        }
-                    },
-                    params: {
-                        active: true,
-                        position: 'bottom-right',
-                        order: 2,
-                        options: {
-                            unit: this._map.getTheme().settings.unit,
-                            maxWidth: 200,
-                        }
-                    },
-                },
-                attribution: {
-                    constructor: maplibregl.AttributionControl,
-                    elements: {
-                        '.maplibregl-ctrl-attrib': {
-                        },
-                        '.maplibregl-ctrl-attrib-button': {
-                            addClass: ['dark:invert', 'focus:shadow-none!'],
-                            classBindings: [`['enabled:hover:bg-'+color+'-500/50!']: false`]
-                        },
-                    },
-                    handler: (control) => {
-                        utils.observeElement(control._innerContainer, (mutations, el) => {
-                            Array(el.querySelectorAll('a').forEach(a => {
-                                a.classList.add('dark:text-white!')
-                            }))
-                        })
-
-                        control.getContainer().style.maxWidth = `70vw`
-                    },
-                    params: {
-                        active: true,
-                        position: 'bottom-right',
-                        order: 1,
-                        options: {
-                            compact: true,
-                            customAttribution: '',
-                        },
-                    },
-                },
-            }).map(([name, props]) => {
+            Object.entries(map.getConfig().controls).map(([name, props]) => {
                 const params = this._map.getTheme().settings.controls[name] ??= props.params
                 return [name, {...props, params}]
             }).sort((a, b) => a[1].params.order - b[1].params.order).map(([name, props]) => {
                 const params = props.params
                 if (!params.active) return
 
-                const control = new props.constructor(params.options)
+                const config = this.getControlConfig(name)
+                if (!config) return
+
+                const control = new config.constructor(params.options)
                 this._map.addControl(control, params.position)
 
                 const container = control._controlContainer ?? control._container
@@ -278,7 +141,7 @@ export default class HandleControls {
                     el.classList.add('grid', 'place-items-center', 'm-1', 'size-[15px]!')
                 })
 
-                props.handler?.(control)
+                config.handler?.(control)
 
                 return [name, control]
             }).filter(Boolean)

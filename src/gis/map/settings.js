@@ -169,7 +169,6 @@ export class SettingsControl {
                         highlight: settings.locked,
                         handler: async (event) => {
                             const value = event.detail.value
-                            settings.locked = value
                             await map.updateConfig([
                                 'settings', 
                                 'locked', 
@@ -273,7 +272,7 @@ export class SettingsControl {
         const map = this._map
         const settings = map.getTheme().settings
     
-        if (settings.locked) return
+        if (map._locked) return
 
         const bookmark = settings.bookmark
         const extent = bookmark.extents[bookmark.active]
@@ -446,9 +445,9 @@ export class SettingsControl {
 
         map.setProjection({type:settings.projection})
     
-        await this.configScaleBarUnit(settings.unit)
-
         this.goToBookmark()
+
+        await this.configScaleBarUnit(settings.unit)
 
         theme.layers.forEach(layer => {
           map.addLayer(layer)  

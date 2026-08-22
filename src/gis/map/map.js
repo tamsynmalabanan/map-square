@@ -102,6 +102,175 @@ export default class Map extends maplibregl.Map {
           data: turf.featureCollection([])
         }
       },
+      controls: {
+          metadata: {
+              elements: {
+              },
+              params: {
+                  active: true,
+                  position: 'top-left',
+                  order: 0,
+              },
+          },
+          legend: {
+              elements: {
+                  '.maplibregl-ctrl-legend': {},
+              },
+              params: {
+                  active: true,
+                  position: 'top-left',
+                  order: 1,
+              },
+          },
+
+          placeSearch: {
+              elements: {
+                  '.maplibregl-ctrl-place-search': {
+                  }
+              },
+              params: {
+                  active: true,
+                  position: 'top-right',
+                  order: 1,
+              },
+          },
+          nav: {
+              elements: {
+                  '.maplibregl-ctrl-zoom-in': {
+                      innerHTML: svg.plusMini,
+                  },
+                  '.maplibregl-ctrl-zoom-out': {
+                      innerHTML: svg.minusMini,
+                  },
+                  '.maplibregl-ctrl-compass': {
+                  },
+              },
+              params: {
+                  active: true,
+                  position: 'top-right',
+                  order: 2,
+                  options: {
+                      visualizePitch: true,
+                      showZoom: true,
+                      showCompass: true,
+                  },
+              },
+          },
+          terrain: {
+              elements: {
+                  '.maplibregl-ctrl-terrain': {
+                      innerHTML: '<span class="maplibregl-ctrl-icon dark:invert" aria-hidden="true"></span>'
+                  }
+              },
+              params: {
+                  active: true,
+                  position: 'top-right',
+                  order: 3,
+                  options: {
+                      source:'terrain',
+                      exaggeration:1,
+                  },
+              },
+          },
+          fitToWorld: {
+              elements: {
+                  '.maplibregl-ctrl-fit-to-world': {}
+              },
+              params: {
+                  active: true,
+                  position: 'top-right',
+                  order: 4,
+              },
+          },
+          geolocate: {
+              elements: {
+                  '.maplibregl-ctrl-geolocate': {
+                      innerHTML: '<span class="maplibregl-ctrl-icon dark:invert" aria-hidden="true"></span>'
+                  },
+              },
+              params: {
+                  active: true,
+                  position: 'top-right',
+                  order: 5,
+                  options: {
+                      positionOptions: {
+                          enableHighAccuracy: true
+                      },
+                      trackUserLocation: true,
+                      showUserHeading: true,
+                  },
+              },
+          },
+          fullscreen: {
+              elements: {
+                  '.maplibregl-ctrl-fullscreen': {
+                      innerHTML: '<span class="maplibregl-ctrl-icon dark:invert" aria-hidden="true"></span>',
+                  }
+              },
+              params: {
+                  active: true,
+                  position: 'top-right',
+                  order: 6,
+              },
+          },
+          
+          save: {
+              elements: {
+                  '.maplibregl-ctrl-save': {},
+              },
+              params: {
+                  active: true,
+                  position: 'bottom-right',
+                  order: 4,
+              },
+          },
+          settings: {
+              elements: {
+                  '.maplibregl-ctrl-settings': {},
+              },
+              params: {
+                  active: true,
+                  position: 'bottom-right',
+                  order: 3,
+              },
+          },
+          scalebar: {
+              elements: {
+                  '.maplibregl-ctrl-scale': {
+                      addClass: ['border-gray-950/100!', 'dark:border-gray-100/100!'],
+                      removeClass: ['border-1!', 'dark:border-gray-100/10!', 'border-gray-500/50!'],
+                  }
+              },
+              params: {
+                  active: true,
+                  position: 'bottom-right',
+                  order: 2,
+                  options: {
+                      unit: 'metric',
+                      maxWidth: 200,
+                  }
+              },
+          },
+          attribution: {
+              elements: {
+                  '.maplibregl-ctrl-attrib': {
+                  },
+                  '.maplibregl-ctrl-attrib-button': {
+                      addClass: ['dark:invert', 'focus:shadow-none!'],
+                      classBindings: [`['enabled:hover:bg-'+color+'-500/50!']: false`]
+                  },
+              },
+              params: {
+                  active: true,
+                  position: 'bottom-right',
+                  order: 1,
+                  options: {
+                      compact: true,
+                      customAttribution: '',
+                  },
+              },
+          },
+      },
       themes: [{
         id: utils.randomId(),
         active: true,
@@ -257,6 +426,8 @@ export default class Map extends maplibregl.Map {
     sources.basemap ??= cloneConfig.sources.basemap
     sources.terrain ??= cloneConfig.sources.terrain
 
+    const controls = config.controls ??= cloneConfig.controls
+
     const cloneTheme = cloneConfig.themes.find(theme => theme.active)
     const cloneSettings = cloneTheme.settings
     const cloneCentroid = cloneSettings.bookmark.extents.centroid
@@ -365,7 +536,7 @@ export default class Map extends maplibregl.Map {
       const original = this[i].bind(this)
   
       this[i] = (value, options) => {
-        if (this.getTheme().settings.locked) {
+        if (this._locked) {
           throw new Error('Map is locked')
         } else {
           return original(value, options)
@@ -400,6 +571,7 @@ export default class Map extends maplibregl.Map {
     this.dragPan.disable();
     this.keyboard.disable();
     this.touchZoomRotate.disable();
+    this._locked = true
   }
 
   unlock() {
@@ -408,6 +580,7 @@ export default class Map extends maplibregl.Map {
     this.dragPan.enable();
     this.keyboard.enable();
     this.touchZoomRotate.enable();
+    this._locked = false
   }
 
   async saveConfig() {
