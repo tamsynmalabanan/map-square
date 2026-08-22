@@ -54,7 +54,7 @@ export default class MetadataControl {
     
     const createdSpan = document.createElement('span')
     detailsContainer.appendChild(createdSpan)
-    createdSpan.innerText = `Created on ${utils.formatData(new Date(metadata.dateCreated))}`  
+    createdSpan.innerText = `Created on ${utils.formatDate(new Date(metadata.dateCreated))}`  
     
     const updatedSpan = document.createElement('span')
     detailsContainer.appendChild(updatedSpan)

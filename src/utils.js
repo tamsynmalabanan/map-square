@@ -336,17 +336,19 @@ export const formatRelativeDate = (date) => {
   const diffDay = Math.floor(diffHr / 24)
 
   if (diffSec < 60) {
-    return `${diffSec} seconds ago`
+    return `${diffSec} ${diffSec === 1 ? 'second' : 'seconds'} ago`
   } else if (diffMin < 60) {
-    return `${diffMin} minutes ago`
+    return `${diffMin} ${diffMin === 1 ? 'minute' : 'miutes'} ago`
   } else if (diffHr < 24) {
-    return `${diffHr} hours ago`
+    return `${diffHr} ${diffHr === 1 ? 'hour' : 'hours'} ago`
+  } else if (diffDay < 7) {
+    return `${diffDay} ${diffDay === 1 ? 'day' : 'days'} ago`
   } else {
-    return formatData(date)
+    return formatDate(date)
   }
 }
 
-export const formatData = (date) => {
+export const formatDate = (date) => {
     return date.toLocaleDateString("en-US", {
         year: "numeric",
         month: "long",
