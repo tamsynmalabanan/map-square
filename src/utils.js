@@ -342,8 +342,16 @@ export const formatRelativeDate = (date) => {
   } else if (diffHr < 24) {
     return `${diffHr} hours ago`
   } else {
-    return date.toDateString()
+    return formatData(date)
   }
+}
+
+export const formatData = (date) => {
+    return date.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric"
+    })
 }
 
 export const getBaseURL = (urlString) => {

@@ -50,17 +50,17 @@ export default class MetadataControl {
 
     const authorSpan = document.createElement('span')
     detailsContainer.appendChild(authorSpan)
+    authorSpan.innerText = `Created by ${metadata.author}`  
     
     const createdSpan = document.createElement('span')
     detailsContainer.appendChild(createdSpan)
+    createdSpan.innerText = `Created on ${utils.formatData(new Date(metadata.dateCreated))}`  
     
     const updatedSpan = document.createElement('span')
     detailsContainer.appendChild(updatedSpan)
     
     if (config.id) {
-      authorSpan.innerText = `Created by ${metadata.author}`  
-      createdSpan.innerText = `Created ${metadata.dateCreated}`  
-      updatedSpan.innerText = `Updated ${metadata.dateUpdated}`  
+      updatedSpan.innerText = `Last update ${utils.formatRelativeDate(new Date(metadata.dateUpdated))}`  
     }
 
     const metadataForm = document.createElement('div')
@@ -91,7 +91,7 @@ export default class MetadataControl {
     })
 
     Array(currentMetadata, metadataForm).forEach(i => {
-      i.classList.add('flex', 'flex-col')
+      i.classList.add('flex', 'flex-col', 'gap-3')
     })
 
     Array(titleContainer, titleForm).forEach(i => {
@@ -111,6 +111,7 @@ export default class MetadataControl {
     Array('themeUpdated', 'configUpdated').forEach(i => {
       this._map.on(i, (e) => {
         console.log(e)
+        console.log('compare current version to saved version, indicate if version is saved')
       })
     })
   }

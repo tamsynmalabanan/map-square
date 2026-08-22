@@ -138,9 +138,16 @@ export class SaveControl {
                         highlight: null,
                         handler: async (event) => {
                             await map.updateConfig(['id'], utils.randomId())
-                            await map.updateConfig(['metadata', 'dateCreated'], (new Date()).toDateString())
                             
-                            const id = await gisDB.saveToGISDB('maps', map.getConfig())
+                            const date = (new Date()).toLocaleString("en-US")
+                            
+                            const config = await map.updateConfig(['metadata', 'dateCreated'], date)
+                            
+                            for (const theme of config.themes) {
+                                await map.updateConfig(['metadata', 'dateCreated'], date, {theme})
+                            }
+                            
+                            const id = await gisDB.saveToGISDB('maps', config)
 
                             if (!id) return
 

@@ -70,7 +70,7 @@ export default class Map extends maplibregl.Map {
   }
   
   static getDefaultConfig() {
-    const date = (new Date()).toDateString()
+    const date = (new Date()).toLocaleString("en-US")
 
     return {
       id: null,
@@ -522,7 +522,7 @@ export default class Map extends maplibregl.Map {
     if (propertyName && target[propertyName] !== value) {
       target[propertyName] = value
   
-      const date = (new Date()).toDateString()
+      const date = (new Date()).toLocaleString("en-US")
       config.metadata.dateUpdated = date
       if (theme) theme.metadata.dateUpdated = date
 
