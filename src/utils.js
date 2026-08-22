@@ -327,7 +327,7 @@ export const createAbortController = ({
     return controller
 }
 
-export const formatRelativeDate =(date) => {
+export const formatRelativeDate = (date) => {
   const now = new Date()
   const diffMs = now - date
   const diffSec = Math.floor(diffMs / 1000)
@@ -344,4 +344,10 @@ export const formatRelativeDate =(date) => {
   } else {
     return date.toDateString()
   }
+}
+
+export const getBaseURL = (urlString) => {
+    const url = new URL(urlString)
+    url.search = ''
+    return url.toString()
 }

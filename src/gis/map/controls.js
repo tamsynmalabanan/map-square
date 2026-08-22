@@ -18,7 +18,7 @@ export default class HandleControls {
 
         this.removeControls()
 
-        map._ms.controls = Object.fromEntries(
+        const controls = Object.fromEntries(
             Object.entries({
                 metadata: {
                     constructor: MetadataControl,
@@ -105,9 +105,9 @@ export default class HandleControls {
                             button.click()
                         }
 
-                        button.addEventListener('click', (e) => {
-                            const settings = map.getTheme().settings
-                            settings.terrain = !settings.terrain
+                        button.addEventListener('click', async (e) => {
+                            const theme = map.getTheme()
+                            await map.updateConfig(['settings', 'terrain'], control.isEnabled(), {theme})
                             map.getControls('settings')?.configHillshade()
                         })
                         
@@ -205,7 +205,7 @@ export default class HandleControls {
                         },
                         '.maplibregl-ctrl-attrib-button': {
                             addClass: ['dark:invert', 'focus:shadow-none!'],
-                            classBindings: [`['hover:bg-'+color+'-500/50!']: false`]
+                            classBindings: [`['enabled:hover:bg-'+color+'-500/50!']: false`]
                         },
                     },
                     handler: (control) => {
@@ -257,7 +257,7 @@ export default class HandleControls {
                     
                     Array(
                         ...(el.tagName.toLowerCase() == 'button' ? [
-                            `['hover:bg-'+color+'-500/50! rounded! focus:rounded! hover:rounded!']: true`,
+                            `['enabled:hover:bg-'+color+'-500/50! rounded! focus:rounded! hover:rounded!']: true`,
                         ] : []), 
                         ...(params.classBindings ?? [])
                     ).forEach(exp => {
@@ -283,18 +283,22 @@ export default class HandleControls {
                 return [name, control]
             }).filter(Boolean)
         )
+
+        map.getControls = (name) => {
+            if (name) return controls[name]
+            return controls
+        }
     }
 
     removeControls() {
         const map = this._map
 
-        const controls = map.getControls()
+        const controls = map.getControls?.() || {}
         if (Object.keys(controls).length === 0) return
         
-        Object.values(controls).forEach(control => {
+        Object.entries(controls).forEach((name, control) => {
             map.removeControl(control)
+            delete controls[name]
         })
-
-        map._ms.controls = {}
     }
 }

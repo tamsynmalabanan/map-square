@@ -65,7 +65,7 @@ export class SaveControl {
                 )
                 const menuBtn = utils.strToEl(button({
                     title: params.title,
-                    icon: params.icon,
+                    icon: params.href ? `<a href='${params.href}' target='_blank'>${params.icon}</a>` : params.icon,
                     classStr: 'grid place-items-center border-none! rounded! focus:rounded!',
                     ...( dynamicBtn ? {
                         attrs: `
@@ -87,7 +87,12 @@ export class SaveControl {
                     menuBtn.disabled = true
                 }
                 
-                menuBtn.addEventListener(dynamicBtn ? 'highlightToggled' : 'click', params.handler)
+                if (params.handler) {
+                    menuBtn.addEventListener(dynamicBtn ? 'highlightToggled' : 'click', async (event) => {
+                        await params.handler(event)
+                    })
+                }
+
                 buttonsContainer.appendChild(menuBtn)
             })
         })
@@ -122,17 +127,24 @@ export class SaveControl {
                 // label: 'Save Menu',
                 buttons: [
                     {
+                        title: 'Open a new map window',
+                        icon: '➕',
+                        highlight: null,
+                        href: utils.getBaseURL(window.location.href)
+                    },
+                    {
                         title: 'Save as new map',
                         icon: '💾',
                         highlight: null,
-                        handler: (event) => {
-                            map.updateConfig(['id'], utils.randomId())
-                            
-                            event.target.parentElement.querySelectorAll('button').forEach(btn => {
-                                btn.disabled = false
-                            })
+                        handler: async (event) => {
+                            await map.updateConfig(['id'], utils.randomId())
+                            await map.updateConfig(['metadata', 'dateCreated'], (new Date()).toDateString())
+                            const id = await gisDB.saveToGISDB('maps', map.getConfig())
 
-                            console.log('save new map to indexdb, updated metadata display')
+                            const url = new URL(utils.getBaseURL(window.location.href))
+                            url.searchParams.set('source', 'local')
+                            url.searchParams.set('id', id)
+                            window.location.href = url.toString()
                         },
                     },
                     {
@@ -140,17 +152,18 @@ export class SaveControl {
                         icon: `⬆️`,
                         highlight: null,
                         disabled: !config.id,
-                        handler: (event) => {
-                            console.log('save changes to map')
+                        handler: async (event) => {
+                            await map.saveConfig()
                         },
                     },
                     {
                         title: 'Autosave map changes',
                         icon: `🔄️`,
-                        highlight: config.autosave && config.id,
+                        highlight: config.autosave && config.id !== null,
                         disabled: !config.id,
-                        handler: (event) => {
-                            map.updateConfig(['autosave'], event.detail.value)
+                        handler: async (event) => {
+                            await map.updateConfig(['autosave'], event.detail.value)
+                            await map.saveConfig()
                         },
                     },
                 ]

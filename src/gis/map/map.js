@@ -10,9 +10,6 @@ import { getGISDBKeys } from '../db.js';
 export default class Map extends maplibregl.Map { 
   constructor(container, config=null) {
     config = Map.normalizeConfig(config)
-    
-    const theme = config.themes.find(theme => theme.active) || config.themes[0]
-    theme.active = true
 
     const options = {
       container,
@@ -22,24 +19,25 @@ export default class Map extends maplibregl.Map {
       attributionControl: false,
       style: {
         version: 8,
-        sources: structuredClone(config.sources),
-        layers: structuredClone(theme.layers)
+        sources: config.sources,
+        layers: []
       },
     }
 
-    super(options);
+    super(options)
 
     this.on('load', () => {
-      this.handlers['handleControls'] = new HandleControls(this)
+      new HandleControls(this)
     })
 
-    this._ms = {config, theme}
-    this.getConfig = () => this._ms.config
-    this.getTheme = () => this.getConfig().themes.find(i => i.active)
-    this.getControls = (name) => {
-      const controls = this._ms.controls ??= {}
-      if (name) return controls[name]
-      return controls
+    this.getConfig = () => config
+    this.getTheme = () => {
+      let theme = config.themes.find(i => i.active)
+      if (!theme && config.themes.length) {
+        theme = config.themes[0]
+        theme.active = true
+      }
+      return theme
     }
 
     this.configAddSource()
@@ -54,12 +52,18 @@ export default class Map extends maplibregl.Map {
   static async create(container, params=null) {
     let config
 
-    console.log(params)
-    if (params.source && params.id) {
-      const localMaps = await gisDB.getGISDBKeys('maps')
-      console.log(localMaps)
-
-      // if source is not local remove id
+    const {source, id, url} = params
+    
+    if (source === 'local') {
+      if ((await gisDB.getGISDBKeys('maps')).includes(id)) {
+        config = await gisDB.getFromGISDB('maps', id)
+      } else {
+        window.location.href = utils.getBaseURL(window.location.href)
+      }
+    } else {
+      if (config) {
+        delete config.id
+      }
     }
 
     return new Map(container, config)
@@ -406,7 +410,13 @@ export default class Map extends maplibregl.Map {
     this.touchZoomRotate.enable();
   }
 
-  updateConfig(property, value, {theme}={}) {
+  async saveConfig() {
+    const config = map.getConfig()
+    await gisDB.saveToGISDB('maps', config)
+    this.fire('configSaved', {details: {config}})
+  }
+
+  async updateConfig(property, value, {theme}={}) {
     const config = this.getConfig()
 
     let target = theme || config
@@ -417,23 +427,20 @@ export default class Map extends maplibregl.Map {
 
     const propertyName = property[property.length-1]
     
-    if (target[propertyName] !== value) {
+    if (propertyName && target[propertyName] !== value) {
       target[propertyName] = value
   
       const date = (new Date()).toDateString()
       config.metadata.dateUpdated = date
-      if (theme) {
-        theme.metadata.dateUpdated = date
-      }
+      if (theme) theme.metadata.dateUpdated = date
 
       this.fire(theme ? 'themeUpdated' : 'configUpdated', {details: {property, value}})
       
       if (config.autosave) {
-        console.log('autosave config to indexdb')
-        this.fire('configSaved', {details: {property, value}})
+        await this.saveConfig()
       }
     }
 
-    return value
+    return theme || config
   }
 }

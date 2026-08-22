@@ -40,7 +40,7 @@ export default class MetadataControl {
     
     const editBtn = utils.strToEl(button({
       icon: svg.pencilSquareMini,
-      attrs: `@click="toggleCollapse"`
+      attrs: `@click="toggleCollapse"`,
     }))
     titleContainer.appendChild(editBtn)
 
@@ -82,12 +82,12 @@ export default class MetadataControl {
       attrs: `@click="toggleCollapse"`
     }))
     titleForm.appendChild(saveBtn)
-    saveBtn.addEventListener('click', () => {
+    saveBtn.addEventListener('click', async () => {
       const value = utils.removeWhitespace(titleInput.value)
       if (value === '' || value === metadata.title) return
       
       titleSpan.innerHTML = value
-      map.updateConfig(['metadata', 'title'], value)
+      await map.updateConfig(['metadata', 'title'], value)
     })
 
     Array(currentMetadata, metadataForm).forEach(i => {
@@ -99,7 +99,7 @@ export default class MetadataControl {
     })
 
     Array(editBtn, saveBtn).forEach(i => {
-      i.classList.add('grid', 'place-items-center', 'opacity-25', 'hover:opacity-100', 'rounded!')
+      i.classList.add('grid', 'place-items-center', 'opacity-25', 'hover:opacity-100', 'rounded!', 'justify-self-end')
     })
 
     this.configDisplayUpdate()

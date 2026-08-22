@@ -107,8 +107,8 @@ export class SettingsControl {
             attrs: `@click='closeCollapse' x-show='!collapsed'`
         })))    
         
-        map.once('load', () => {
-            this.applyMapSettings()
+        map.once('load', async () => {
+            await this.applyMapSettings()
         })
         
         return container
@@ -131,18 +131,18 @@ export class SettingsControl {
                         title: 'Toggle 3D globe',
                         icon: '🌍',
                         highlight: settings.projection === 'globe',
-                        handler: (event) => {
+                        handler: async (event) => {
                             const type = event.detail.value ? 'globe' : 'mercator'
                             map.setProjection({type})
-                            map.updateConfig(['settings', 'projection'], type, {theme: map.getTheme()})
+                            await map.updateConfig(['settings', 'projection'], type, {theme: map.getTheme()})
                         },
                     },
                     {
                         title: 'Toggle basemap',
                         icon: '🗺️',
                         highlight: settings.basemap.render,
-                        handler: (event) => {
-                            map.updateConfig([
+                        handler: async (event) => {
+                            await map.updateConfig([
                                 'settings', 
                                 'basemap', 
                                 'render'
@@ -154,8 +154,8 @@ export class SettingsControl {
                         title: 'Toggle hillshade',
                         icon: '🏔️',
                         highlight: settings.hillshade.render,
-                        handler: (event) => {
-                            map.updateConfig([
+                        handler: async (event) => {
+                            await map.updateConfig([
                                 'settings', 
                                 'hillshade', 
                                 'render'
@@ -167,10 +167,10 @@ export class SettingsControl {
                         title: 'Toggle interactivity',
                         icon: '🔒',
                         highlight: settings.locked,
-                        handler: (event) => {
+                        handler: async (event) => {
                             const value = event.detail.value
                             settings.locked = value
-                            map.updateConfig([
+                            await map.updateConfig([
                                 'settings', 
                                 'locked', 
                             ], value, {theme: map.getTheme()})
@@ -213,14 +213,14 @@ export class SettingsControl {
                             ? '📍' : '🖼️'
                         ),
                         highlight: null,
-                        handler: (event) => {
+                        handler: async (event) => {
                             const bookmark = map.getTheme().settings.bookmark
                             const active = bookmark.active === 'centroid' ? 'bbox' : 'centroid'
                             event.target.innerHTML = (
                                 active === 'centroid'
                                 ? '📍' : '🖼️'
                             )
-                            map.updateConfig([
+                            await map.updateConfig([
                                 'settings', 
                                 'bookmark', 
                                 'active',
@@ -236,34 +236,34 @@ export class SettingsControl {
                     title: 'Metric',
                     icon: 'km',
                     value: 'metric',
-                    handler: (event) => {
-                        this.configScaleBarUnit('metric')
+                    handler: async (event) => {
+                        await this.configScaleBarUnit('metric')
                     },
                 }, {
                     title: 'Imperial',
                     icon: 'mi',
                     value: 'imperial',
-                    handler: (event) => {
-                        this.configScaleBarUnit('imperial')
+                    handler: async (event) => {
+                        await this.configScaleBarUnit('imperial')
                     },
                 }, {
                     title: 'Nautical',
                     icon: 'nm',
                     value: 'nautical',
-                    handler: (event) => {
-                        this.configScaleBarUnit('nautical')
+                    handler: async (event) => {
+                        await this.configScaleBarUnit('nautical')
                     },
                 }]
             },
         ]
     }
 
-    configScaleBarUnit(value) {
+    async configScaleBarUnit(value) {
         const map = this._map
         
         map.getControls('scalebar').setUnit(value)
 
-        map.updateConfig([
+        await map.updateConfig([
             'settings', 
             'unit', 
         ], value, {theme: map.getTheme()})
@@ -295,7 +295,7 @@ export class SettingsControl {
         map.setBearing(bookmark.bearing)
     }
 
-    updateBookmark({
+    async updateBookmark({
         zoom,lng,lat,
         w,s,e,n,
         padding,maxZoom,
@@ -306,7 +306,7 @@ export class SettingsControl {
         const bookmark = theme.settings.bookmark
 
         const bbox = bookmark.extents.bbox
-        map.updateConfig([
+        await map.updateConfig([
             'settings', 
             'bookmark', 
             'extents',
@@ -322,7 +322,7 @@ export class SettingsControl {
         }, {theme})
         
         const centroid = bookmark.extents.centroid
-        map.updateConfig([
+        await map.updateConfig([
             'settings', 
             'bookmark', 
             'extents',
@@ -334,13 +334,13 @@ export class SettingsControl {
             lat: lat || centroid.params.lat,
         }, {theme})
         
-        map.updateConfig([
+        await map.updateConfig([
             'settings', 
             'bookmark', 
             'pitch',
         ], pitch || bookmark.pitch, {theme})
         
-        map.updateConfig([
+        await map.updateConfig([
             'settings', 
             'bookmark', 
             'bearing',
@@ -407,7 +407,7 @@ export class SettingsControl {
         }
     }
 
-    applyMapSettings() {
+    async applyMapSettings() {
         const map = this._map
 
         document.addEventListener('darkModeToggled', (e) => {
@@ -419,8 +419,8 @@ export class SettingsControl {
         Array('sourceadded', 'sourceremoved').forEach(i => {
             map.on(i, () => {
                 clearTimeout(sourceTimer)
-                sourceTimer = setTimeout(() => {
-                    map.updateConfig(['sources'], map.getStyle().sources)
+                sourceTimer = setTimeout(async () => {
+                    await map.updateConfig(['sources'], map.getStyle().sources)
                 }, 1000);
             })
         })
@@ -429,25 +429,30 @@ export class SettingsControl {
         Array('layeradded', 'layerremoved').forEach(i => {
             map.on(i, () => {
                 clearTimeout(layerTimer)
-                layerTimer = setTimeout(() => {
-                    map.updateConfig(['layers'], map.getStyle().layers, {theme: map.getTheme()})
+                layerTimer = setTimeout(async () => {
+                    await map.updateConfig(['layers'], map.getStyle().layers, {theme: map.getTheme()})
                 }, 1000);
             })
         })
 
-        this.applyThemeSettings()
+        await this.applyThemeSettings()
     }
 
-    applyThemeSettings() {
+    async applyThemeSettings() {
         const map = this._map
-        const settings = map.getTheme().settings
+        const theme = map.getTheme()
+        const settings = theme.settings
         const controls = map.getControls()
 
         map.setProjection({type:settings.projection})
     
-        this.configScaleBarUnit(settings.unit)
+        await this.configScaleBarUnit(settings.unit)
 
         this.goToBookmark()
+
+        theme.layers.forEach(layer => {
+          map.addLayer(layer)  
+        })
 
         this.configBasemap()
 
