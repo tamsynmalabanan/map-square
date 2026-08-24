@@ -7,6 +7,7 @@
 import Alpine from "alpinejs";
 import button from "../../templates/button.js"
 import modal from '../../templates/modal.js'; 
+import { values } from "lodash";
 
 export class SaveControl {
     constructor(options) {
@@ -98,7 +99,7 @@ export class SaveControl {
         })
         
         const nav = document.createElement('div')
-        nav.classList.add('grid', 'justify-items-stretch')
+        nav.classList.add('grid', 'justify-items-stretch', 'p-1')
         content.appendChild(nav)
         
         nav.appendChild(utils.strToEl(button({
@@ -137,23 +138,11 @@ export class SaveControl {
                         icon: '💾',
                         highlight: null,
                         handler: async (event) => {
-                            await map.updateConfig(['id'], utils.randomId())
-                            
-                            const date = (new Date()).toLocaleString("en-US")
-                            
-                            const config = await map.updateConfig(['metadata', 'dateCreated'], date)
-                            
-                            for (const theme of config.themes) {
-                                await map.updateConfig(['metadata', 'dateCreated'], date, {theme})
-                            }
-                            
-                            const id = await gisDB.saveToGISDB('maps', config)
-
-                            if (!id) return
+                            const config = await map.updateConfig(['id'], utils.randomId())
 
                             const url = new URL(utils.getBaseURL(window.location.href))
                             url.searchParams.set('source', 'local')
-                            url.searchParams.set('id', id)
+                            url.searchParams.set('id', config.id)
                             window.location.href = url.toString()
                         },
                     },
@@ -173,7 +162,6 @@ export class SaveControl {
                         disabled: !config.id,
                         handler: async (event) => {
                             await map.updateConfig(['autosave'], event.detail.value)
-                            await map.saveConfig()
                         },
                     },
                 ]

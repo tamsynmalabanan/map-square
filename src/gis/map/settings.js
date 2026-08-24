@@ -97,7 +97,7 @@ export class SettingsControl {
         })
 
         const nav = document.createElement('div')
-        nav.classList.add('grid', 'justify-items-stretch')
+        nav.classList.add('grid', 'justify-items-stretch', 'p-1')
         content.appendChild(nav)
         
         nav.appendChild(utils.strToEl(button({
@@ -449,15 +449,19 @@ export class SettingsControl {
 
         await this.configScaleBarUnit(settings.unit)
 
-        theme.layers.forEach(layer => {
-          map.addLayer(layer)  
-        })
-
-        this.configBasemap()
+        
+        this.configBasemap() // suppress config update when basemap and terrain are config
 
         if (settings.terrain && !controls.terrain.isEnabled()) {
             controls.terrain.toggleTerrain()
         }
+        
+        const systemLayers = map.getControls('legend').getAllSystemLayerNames()
+        theme.layers.forEach(layer => {
+            if (systemLayers.includes(layer.id)) return
+            map.addLayer(layer)  
+        })
+        
             
         if (settings.locked) {
             map.lock()

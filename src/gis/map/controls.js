@@ -101,6 +101,9 @@ export default class HandleControls {
             
             metadata: {
                 constructor: MetadataControl,
+                elements: {
+                    '.maplibregl-ctrl-metadata': {},
+                },
             },
             legend: {
                 constructor: LegendControl,
@@ -191,7 +194,7 @@ export default class HandleControls {
                 })
 
                 Array.from(container.querySelectorAll('.maplibregl-ctrl-close')).forEach(el => {
-                    el.classList.add('grid', 'place-items-center', 'm-1', 'size-[15px]!')
+                    el.classList.add('grid', 'place-items-center', 'size-[15px]!')
                 })
 
                 config.handler?.(control)

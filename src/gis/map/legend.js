@@ -25,7 +25,7 @@ export class LegendControl {
         container.appendChild(content)
         
         const nav = document.createElement('div')
-        nav.classList.add('grid', 'justify-items-stretch')
+        nav.classList.add('grid', 'justify-items-stretch', 'p-1')
         content.appendChild(nav)
 
         nav.appendChild(utils.strToEl(button({
@@ -61,6 +61,12 @@ export class LegendControl {
             'mask',
             'hillshade', 
         ]
+    }
+
+    getAllSystemLayerNames() {
+        const base = this.getBaseLayerNames()
+        const overlay = this.getSystemOverlayNames()
+        return [...base, ...overlay]
     }
 
     getGeometryFilters() {

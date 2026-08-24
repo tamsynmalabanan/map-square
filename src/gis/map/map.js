@@ -45,7 +45,7 @@ export default class Map extends maplibregl.Map {
     this.configAddLayer()
     this.configRemoveLayer()
     this.configMovementFns()
-    
+
     window.map = this
   }
 
@@ -81,6 +81,7 @@ export default class Map extends maplibregl.Map {
         author: 'Unknown Author',
         dateCreated: date,
         dateUpdated: date,
+        dateSaved: null,
       },
       sources: {
         basemap: {
@@ -324,8 +325,7 @@ export default class Map extends maplibregl.Map {
         },
         metadata: {
           title: 'Untitled Theme',
-          abstract: '',
-          author: '',
+          description: '',
           dateCreated: date,
           dateUpdated: date,
         },
@@ -502,8 +502,12 @@ export default class Map extends maplibregl.Map {
     this._locked = false
   }
 
-  async saveConfig() {
+  async saveConfig(date) {
     const config = map.getConfig()
+
+    date ??= (new Date()).toLocaleString("en-US")
+    config.metadata.dateSaved = date
+
     await gisDB.saveToGISDB('maps', config)
     this.fire('configSaved', {details: {config}})
   }
@@ -528,8 +532,18 @@ export default class Map extends maplibregl.Map {
 
       this.fire(theme ? 'themeUpdated' : 'configUpdated', {details: {property, value}})
       
-      if (config.autosave) {
-        await this.saveConfig()
+      const newMap = !theme && property[0] === 'id'
+
+      if (newMap) {
+        config.metadata.dateCreated = date
+        for (const i of config.themes) {
+          i.metadata.dateCreated = date
+          i.metadata.dateUpdated = date
+        }
+      }
+
+      if (config.autosave || property[0] === 'autosave' || newMap) {
+        await this.saveConfig(date)
       }
     }
 
