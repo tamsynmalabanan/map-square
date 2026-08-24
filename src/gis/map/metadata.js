@@ -191,7 +191,7 @@ export default class MetadataControl {
     
     this.updatedSpan.innerHTML = `
       <span>Last updated ${utils.formatRelativeDate(new Date(dateUpdated))}</span>
-      <span class="italic">${dateUpdated > dateSaved ? '(unsaved)' : ''}</span>
+      <span class="italic">${dateUpdated > dateSaved ? '(unsaved changes)' : ''}</span>
     `
   }
 }
