@@ -6,6 +6,7 @@ import * as gisUtils from '../utils.js';
 import HandleControls from './controls.js';
 import * as turf from '@turf/turf'
 import { getGISDBKeys } from '../db.js';
+import _ from 'lodash';
 
 export default class Map extends maplibregl.Map { 
   constructor(container, config=null) {
@@ -52,9 +53,9 @@ export default class Map extends maplibregl.Map {
   static async create(container, params=null) {
     let config
 
-    const {source, id, url} = params
+    const {src, id} = params
     
-    if (source === 'local') {
+    if (src === 'db') {
       if ((await gisDB.getGISDBKeys('maps')).includes(id)) {
         config = await gisDB.getFromGISDB('maps', id)
       } else {
@@ -62,7 +63,8 @@ export default class Map extends maplibregl.Map {
       }
     } else {
       if (config) {
-        delete config.id
+        config.id = id
+        config.src = src
       }
     }
 
@@ -74,6 +76,7 @@ export default class Map extends maplibregl.Map {
 
     return {
       id: null,
+      src: null,
       autosave: false,
       metadata: {
         title: 'Untitled Map',
@@ -82,6 +85,7 @@ export default class Map extends maplibregl.Map {
         dateCreated: date,
         dateUpdated: date,
         dateSaved: null,
+        lineage: null
       },
       sources: {
         basemap: {
@@ -522,25 +526,42 @@ export default class Map extends maplibregl.Map {
     })
 
     const propertyName = property[property.length-1]
-    
-    if (propertyName && target[propertyName] !== value) {
-      target[propertyName] = value
-  
-      const date = (new Date()).toLocaleString("en-US")
-      config.metadata.dateUpdated = date
-      if (theme) theme.metadata.dateUpdated = date
 
-      this.fire(theme ? 'themeUpdated' : 'configUpdated', {details: {property, value}})
-      
+    const currentValue = target[propertyName]
+
+    console.log(property, value, currentValue, !_.isEqual(currentValue, value))
+
+    console.log('handle when theme layers are resorted, same object, diff sequence')
+
+    if (propertyName && !_.isEqual(currentValue, value)) {
       const newMap = !theme && property[0] === 'id'
+      const date = (new Date()).toLocaleString("en-US")
+      
+      Array(config, ...(newMap ? config.themes : [theme]))
+      .filter(Boolean)
+      .forEach(i => {
+        i.metadata.dateUpdated = date
+        if (!newMap) return
+        i.metadata.dateCreated = date
+      })
 
       if (newMap) {
-        config.metadata.dateCreated = date
-        for (const i of config.themes) {
-          i.metadata.dateCreated = date
-          i.metadata.dateUpdated = date
+        if (config.id) {
+          config.metadata.lineage = {
+            id: config.id,
+            src: config.src,
+            metadata: structuredClone(config.metadata)
+          }
         }
+
+        config.src = 'db'
       }
+
+      target[propertyName] = value
+
+      this.fire(theme ? 'themeUpdated' : 'configUpdated', {
+        details: {property, value}
+      })
 
       if (config.autosave || property[0] === 'autosave' || newMap) {
         await this.saveConfig(date)

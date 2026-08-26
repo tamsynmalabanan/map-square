@@ -47,6 +47,16 @@ export class SettingsControl {
             header.appendChild(label)
 
             const collapse = document.createElement('span')
+            collapse.classList.add(
+                'grid', 
+                'place-items-center', 
+                'rounded!', 
+                'focus:rounded!', 
+                'active:rounded!', 
+                'size-[15px]!', 
+                'opacity-25', 
+                'hover:opacity-100'
+            )
             collapse.setAttribute('x-html', `isActiveSection(${groupIndex}) ? svg.chevronUpMini : svg.chevronDownMini`)
             header.appendChild(collapse)
             

@@ -141,8 +141,13 @@ export class SaveControl {
                             const config = await map.updateConfig(['id'], utils.randomId())
 
                             const url = new URL(utils.getBaseURL(window.location.href))
-                            url.searchParams.set('source', 'local')
-                            url.searchParams.set('id', config.id)
+                            const id = config?.id
+
+                            if (id) {
+                                url.searchParams.set('src', 'db')
+                                url.searchParams.set('id', id)
+                            }
+
                             window.location.href = url.toString()
                         },
                     },

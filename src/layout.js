@@ -10,7 +10,7 @@ export default function registerLayout() {
 
     const params = new URLSearchParams(window.location.search)
     app.appendChild(utils.strToEl(map({params: Object.fromEntries(Array(
-        'source', 'id', 'url'
+        'src', 'id'
     ).map(i => [i, params.get(i)]))})))
 
     app.appendChild(utils.strToEl(modal({
