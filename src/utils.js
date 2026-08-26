@@ -7,6 +7,14 @@ export const strToEl = (str) => {
     return div.firstElementChild;
 }
 
+export const toTitleCase = (str) => {
+  return str
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ')
+}
+
+
 export const objToStr = (obj) => {
     return JSON.stringify(obj).replace(/"/g, '&quot;')
 }

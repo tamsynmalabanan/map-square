@@ -73,6 +73,7 @@ export default class Map extends maplibregl.Map {
   
   static getDefaultConfig() {
     const date = (new Date()).toLocaleString("en-US")
+    const displaySettings = Alpine.store('displaySettings')
 
     return {
       id: null,
@@ -204,6 +205,8 @@ export default class Map extends maplibregl.Map {
           precision: 1000000,
           projection: 'mercator', // mercator or globe,
           terrain: false,
+          darkMode: displaySettings.darkMode,
+          colorScheme: displaySettings.colorScheme,
           bookmark: {
             active: 'centroid',
             extents: {
@@ -232,7 +235,6 @@ export default class Map extends maplibregl.Map {
           },  
           basemap: {
             render: true,
-            theme: 'auto',
             paints: {
               default: {
                 basemap: {
@@ -363,6 +365,8 @@ export default class Map extends maplibregl.Map {
 
     const settings = theme.settings ??= cloneSettings
     settings.locked ??= cloneSettings.locked
+    settings.darkMode ??= cloneSettings.darkMode
+    settings.colorScheme ??= cloneSettings.colorScheme
 
     const bookmark = settings.bookmark ??= cloneSettings.bookmark
     bookmark.pitch ??= cloneSettings.bookmark.pitch
@@ -383,26 +387,18 @@ export default class Map extends maplibregl.Map {
 
     const basemap = settings.basemap ??= cloneSettings.basemap
     basemap.render ??= cloneSettings.basemap.render
-    basemap.theme ??= cloneSettings.basemap.theme
     basemap.color ??= cloneSettings.basemap.color
     
-    const basemapTheme = Map.getTheme(basemap.theme)
+    const basemapTheme = settings.darkMode ? 'dark' : 'default'
     const paints = basemap.paints[basemapTheme]
     if (paints && Object.keys(basemap.paints).includes(basemapTheme)) {
       paints.basemap ??= cloneSettings.basemap.paints[basemapTheme].basemap
       paints.sky ??= cloneSettings.basemap.paints[basemapTheme].sky
     } else {
-      basemap.theme = cloneSettings.basemap.theme
       basemap.paints = cloneSettings.basemap.paints
     }
 
     return config
-  }
-
-  static getTheme(theme) {
-    return (theme == 'dark' || (
-      theme == 'auto' && Alpine.store('displaySettings').darkMode
-    )) ? 'dark' : 'default'
   }
 
   configAddSource() {

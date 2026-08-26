@@ -61,7 +61,7 @@ export class SettingsControl {
             header.appendChild(collapse)
             
             const buttonsContainer = document.createElement('div')
-            buttonsContainer.classList.add('flex', 'flex-wrap', 'justify-items-start', 'gap-1')
+            buttonsContainer.classList.add('grid', 'grid-cols-4', 'gap-1')
             buttonsContainer.setAttribute('x-show', `isActiveSection(${groupIndex})`)
             if (group.radio) {
                 buttonsContainer.setAttribute('x-data', `radioGroup({value:'${group.radio}'})`)
@@ -132,6 +132,7 @@ export class SettingsControl {
     getMenuButtons() {
         const map = this._map
         const settings = map.getTheme().settings
+        const displaySettings = Alpine.store('displaySettings')
 
         return [
             {
@@ -160,6 +161,7 @@ export class SettingsControl {
                             this.configBasemap()
                         },
                     },
+                    
                     {
                         title: 'Toggle hillshade',
                         icon: '🏔️',
@@ -171,6 +173,25 @@ export class SettingsControl {
                                 'render'
                             ], event.detail.value, {theme: map.getTheme()})
                             this.configHillshade()
+                        },
+                    },
+                    {
+                        title: 'Toggle dark mode',
+                        icon: '🌙',
+                        highlight: settings.darkMode,
+                        handler: async (event) => {
+                            const isDark = event.detail.value
+                            
+                            if (isDark !== displaySettings.darkMode) {
+                                displaySettings.toggleDarkMode()
+                            }
+                            
+                            await map.updateConfig([
+                                'settings', 
+                                'darkMode', 
+                            ], isDark, {theme: map.getTheme()})
+
+                            this.configBasemap()
                         },
                     },
                     {
@@ -188,12 +209,13 @@ export class SettingsControl {
                     },
                     {
                         title: 'Open settings',
-                        icon: svg.cog8ToothMini,
+                        icon: '⚙️',
                         highlight: null,
                         handler: (event) => {
                             console.log('open settings')
                         },
                     },
+                    
                 ]
             },
             {
@@ -263,6 +285,27 @@ export class SettingsControl {
                         await this.configScaleBarUnit('nautical')
                     },
                 }]
+            },
+            {
+                label: 'Color Scheme',
+                radio: displaySettings.colorScheme,
+                buttons: Object.entries(displaySettings.colorOptions).map(([name, hex]) => {
+                    return {
+                        title: utils.toTitleCase(name),
+                        icon: `<div class="bg-${name}-500/100! size-[15px]! rounded!"></div>`,
+                        value: name,
+                        handler: async (event) => {
+                            if (name !== displaySettings.colorScheme) {
+                                displaySettings.changeColorScheme(name)
+                            }
+                            
+                            await map.updateConfig([
+                                'settings', 
+                                'colorScheme', 
+                            ], name, {theme: map.getTheme()})
+                        },
+                    }
+                })
             },
         ]
     }
@@ -397,10 +440,11 @@ export class SettingsControl {
             map.setStyle(style)
         }
 
-        const basemap = map.getTheme().settings.basemap
+        const settings = map.getTheme().settings
+        const basemap = settings.basemap
         if (!basemap.render) return
         
-        const theme = map.constructor.getTheme(basemap.theme)
+        const theme = settings.darkMode ? 'dark' : 'default'
         const paints = basemap.paints[theme]
         style.sky = paints.sky
         map.setStyle(style)
@@ -418,11 +462,6 @@ export class SettingsControl {
 
     async applyMapSettings() {
         const map = this._map
-
-        document.addEventListener('darkModeToggled', (e) => {
-            if (map.getTheme().settings.basemap.theme !== 'auto') return
-            this.configBasemap()
-        })
 
         let sourceTimer
         Array('sourceadded', 'sourceremoved').forEach(i => {
@@ -453,6 +492,16 @@ export class SettingsControl {
         const settings = theme.settings
         const controls = map.getControls()
 
+        const displaySettings = Alpine.store('displaySettings')
+        
+        if (settings.darkMode !== displaySettings.darkMode) {
+            displaySettings.toggleDarkMode()
+        }
+
+        if (settings.colorScheme !== displaySettings.colorScheme) {
+            displaySettings.changeColorScheme(settings.colorScheme)
+        }
+
         map.setProjection({type:settings.projection})
     
         this.goToBookmark()
@@ -471,7 +520,6 @@ export class SettingsControl {
             if (systemLayers.includes(layer.id)) return
             map.addLayer(layer)  
         })
-        
             
         if (settings.locked) {
             map.lock()
