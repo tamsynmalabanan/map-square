@@ -138,7 +138,7 @@ export class SaveControl {
                         icon: '💾',
                         highlight: null,
                         handler: async (event) => {
-                            const config = await map.updateConfig(['id'], utils.randomId())
+                            const config = await map.getControls('settings').updateConfig(['id'], utils.randomId())
 
                             const url = new URL(utils.getBaseURL(window.location.href))
                             const id = config?.id
@@ -157,7 +157,7 @@ export class SaveControl {
                         highlight: null,
                         disabled: !config.id,
                         handler: async (event) => {
-                            await map.saveConfig()
+                            await map.getControls('settings').saveConfig()
                         },
                     },
                     {
@@ -166,7 +166,7 @@ export class SaveControl {
                         highlight: config.autosave && config.id !== null,
                         disabled: !config.id,
                         handler: async (event) => {
-                            await map.updateConfig(['autosave'], event.detail.value)
+                            await map.getControls('settings').updateConfig(['autosave'], event.detail.value)
                         },
                     },
                 ]

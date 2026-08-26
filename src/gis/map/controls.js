@@ -42,9 +42,12 @@ export default class HandleControls {
                     }
 
                     button.addEventListener('click', async (e) => {
-                        const theme = map.getTheme()
-                        await map.updateConfig(['settings', 'terrain'], control.isEnabled(), {theme})
-                        map.getControls('settings')?.configHillshade()
+                        const map = this._map
+                        const settings = map.getControls('settings')
+                        if (!settings) return
+                        
+                        await settings.updateConfig(['settings', 'terrain'], control.isEnabled(), {theme: map.getTheme()})
+                        settings.configHillshade()
                     })
                 },
                 elements: {

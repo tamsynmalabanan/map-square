@@ -1,6 +1,7 @@
 import Alpine from "alpinejs";
 import button from "../../templates/button.js"
 import modal from '../../templates/modal.js'; 
+import _ from 'lodash';
 
 export class SettingsControl {
     constructor(options) {
@@ -145,7 +146,7 @@ export class SettingsControl {
                         handler: async (event) => {
                             const type = event.detail.value ? 'globe' : 'mercator'
                             map.setProjection({type})
-                            await map.updateConfig(['settings', 'projection'], type, {theme: map.getTheme()})
+                            await this.updateConfig(['settings', 'projection'], type, {theme: map.getTheme()})
                         },
                     },
                     {
@@ -153,7 +154,7 @@ export class SettingsControl {
                         icon: '🗺️',
                         highlight: settings.basemap.render,
                         handler: async (event) => {
-                            await map.updateConfig([
+                            await this.updateConfig([
                                 'settings', 
                                 'basemap', 
                                 'render'
@@ -167,7 +168,7 @@ export class SettingsControl {
                         icon: '🏔️',
                         highlight: settings.hillshade.render,
                         handler: async (event) => {
-                            await map.updateConfig([
+                            await this.updateConfig([
                                 'settings', 
                                 'hillshade', 
                                 'render'
@@ -186,7 +187,7 @@ export class SettingsControl {
                                 displaySettings.toggleDarkMode()
                             }
                             
-                            await map.updateConfig([
+                            await this.updateConfig([
                                 'settings', 
                                 'darkMode', 
                             ], isDark, {theme: map.getTheme()})
@@ -200,7 +201,7 @@ export class SettingsControl {
                         highlight: settings.locked,
                         handler: async (event) => {
                             const value = event.detail.value
-                            await map.updateConfig([
+                            await this.updateConfig([
                                 'settings', 
                                 'locked', 
                             ], value, {theme: map.getTheme()})
@@ -251,7 +252,7 @@ export class SettingsControl {
                                 active === 'centroid'
                                 ? '📍' : '🖼️'
                             )
-                            await map.updateConfig([
+                            await this.updateConfig([
                                 'settings', 
                                 'bookmark', 
                                 'active',
@@ -299,7 +300,7 @@ export class SettingsControl {
                                 displaySettings.changeColorScheme(name)
                             }
                             
-                            await map.updateConfig([
+                            await this.updateConfig([
                                 'settings', 
                                 'colorScheme', 
                             ], name, {theme: map.getTheme()})
@@ -315,7 +316,7 @@ export class SettingsControl {
         
         map.getControls('scalebar').setUnit(value)
 
-        await map.updateConfig([
+        await this.updateConfig([
             'settings', 
             'unit', 
         ], value, {theme: map.getTheme()})
@@ -358,7 +359,7 @@ export class SettingsControl {
         const bookmark = theme.settings.bookmark
 
         const bbox = bookmark.extents.bbox
-        await map.updateConfig([
+        await this.updateConfig([
             'settings', 
             'bookmark', 
             'extents',
@@ -374,7 +375,7 @@ export class SettingsControl {
         }, {theme})
         
         const centroid = bookmark.extents.centroid
-        await map.updateConfig([
+        await this.updateConfig([
             'settings', 
             'bookmark', 
             'extents',
@@ -386,13 +387,13 @@ export class SettingsControl {
             lat: lat || centroid.params.lat,
         }, {theme})
         
-        await map.updateConfig([
+        await this.updateConfig([
             'settings', 
             'bookmark', 
             'pitch',
         ], pitch || bookmark.pitch, {theme})
         
-        await map.updateConfig([
+        await this.updateConfig([
             'settings', 
             'bookmark', 
             'bearing',
@@ -468,7 +469,7 @@ export class SettingsControl {
             map.on(i, () => {
                 clearTimeout(sourceTimer)
                 sourceTimer = setTimeout(async () => {
-                    await map.updateConfig(['sources'], map.getStyle().sources)
+                    await this.updateConfig(['sources'], map.getStyle().sources)
                 }, 1000);
             })
         })
@@ -478,7 +479,7 @@ export class SettingsControl {
             map.on(i, () => {
                 clearTimeout(layerTimer)
                 layerTimer = setTimeout(async () => {
-                    await map.updateConfig(['layers'], map.getStyle().layers, {theme: map.getTheme()})
+                    await this.updateConfig(['layers'], map.getStyle().layers, {theme: map.getTheme()})
                 }, 1000);
             })
         })
@@ -524,5 +525,78 @@ export class SettingsControl {
         if (settings.locked) {
             map.lock()
         }
+    }
+
+    async saveConfig(date) {
+        if (this.saveTimer) {
+            clearTimeout(this.saveTimer)
+        }
+
+        this.saveTimer = setTimeout(async () => {
+            const map = this._map
+            const config = map.getConfig()
+    
+            date ??= (new Date()).toLocaleString("en-US")
+            config.metadata.dateSaved = date
+    
+            await gisDB.saveToGISDB('maps', config)
+            map.fire('configSaved', {details: {config}})
+        }, 3000)
+    }
+
+    async updateConfig(property, value, {theme}={}) {
+        const map = this._map
+        const config = map.getConfig()
+
+        let target = theme || config
+
+        property.slice(0, -1).forEach(name => {
+        target = target[name]
+        })
+
+        const propertyName = property[property.length-1]
+        const currentValue = target[propertyName]
+        const valueChanged = !_.isEqual(currentValue, value)
+
+        if (propertyName && (valueChanged || (
+            theme && property[0] === 'layers' 
+            && utils.removeWhitespace(JSON.stringify(currentValue)) 
+            !== utils.removeWhitespace(JSON.stringify(value))
+        ))) {
+            const newMap = !theme && property[0] === 'id'
+            const date = (new Date()).toLocaleString("en-US")
+            
+            Array(config, ...(newMap ? config.themes : [theme]))
+            .filter(Boolean)
+            .forEach(i => {
+                i.metadata.dateUpdated = date
+                if (!newMap) return
+                i.metadata.dateCreated = date
+            })
+
+            if (newMap) {
+                if (config.id) {
+                config.metadata.lineage = {
+                    id: config.id,
+                    src: config.src,
+                    metadata: structuredClone(config.metadata)
+                }
+                }
+
+                config.src = 'db'
+            }
+
+            target[propertyName] = value
+
+            map.fire(theme ? 'themeUpdated' : 'configUpdated', {
+                details: {property, value}
+            })
+
+            if (config.autosave || property[0] === 'autosave' || newMap) {
+                await this.saveConfig(date)
+            }
+        }
+
+        return theme || config
     }
 }

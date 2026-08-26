@@ -131,7 +131,7 @@ export default class MetadataControl {
           }
         }
 
-        map.updateConfig(['metadata', name], value)
+        map.getControls('settings').updateConfig(['metadata', name], value)
       })
     })
     nav.appendChild(saveBtn)
@@ -184,7 +184,7 @@ export default class MetadataControl {
       
       setInterval(() => {
         this.setDateUpdated()
-      }, 15000)
+      }, 60000)
     }
 
     Array(editBtn, saveBtn, backBtn, collapseBtn).filter(Boolean).forEach(i => {
