@@ -541,7 +541,7 @@ export class SettingsControl {
     
             await gisDB.saveToGISDB('maps', config)
             map.fire('configSaved', {details: {config}})
-        }, 3000)
+        }, 2000)
     }
 
     async updateConfig(property, value, {theme}={}) {
