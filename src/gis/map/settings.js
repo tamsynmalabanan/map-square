@@ -580,7 +580,7 @@ export class SettingsControl {
 
             if (newMap) {
                 if (config.id) {
-                config.metadata.lineage = {
+                config.metadata.reference = {
                     id: config.id,
                     src: config.src,
                     metadata: structuredClone(config.metadata)
