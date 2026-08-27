@@ -14,12 +14,12 @@ export default class PlaceSearchControl {
         container.classList.add('maplibregl-ctrl','maplibregl-ctrl-group', 'flex', 'flex-nowrap', 'items-center')
         container.setAttribute('x-data', 'collapseGroup')
 
-        container.innerHTML = button({
-            title: 'Place Search',
-            icon: svg.magnifyingGlassMini,
-            classStr: 'maplibregl-ctrl-place-search',
-            attrs: `@click='toggleCollapse'`
-        })
+        // container.innerHTML = button({
+        //     title: 'Place Search',
+        //     icon: svg.magnifyingGlassMini,
+        //     classStr: 'maplibregl-ctrl-place-search',
+        //     attrs: `@click='toggleCollapse'`
+        // })
 
         const form = document.createElement('div')
         form.classList.add('grid', 'place-items-center')
@@ -33,6 +33,13 @@ export default class PlaceSearchControl {
         input.setAttribute('name', 'placeSearch')
         input.setAttribute('placeholder', 'Search place...')
         form.appendChild(input)
+
+        container.appendChild(utils.strToEl(button({
+            title: 'Place Search',
+            icon: svg.magnifyingGlassMini,
+            classStr: 'maplibregl-ctrl-place-search',
+            attrs: `@click='toggleCollapse'`
+        })))
 
         let timer
         Array('input', 'keydown').forEach(i => {

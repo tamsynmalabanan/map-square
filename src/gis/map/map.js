@@ -83,8 +83,10 @@ export default class Map extends maplibregl.Map {
         title: 'Untitled Map',
         abstract: '',
         author: 'Unknown Author',
+        logo: '',
+        website: '',
         dateCreated: date,
-        dateUpdated: date,
+        dateUpdated: null,
         dateSaved: null,
         lineage: null
       },
@@ -333,7 +335,7 @@ export default class Map extends maplibregl.Map {
           title: 'Untitled Theme',
           description: '',
           dateCreated: date,
-          dateUpdated: date,
+          dateUpdated: null,
         },
         layers: [] 
       }]
