@@ -14,7 +14,6 @@ export const toTitleCase = (str) => {
     .join(' ')
 }
 
-
 export const objToStr = (obj) => {
     return JSON.stringify(obj).replace(/"/g, '&quot;')
 }
@@ -356,16 +355,42 @@ export const formatRelativeDate = (date) => {
   }
 }
 
-export const formatDate = (date) => {
+export const formatDate = (date, {time=false}={}) => {
     return date.toLocaleDateString("en-US", {
         year: "numeric",
         month: "long",
-        day: "numeric"
+        day: "numeric",
+        ...(time ? {
+            hour: "numeric",
+            minute: "2-digit",
+            hour12: true,
+            timeZoneName: "short"
+        } : {})
     })
 }
 
 export const getBaseURL = (urlString) => {
-    const url = new URL(urlString)
-    url.search = ''
-    return url.toString()
+    try {
+        const url = new URL(urlString)
+        url.search = ''
+        return url.toString()
+    } catch {
+        return urlString
+    }
+}
+
+export const fileToDataURL = async (file) => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader()
+
+        reader.onload = (e) => {
+            resolve(e.target.result)
+        }
+
+        try {
+            reader.readAsDataURL(file)
+        } catch {
+            resolve('')
+        }
+    })
 }
