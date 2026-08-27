@@ -528,20 +528,24 @@ export class SettingsControl {
     }
 
     async saveConfig(date) {
-        if (this.saveTimer) {
-            clearTimeout(this.saveTimer)
-        }
+        return new Promise((resolve, reject) => {
+            if (this.saveTimer) {
+                clearTimeout(this.saveTimer)
+            }
 
-        this.saveTimer = setTimeout(async () => {
-            const map = this._map
-            const config = map.getConfig()
-    
-            date ??= (new Date()).toLocaleString("en-US")
-            config.metadata.dateSaved = date
-    
-            await gisDB.saveToGISDB('maps', config)
-            map.fire('configSaved', {details: {config}})
-        }, 2000)
+            this.saveTimer = setTimeout(async () => {
+                const map = this._map
+                const config = map.getConfig()
+        
+                date ??= (new Date()).toLocaleString("en-US")
+                config.metadata.dateSaved = date
+        
+                await gisDB.saveToGISDB('maps', config)
+                map.fire('configSaved', {details: {config}})
+
+                resolve(config)
+            }, 2000)
+        })
     }
 
     async updateConfig(property, value, {theme}={}) {

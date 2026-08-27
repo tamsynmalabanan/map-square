@@ -36,7 +36,7 @@ export default class MetadataControl {
     form.appendChild(titleContainer)
 
     const titleInput = document.createElement('span')
-    titleInput.innerHTML = metadata.title
+    titleInput.innerText = metadata.title
     titleInput.setAttribute('name', 'title')
     titleInput.setAttribute('contenteditable', "false")
     titleInput.style.maxHeight = `10vh`
@@ -91,7 +91,7 @@ export default class MetadataControl {
         if (!name || !(name in metadata)) return
         
         if (i.getAttribute('contenteditable')) {
-          i.innerHTML = metadata[name]
+          i.innerText = metadata[name]
           i.setAttribute('contenteditable', 'false')
         } else {
           i.value = metadata[name]
@@ -121,13 +121,14 @@ export default class MetadataControl {
         const name = i.getAttribute('name')
         if (!name || !(name in metadata)) return
 
-        let value = isInputEl ? i.value : i.innerHTML
+        let value = isInputEl ? i.value : i.innerText
         if (typeof value === 'string') {
           console.log(value, defaultMetadata[name])
           value = utils.removeWhitespace(value)
           if (value === metadata.title) return
           if (value === '' && !isInputEl) {
-            i.innerHTML = value = defaultMetadata[name]            
+            console.log(defaultMetadata[name])
+            i.innerText = value = defaultMetadata[name]            
           }
         }
 
@@ -161,7 +162,7 @@ export default class MetadataControl {
       details.appendChild(authorContainer)
 
       const authorSpan = document.createElement('span')
-      authorSpan.innerHTML = `Created by`  
+      authorSpan.innerText = `Created by`  
       authorContainer.appendChild(authorSpan)
 
       const authorInput = document.createElement('input')
@@ -174,7 +175,7 @@ export default class MetadataControl {
 
       const createdSpan = document.createElement('span')
       details.appendChild(createdSpan)
-      createdSpan.innerHTML = `Created on ${utils.formatDate(new Date(metadata.dateCreated))}`  
+      createdSpan.innerText = `Created on ${utils.formatDate(new Date(metadata.dateCreated))}`  
     
       const updatedSpan = this.updatedSpan = document.createElement('span')
       updatedSpan.classList.add('flex', 'flex-nowrap', 'gap-1')

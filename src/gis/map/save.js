@@ -122,7 +122,7 @@ export class SaveControl {
         const config = map.getConfig()
         const theme = map.getTheme()
         const settings = theme.settings
-
+        
         return [
             {
                 // label: 'Save Menu',
@@ -147,28 +147,30 @@ export class SaveControl {
                                 url.searchParams.set('src', 'db')
                                 url.searchParams.set('id', id)
                             }
-
+                            
                             window.location.href = url.toString()
                         },
                     },
-                    {
-                        title: 'Save changes to map',
-                        icon: `⬆️`,
-                        highlight: null,
-                        disabled: !config.id,
-                        handler: async (event) => {
-                            await map.getControls('settings').saveConfig()
+                    ...(config.id ? [
+                        {
+                            title: 'Save changes to map',
+                            icon: `⬆️`,
+                            highlight: null,
+                            disabled: !config.id,
+                            handler: async (event) => {
+                                await map.getControls('settings').saveConfig()
+                            },
                         },
-                    },
-                    {
-                        title: 'Autosave map changes',
-                        icon: `🔄️`,
-                        highlight: config.autosave && config.id !== null,
-                        disabled: !config.id,
-                        handler: async (event) => {
-                            await map.getControls('settings').updateConfig(['autosave'], event.detail.value)
+                        {
+                            title: 'Autosave map changes',
+                            icon: `🔄️`,
+                            highlight: config.autosave && config.id !== null,
+                            disabled: !config.id,
+                            handler: async (event) => {
+                                await map.getControls('settings').updateConfig(['autosave'], event.detail.value)
+                            },
                         },
-                    },
+                    ] : [])
                 ]
             },
         ]
