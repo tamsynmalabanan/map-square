@@ -10,6 +10,7 @@ export default class MetadataControl {
     const config = map.getConfig()
     const metadata = config.metadata
     const defaultMetadata = Map.getDefaultConfig().metadata
+    const inputSelector = 'input, textarea, [contenteditable], [type="editor"]'
     
     const container = this._container = document.createElement('div')
     container.style.maxWidth = `80vw`
@@ -74,10 +75,14 @@ export default class MetadataControl {
         attrs: `@click='toggleRadio("edit")' x-show='isRadioValue("current")'`
     }))
     editBtn.addEventListener('click', () => {
-      form.querySelectorAll('input, textarea, [contenteditable="false"]').forEach(i => {
-        i.getAttribute('contenteditable') 
-        ? i.setAttribute('contenteditable', "true") 
-        : i.removeAttribute('readonly')
+      form.querySelectorAll(inputSelector).forEach(i => {
+        if (i.getAttribute('contenteditable')) {
+          i.setAttribute('contenteditable', "true")
+        } else if (i.getAttribute('type') === 'editor') {
+          Quill.find(i.querySelector('.ql-container')).enable(true)
+        } else {
+          i.removeAttribute('readonly')
+        }
       })
     })
     nav.appendChild(editBtn)
@@ -88,26 +93,32 @@ export default class MetadataControl {
         attrs: `@click='toggleRadio("current")' x-show='isRadioValue("edit")'`
     }))
     backBtn.addEventListener('click', () => {
-      form.querySelectorAll('input, textarea, [contenteditable="true"]').forEach(i => {
+      form.querySelectorAll(inputSelector).forEach(i => {
         const name = i.getAttribute('name')
         if (!name || !(name in metadata)) return
         
         const type = i.getAttribute('type')
-        const target = form.querySelector(`[name="${name}"]:not(input)`)
+        const target = form.querySelector(`[name="${name}"]:not(input):not([type="editor"])`)
         const value = metadata[name]
 
-        if (i.getAttribute('contenteditable')) {
-          i.innerHTML = value
+        if (type === 'editor') {
+          const quill = Quill.find(i.querySelector('.ql-container'))
+          quill.root.innerHTML = value
+          quill.enable(false)
+        } else if (i.getAttribute('contenteditable')) {
           i.setAttribute('contenteditable', 'false')
+          i.innerHTML = value
         } else {
-          i.value = type === 'file' ? '' : value
           i.setAttribute('readonly', 'true')
+          
+          i.value = type === 'file' ? '' : value
+          
+          if (type === 'file') {
+            target.src = value
+            Alpine.$data(target).show = value !== defaultMetadata[name]
+          }
         }
 
-        if (type === 'file') {
-          target.src = value
-          Alpine.$data(target).show = value !== defaultMetadata[name]
-        }
       })
     })
     nav.appendChild(backBtn)
@@ -118,7 +129,7 @@ export default class MetadataControl {
         attrs: `@click='toggleRadio("current")' x-show='isRadioValue("edit")'`
     }))
     saveBtn.addEventListener('click', async () => {
-      for (const i of form.querySelectorAll('input, textarea, [contenteditable="true"]')) {
+      for (const i of form.querySelectorAll(inputSelector)) {
 
         const isInputEl = !i.getAttribute('contenteditable')
   
@@ -132,11 +143,15 @@ export default class MetadataControl {
         if (!name || !(name in metadata)) continue
   
         const type = i.getAttribute('type')
-        const target = form.querySelector(`[name="${name}"]:not(input)`)
+        const target = form.querySelector(`[name="${name}"]:not(input):not([type="editor"])`)
   
         let value = isInputEl ? type === 'file' ? target.src : i.value : i.innerHTML
         
-        if (type === 'file') {
+        if (type === 'editor') {
+          const quill = Quill.find(i.querySelector('.ql-container'))
+          value = quill.root.innerHTML
+          quill.enable(false)
+        } else if (type === 'file') {
           i.value = ''
         } else if (typeof value === 'string') {
           value = utils.removeWhitespace(value)
@@ -166,7 +181,7 @@ export default class MetadataControl {
       nav.appendChild(collapseBtn)
       
       const details = document.createElement('div')
-      details.classList.add('flex', 'flex-nowrap')
+      details.classList.add('flex', 'flex-col', 'gap-5')
       details.setAttribute('x-data', '{show:true}')
       details.setAttribute('x-show', 'show')
       form.appendChild(details)
@@ -177,9 +192,13 @@ export default class MetadataControl {
         collapseBtn.innerHTML = data.show ? svg.chevronUpMini : svg.chevronDownMini
       })
 
+      const mainContainer = document.createElement('div')
+      mainContainer.classList.add('flex', 'flex-nowrap')
+      details.appendChild(mainContainer)
+
       const logoForm = document.createElement('div')
       logoForm.classList.add('flex', 'flex-col', 'gap-2')
-      details.appendChild(logoForm)
+      mainContainer.appendChild(logoForm)
 
       const logoImg = document.createElement('img')
       logoImg.classList.add('size-[10vh]', 'rounded', 'me-2')
@@ -231,7 +250,7 @@ export default class MetadataControl {
 
       const attrContainer = document.createElement('div')
       attrContainer.classList.add('grid', 'grid-flow-row', 'gap-1', 'grow')
-      details.appendChild(attrContainer)
+      mainContainer.appendChild(attrContainer)
 
       const authorContainer = document.createElement('div')
       authorContainer.classList.add('flex', 'flex-nowrap', 'gap-1')
@@ -297,7 +316,45 @@ export default class MetadataControl {
       const updatedSpan = this.updatedSpan = document.createElement('span')
       updatedSpan.classList.add('flex', 'flex-nowrap', 'gap-1')
       attrContainer.appendChild(updatedSpan)
+
+      const abstractContainer = document.createElement('div')
+      abstractContainer.classList.add('flex', 'flex-col', 'gap-1')
+      details.appendChild(abstractContainer)
+
+      const abstractLabel = document.createElement('span')
+      abstractLabel.classList.add('font-bold')
+      abstractLabel.innerText = 'Abstract'
+      abstractContainer.appendChild(abstractLabel)
+
+      const abstractEditor = document.createElement('div')
+      abstractEditor.classList.add('max-h-[50vh]', 'overflow-auto')
+      abstractEditor.setAttribute('type', 'editor')
+      abstractEditor.setAttribute('name', 'abstract')
+      abstractEditor.setAttribute(':class', `{
+        ['scrollbar-thumb-'+color+'-500/10!']: true  
+      }`)
+      abstractContainer.appendChild(abstractEditor)
+
       
+      const abstractQuill = document.createElement('div')
+      abstractQuill.innerHTML = metadata.abstract
+      abstractEditor.appendChild(abstractQuill)
+      new Quill(abstractQuill, {theme: 'snow', readOnly: true})
+
+      Array.from(abstractEditor.children).forEach(i => {
+        i.classList.add('border-none!')
+      })
+      abstractEditor.querySelector('.ql-editor').classList.add('p-0!')
+      utils.appendBinding(abstractEditor.querySelector('.ql-editor'), ':class', `
+        ['min-h-[25vh]']: isRadioValue("edit")
+      `)
+      
+      const abstractToolbar = abstractEditor.querySelector('.ql-toolbar')
+      abstractToolbar.setAttribute('x-show', 'isRadioValue("edit")')
+      utils.appendBinding(abstractToolbar.querySelector('.ql-picker-options'), ':class', `
+        ['bg-'+color+'-100/50! dark:bg-'+color+'-950/50!']: true
+      `)
+
       this.setDateUpdated()
       
       setInterval(() => {
@@ -325,14 +382,16 @@ export default class MetadataControl {
       )
     })
 
-    form.querySelectorAll('input, textarea, [contenteditable]').forEach(i => {
+    form.querySelectorAll(inputSelector).forEach(i => {
       i.classList.add('focus:outline-none', 'rounded!')
       
       if (!i.getAttribute('contenteditable')) {
         i.setAttribute('readonly', 'true')
       }
 
-      utils.appendBinding(i, ':class', `['bg-'+color+'-500/50! px-2!']: isRadioValue("edit")`)
+      utils.appendBinding(i, ':class', `
+        ['bg-'+color+'-500/50! p-2!']: isRadioValue("edit")
+      `)
     })
 
     this.handleUpdates()

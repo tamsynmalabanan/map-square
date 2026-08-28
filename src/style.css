@@ -3,3 +3,17 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @source inline("{bg,dark:bg,enabled:hover:bg,scrollbar-track,scrollbar-thumb}-{yellow,teal,blue,pink,gray}-{100,500,950}/{10,50,90,100}!");
+
+.dark .ql-stroke {
+  stroke: white !important;
+}
+.dark .ql-fill {
+  fill: white 
+}
+.dark .ql-picker-options,
+.dark .ql-picker-label {
+  color: white 
+}
+.dark .ql-picker-label {
+  color: white 
+}

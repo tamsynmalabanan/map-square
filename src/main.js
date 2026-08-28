@@ -15,6 +15,10 @@ window.svg = svg;
 import Alpine from 'alpinejs'
 window.Alpine = Alpine;
 
+import Quill from 'quill';
+window.Quill = Quill
+import 'quill/dist/quill.snow.css';
+
 import persist from '@alpinejs/persist'
 Alpine.plugin(persist)
 
