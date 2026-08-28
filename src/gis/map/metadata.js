@@ -94,18 +94,19 @@ export default class MetadataControl {
         
         const type = i.getAttribute('type')
         const target = form.querySelector(`[name="${name}"]:not(input)`)
+        const value = metadata[name]
 
         if (i.getAttribute('contenteditable')) {
-          i.innerHTML = metadata[name]
+          i.innerHTML = value
           i.setAttribute('contenteditable', 'false')
         } else {
-          i.value = type === 'file' ? '' : metadata[name]
+          i.value = type === 'file' ? '' : value
           i.setAttribute('readonly', 'true')
         }
 
         if (type === 'file') {
-          target.src = metadata[name]
-          Alpine.$data(target).show = metadata[name] !== defaultMetadata[name]
+          target.src = value
+          Alpine.$data(target).show = value !== defaultMetadata[name]
         }
       })
     })
@@ -139,12 +140,8 @@ export default class MetadataControl {
           i.value = ''
         } else if (typeof value === 'string') {
           value = utils.removeWhitespace(value)
-  
-          if (!isInputEl) {
-            console.log(value, i)
-          }
 
-          if (Array('', '<br>').includes(value) && !isInputEl) {
+          if (!isInputEl && Array('', '<br>').includes(value)) {
             i.innerHTML = value = defaultMetadata[name]            
           }
   
