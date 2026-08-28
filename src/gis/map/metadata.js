@@ -24,11 +24,15 @@ export default class MetadataControl {
     })
     
     const inner = document.createElement('div')
-    inner.classList.add('flex', 'flex-nowrap', 'gap-2', 'px-1', 'pt-1', 'pb-2', 'w-full!')
+    inner.classList.add('p-2', 'w-full!', 'relative')
     inner.setAttribute('x-show', '!collapsed')
     inner.setAttribute('x-data', 'radioGroup({value:"current"})')
     container.appendChild(inner)
-    
+
+    const nav = this.nav = document.createElement('div')
+    nav.classList.add('flex', 'flex-nowrap', 'gap-2', 'absolute', 'right-0', 'm-1', 'top-0')
+    inner.appendChild(nav)
+
     const form = this.form = document.createElement('form')
     form.classList.add('flex', 'flex-col', 'gap-2', 'grow')
     form.addEventListener('submit', (e) => {
@@ -38,7 +42,7 @@ export default class MetadataControl {
     inner.appendChild(form)
     
     const titleContainer = document.createElement('div')
-    titleContainer.classList.add('flex', 'flex-nowrap', 'justify-between', 'gap-3', 'pe-1', 'ps-2')
+    titleContainer.classList.add('flex', 'flex-nowrap', 'justify-between', 'gap-3')
     form.appendChild(titleContainer)
 
     const titleInput = document.createElement('span')
@@ -63,17 +67,6 @@ export default class MetadataControl {
       ['scrollbar-thumb-'+color+'-500/10!']: true  
     }`)
     titleContainer.appendChild(titleInput)
-
-    const nav = this.nav = document.createElement('div')
-    nav.classList.add('flex', 'flex-col', 'gap-1')
-    inner.appendChild(nav)
-    
-    nav.appendChild(utils.strToEl(button({
-        title: 'Collapse metadata',
-        icon: svg.xMini,
-        classStr: 'maplibregl-ctrl-close',
-        attrs: `@click='toggleCollapse'  x-show='isRadioValue("current")'`
-    })))
 
     const editBtn = utils.strToEl(button({
         title: 'Edit metadata',
@@ -176,7 +169,7 @@ export default class MetadataControl {
       nav.appendChild(collapseBtn)
       
       const details = document.createElement('div')
-      details.classList.add('flex', 'flex-nowrap', 'ps-2', 'pe-1')
+      details.classList.add('flex', 'flex-nowrap')
       details.setAttribute('x-data', '{show:true}')
       details.setAttribute('x-show', 'show')
       form.appendChild(details)
@@ -314,6 +307,13 @@ export default class MetadataControl {
         this.setDateUpdated()
       }, 60000)
     }
+
+    nav.appendChild(utils.strToEl(button({
+      title: 'Collapse metadata',
+      icon: svg.xMini,
+      classStr: 'maplibregl-ctrl-close',
+      attrs: `@click='toggleCollapse'  x-show='isRadioValue("current")'`
+    })))
 
     Array(editBtn, saveBtn, backBtn, collapseBtn).filter(Boolean).forEach(i => {
       i.classList.add(
