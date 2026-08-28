@@ -42,7 +42,7 @@ export default class MetadataControl {
     form.appendChild(titleContainer)
 
     const titleInput = document.createElement('span')
-    titleInput.innerText = metadata.title
+    titleInput.innerHTML = metadata.title
     titleInput.setAttribute('name', 'title')
     titleInput.setAttribute('contenteditable', "false")
     titleInput.style.maxHeight = `10vh`
@@ -103,7 +103,7 @@ export default class MetadataControl {
         const target = form.querySelector(`[name="${name}"]:not(input)`)
 
         if (i.getAttribute('contenteditable')) {
-          i.innerText = metadata[name]
+          i.innerHTML = metadata[name]
           i.setAttribute('contenteditable', 'false')
         } else {
           i.value = type === 'file' ? '' : metadata[name]
@@ -140,16 +140,19 @@ export default class MetadataControl {
         const type = i.getAttribute('type')
         const target = form.querySelector(`[name="${name}"]:not(input)`)
   
-        let value = isInputEl ? type === 'file' ? target.src : i.value : i.innerText
-  
+        let value = isInputEl ? type === 'file' ? target.src : i.value : i.innerHTML
         
         if (type === 'file') {
           i.value = ''
         } else if (typeof value === 'string') {
           value = utils.removeWhitespace(value)
   
-          if (value === '' && !isInputEl) {
-            i.innerText = value = defaultMetadata[name]            
+          if (!isInputEl) {
+            console.log(value, i)
+          }
+
+          if (Array('', '<br>').includes(value) && !isInputEl) {
+            i.innerHTML = value = defaultMetadata[name]            
           }
   
           if (type === 'url') {
@@ -249,7 +252,7 @@ export default class MetadataControl {
       authorContainer.appendChild(authorSpan)
 
       const authorInput = document.createElement('span')
-      authorInput.innerText = metadata.author
+      authorInput.innerHTML = metadata.author
       authorInput.setAttribute('name', 'author')
       authorInput.setAttribute('contenteditable', "false")
       authorInput.classList.add(
