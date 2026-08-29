@@ -7,10 +7,10 @@ import { create } from 'lodash';
 export default class MetadataControl {
   onAdd(map) {
     this._map = map
-    const config = map.getConfig()
-    const metadata = config.metadata
-    const defaultMetadata = Map.getDefaultConfig().metadata
-    const inputSelector = 'input, textarea, [contenteditable], [type="editor"]'
+    const config = this.config = map.getConfig()
+    const metadata = this.metadata = config.metadata
+    const defaultMetadata = this.defaultMetadata = Map.getDefaultConfig().metadata
+    const inputSelector = this.inputSelector = 'input, textarea, [contenteditable], [type="editor"]'
     
     const container = this._container = document.createElement('div')
     container.classList.add('maplibregl-ctrl','maplibregl-ctrl-group', 'sm:max-w-[80vw]', 'md:max-w-[60vw]', 'lg:max-w-[40vw]')
@@ -23,15 +23,13 @@ export default class MetadataControl {
       attrs: `@click='toggleCollapse' x-show='collapsed'`
     })
     
-    const inner = document.createElement('div')
+    const inner = this.inner = document.createElement('div')
     inner.classList.add('p-2', 'max-w-[80vw]', 'relative')
     inner.setAttribute('x-show', '!collapsed')
     inner.setAttribute('x-data', 'radioGroup({value:"current"})')
     container.appendChild(inner)
 
-    const nav = this.nav = document.createElement('div')
-    nav.classList.add('flex', 'flex-nowrap', 'gap-2', 'absolute', 'right-0', 'm-1', 'top-0')
-    inner.appendChild(nav)
+    this.addNavSection()
 
     const form = this.form = document.createElement('form')
     form.classList.add('flex', 'flex-col', 'gap-5', 'grow', 'max-w-full!')
@@ -64,128 +62,12 @@ export default class MetadataControl {
     }`)
     form.appendChild(titleInput)
 
-    const editBtn = utils.strToEl(button({
-        title: 'Edit metadata',
-        icon: svg.pencilSquareMini,
-        attrs: `@click='toggleRadio("edit")' x-show='isRadioValue("current")'`
-    }))
-    editBtn.addEventListener('click', () => {
-      form.querySelectorAll(inputSelector).forEach(i => {
-        if (i.getAttribute('contenteditable')) {
-          i.setAttribute('contenteditable', "true")
-        } else if (i.getAttribute('type') === 'editor') {
-          Quill.find(i.querySelector('.ql-container')).enable(true)
-        } else {
-          i.removeAttribute('readonly')
-        }
-      })
-    })
-    nav.appendChild(editBtn)
-
-    const backBtn = utils.strToEl(button({
-        title: 'Go back',
-        icon: svg.arrowUturnLeftMini,
-        attrs: `@click='toggleRadio("current")' x-show='isRadioValue("edit")'`
-    }))
-    backBtn.addEventListener('click', () => {
-      form.querySelectorAll(inputSelector).forEach(i => {
-        const name = i.getAttribute('name')
-        if (!name || !(name in metadata)) return
-        
-        const type = i.getAttribute('type')
-        const target = form.querySelector(`[name="${name}"]:not(input):not([type="editor"])`)
-        const value = metadata[name]
-
-        if (type === 'editor') {
-          const quill = Quill.find(i.querySelector('.ql-container'))
-          quill.root.innerHTML = value
-          quill.enable(false)
-        } else if (i.getAttribute('contenteditable')) {
-          i.setAttribute('contenteditable', 'false')
-          i.innerHTML = value
-        } else {
-          i.setAttribute('readonly', 'true')
-          
-          i.value = type === 'file' ? '' : value
-          
-          if (type === 'file') {
-            target.src = value
-            Alpine.$data(target).show = value !== defaultMetadata[name]
-          }
-        }
-
-      })
-    })
-    nav.appendChild(backBtn)
-
-    const saveBtn = utils.strToEl(button({
-        title: 'Save changes',
-        icon: svg.checkCircleMini,
-        attrs: `@click='toggleRadio("current")' x-show='isRadioValue("edit")'`
-    }))
-    saveBtn.addEventListener('click', async () => {
-      for (const i of form.querySelectorAll(inputSelector)) {
-
-        const isInputEl = !i.getAttribute('contenteditable')
-  
-        if (isInputEl) {
-          i.setAttribute('readonly', 'true')
-        } else {
-          i.setAttribute('contenteditable', 'false')
-        }
-  
-        const name = i.getAttribute('name')
-        if (!name || !(name in metadata)) continue
-  
-        const type = i.getAttribute('type')
-        const target = form.querySelector(`[name="${name}"]:not(input):not([type="editor"])`)
-  
-        let value = isInputEl ? type === 'file' ? target.src : i.value : i.innerHTML
-        
-        if (type === 'editor') {
-          const quill = Quill.find(i.querySelector('.ql-container'))
-          value = quill.root.innerHTML
-          quill.enable(false)
-        } else if (type === 'file') {
-          i.value = ''
-        } else if (typeof value === 'string') {
-          value = utils.removeWhitespace(value)
-
-          if (!isInputEl && Array('', '<br>').includes(value)) {
-            i.innerHTML = value = defaultMetadata[name]            
-          }
-  
-          if (type === 'url') {
-            target.href = value
-            target.innerText = utils.getBaseURL(value)
-          }
-        }
-  
-        if (value === metadata[name]) continue
-        map.getControls('settings').updateConfig(['metadata', name], value)
-      }
-    })
-    nav.appendChild(saveBtn)
-
-    let collapseBtn
     if (config.id) {
-      collapseBtn = utils.strToEl(button({
-        title: 'Toggle details',
-        icon: svg.chevronUpMini,
-      }))
-      nav.appendChild(collapseBtn)
-      
-      const details = document.createElement('div')
+      const details = this.details = document.createElement('div')
       details.classList.add('flex', 'flex-col', 'gap-5')
       details.setAttribute('x-data', '{show:true}')
       details.setAttribute('x-show', 'show')
       form.appendChild(details)
-
-      collapseBtn.addEventListener('click', () => {
-        const data = Alpine.$data(details)
-        data.show = !data.show
-        collapseBtn.innerHTML = data.show ? svg.chevronUpMini : svg.chevronDownMini
-      })
 
       const mainContainer = document.createElement('div')
       mainContainer.classList.add('flex', 'flex-nowrap')
@@ -319,98 +201,154 @@ export default class MetadataControl {
       const updatedSpan = this.updatedSpan = document.createElement('span')
       updatedContainer.appendChild(updatedSpan)
 
-      const descContainer = document.createElement('div')
-      descContainer.classList.add('flex', 'flex-col', 'gap-1')
-      descContainer.setAttribute('x-data', '{show:true}')
-      details.appendChild(descContainer)
+      this.addDescriptionSection()
 
-      const descHeader = document.createElement('span')
-      descHeader.classList.add('flex', 'flex-nowrap', 'justify-between', 'align-middle', 'font-bold')
-      descHeader.setAttribute('@click', 'show=!show')
-      descContainer.appendChild(descHeader)
-
-      const descLabel = document.createElement('span')
-      descLabel.innerText = 'Description'
-      descHeader.appendChild(descLabel)
-
-      const descCollapse = document.createElement('span')
-      descCollapse.classList.add('size-[15px]!', 'self-center')
-      descCollapse.setAttribute('x-html', 'show ? svg.chevronUpMini : svg.chevronDownMini')
-      descHeader.appendChild(descCollapse)
-
-      const descInput = document.createElement('div')
-      descInput.setAttribute('type', 'editor')
-      descInput.setAttribute('name', 'description')
-      descInput.setAttribute('x-show', 'show')
-      descInput.setAttribute(':class', `{
-        ['scrollbar-thumb-'+color+'-500/10!']: true  
-      }`)
-      descContainer.appendChild(descInput)
-
-      const descQuill = document.createElement('div')
-      descQuill.innerHTML = metadata.description
-      descInput.appendChild(descQuill)
-      new Quill(descQuill, {theme: 'snow', readOnly: true})
-
-      Array.from(descInput.children).forEach(i => {
-        i.classList.add('border-none!')
-      })
-
-      const descEditor = descInput.querySelector('.ql-editor')
-      descEditor.classList.add('p-0!', 'overflow-auto', 'max-h-[30vh]')
-      utils.appendBinding(descEditor, ':class', `
-        ['min-h-[20vh]']: isRadioValue("edit")
-      `)
-      
-      const descToolbar = descInput.querySelector('.ql-toolbar')
-      descToolbar.setAttribute('x-show', 'isRadioValue("edit")')
-      utils.appendBinding(descToolbar.querySelector('.ql-picker-options'), ':class', `
-        ['bg-'+color+'-100/50! dark:bg-'+color+'-950/50!']: true
-      `)
-
-      const licenseContainer = document.createElement('div')
-      licenseContainer.classList.add('flex', 'flex-col', 'gap-1')
-      licenseContainer.setAttribute('x-data', '{show:true}')
-      details.appendChild(licenseContainer)
-
-      const licenseHeader = document.createElement('span')
-      licenseHeader.classList.add('flex', 'flex-nowrap', 'justify-between', 'align-middle', 'font-bold')
-      licenseHeader.setAttribute('@click', 'show=!show')
-      licenseContainer.appendChild(licenseHeader)
-
-      const licenseLabel = document.createElement('span')
-      licenseLabel.innerText = 'License'
-      licenseHeader.appendChild(licenseLabel)
-
-      const licenseCollapse = document.createElement('span')
-      licenseCollapse.classList.add('size-[15px]!', 'self-center')
-      licenseCollapse.setAttribute('x-html', 'show ? svg.chevronUpMini : svg.chevronDownMini')
-      licenseHeader.appendChild(licenseCollapse)
-
-      const licenceInput = document.createElement('span')
-      licenceInput.innerHTML = metadata.license
-      licenceInput.setAttribute('name', 'license')
-      licenceInput.setAttribute('contenteditable', "false")
-      licenceInput.setAttribute('x-show', 'show')
-      licenceInput.classList.add(
-        'max-h-[10vh]',
-        'word-break', 
-        'text-wrap', 
-        'truncate', 
-        'text-ellipsis', 
-        'overflow-auto', 
-        'grow',
-      )
-      licenceInput.setAttribute(':class', `{
-        ['scrollbar-thumb-'+color+'-500/10!']: true  
-      }`)
-      licenseContainer.appendChild(licenceInput)
+      this.addLicenseSection()
 
       this.setDateUpdated()
       
       setInterval(() => {
         this.setDateUpdated()
       }, 60000)
+    }
+
+    form.querySelectorAll(inputSelector).forEach(i => {
+      i.classList.add('focus:outline-none', 'rounded!')
+      
+      if (!i.getAttribute('contenteditable')) {
+        i.setAttribute('readonly', 'true')
+      }
+
+      utils.appendBinding(i, ':class', `
+        ['bg-'+color+'-500/50! p-2!']: isRadioValue("edit")
+      `)
+    })
+
+    this.handleUpdates()
+
+    return container
+  }
+
+  addNavSection() {
+    const nav = this.nav = document.createElement('div')
+    nav.classList.add('flex', 'flex-nowrap', 'gap-2', 'absolute', 'right-0', 'm-1', 'top-0')
+    this.inner.appendChild(nav)
+
+        const editBtn = utils.strToEl(button({
+        title: 'Edit metadata',
+        icon: svg.pencilSquareMini,
+        attrs: `@click='toggleRadio("edit")' x-show='isRadioValue("current")'`
+    }))
+    editBtn.addEventListener('click', () => {
+      this.form.querySelectorAll(this.inputSelector).forEach(i => {
+        if (i.getAttribute('contenteditable')) {
+          i.setAttribute('contenteditable', "true")
+        } else if (i.getAttribute('type') === 'editor') {
+          Quill.find(i.querySelector('.ql-container')).enable(true)
+        } else {
+          i.removeAttribute('readonly')
+        }
+      })
+    })
+    nav.appendChild(editBtn)
+
+    const backBtn = utils.strToEl(button({
+        title: 'Go back',
+        icon: svg.arrowUturnLeftMini,
+        attrs: `@click='toggleRadio("current")' x-show='isRadioValue("edit")'`
+    }))
+    backBtn.addEventListener('click', () => {
+      this.form.querySelectorAll(this.inputSelector).forEach(i => {
+        const name = i.getAttribute('name')
+        if (!name || !(name in this.metadata)) return
+        
+        const type = i.getAttribute('type')
+        const target = this.form.querySelector(`[name="${name}"]:not(input):not([type="editor"])`)
+        const value = this.metadata[name]
+
+        if (type === 'editor') {
+          const quill = Quill.find(i.querySelector('.ql-container'))
+          quill.root.innerHTML = value
+          quill.enable(false)
+        } else if (i.getAttribute('contenteditable')) {
+          i.setAttribute('contenteditable', 'false')
+          i.innerHTML = value
+        } else {
+          i.setAttribute('readonly', 'true')
+          
+          i.value = type === 'file' ? '' : value
+          
+          if (type === 'file') {
+            target.src = value
+            Alpine.$data(target).show = value !== this.defaultMetadata[name]
+          }
+        }
+
+      })
+    })
+    nav.appendChild(backBtn)
+
+    const saveBtn = utils.strToEl(button({
+        title: 'Save changes',
+        icon: svg.checkCircleMini,
+        attrs: `@click='toggleRadio("current")' x-show='isRadioValue("edit")'`
+    }))
+    saveBtn.addEventListener('click', async () => {
+      for (const i of this.form.querySelectorAll(this.inputSelector)) {
+
+        const isInputEl = !i.getAttribute('contenteditable')
+  
+        if (isInputEl) {
+          i.setAttribute('readonly', 'true')
+        } else {
+          i.setAttribute('contenteditable', 'false')
+        }
+  
+        const name = i.getAttribute('name')
+        if (!name || !(name in this.metadata)) continue
+  
+        const type = i.getAttribute('type')
+        const target = this.form.querySelector(`[name="${name}"]:not(input):not([type="editor"])`)
+  
+        let value = isInputEl ? type === 'file' ? target.src : i.value : i.innerHTML
+        
+        if (type === 'editor') {
+          const quill = Quill.find(i.querySelector('.ql-container'))
+          value = quill.root.innerHTML
+          quill.enable(false)
+        } else if (type === 'file') {
+          i.value = ''
+        } else if (typeof value === 'string') {
+          value = utils.removeWhitespace(value)
+
+          if (!isInputEl && Array('', '<br>').includes(value)) {
+            i.innerHTML = value = this.defaultMetadata[name]            
+          }
+  
+          if (type === 'url') {
+            target.href = value
+            target.innerText = utils.getBaseURL(value)
+          }
+        }
+  
+        if (value === this.metadata[name]) continue
+        map.getControls('settings').updateConfig(['metadata', name], value)
+      }
+    })
+    nav.appendChild(saveBtn)
+  
+    let collapseBtn
+    if (this.config.id) {
+      collapseBtn = utils.strToEl(button({
+        title: 'Toggle details',
+        icon: svg.chevronUpMini,
+      }))
+      collapseBtn.addEventListener('click', () => {
+        const data = Alpine.$data(this.details)
+        data.show = !data.show
+        collapseBtn.innerHTML = data.show ? svg.chevronUpMini : svg.chevronDownMini
+      })
+      nav.appendChild(collapseBtn)
     }
 
     nav.appendChild(utils.strToEl(button({
@@ -432,22 +370,97 @@ export default class MetadataControl {
         'hover:opacity-100'
       )
     })
+  }
 
-    form.querySelectorAll(inputSelector).forEach(i => {
-      i.classList.add('focus:outline-none', 'rounded!')
-      
-      if (!i.getAttribute('contenteditable')) {
-        i.setAttribute('readonly', 'true')
-      }
+  addDescriptionSection() {
+    const descContainer = document.createElement('div')
+    descContainer.classList.add('flex', 'flex-col', 'gap-1')
+    descContainer.setAttribute('x-data', '{show:true}')
+    this.details.appendChild(descContainer)
 
-      utils.appendBinding(i, ':class', `
-        ['bg-'+color+'-500/50! p-2!']: isRadioValue("edit")
-      `)
+    const descHeader = document.createElement('span')
+    descHeader.classList.add('flex', 'flex-nowrap', 'justify-between', 'align-middle', 'font-bold')
+    descHeader.setAttribute('@click', 'show=!show')
+    descContainer.appendChild(descHeader)
+
+    const descLabel = document.createElement('span')
+    descLabel.innerText = 'Description'
+    descHeader.appendChild(descLabel)
+
+    const descCollapse = document.createElement('span')
+    descCollapse.classList.add('size-[15px]!', 'self-center')
+    descCollapse.setAttribute('x-html', 'show ? svg.chevronUpMini : svg.chevronDownMini')
+    descHeader.appendChild(descCollapse)
+
+    const descInput = document.createElement('div')
+    descInput.setAttribute('type', 'editor')
+    descInput.setAttribute('name', 'description')
+    descInput.setAttribute('x-show', 'show')
+    descInput.setAttribute(':class', `{
+      ['scrollbar-thumb-'+color+'-500/10!']: true  
+    }`)
+    descContainer.appendChild(descInput)
+
+    const descQuill = document.createElement('div')
+    descQuill.innerHTML = this.metadata.description
+    descInput.appendChild(descQuill)
+    new Quill(descQuill, {theme: 'snow', readOnly: true})
+
+    Array.from(descInput.children).forEach(i => {
+      i.classList.add('border-none!')
     })
 
-    this.handleUpdates()
+    const descEditor = descInput.querySelector('.ql-editor')
+    descEditor.classList.add('p-0!', 'overflow-auto', 'max-h-[30vh]')
+    utils.appendBinding(descEditor, ':class', `
+      ['min-h-[20vh]']: isRadioValue("edit")
+    `)
+    
+    const descToolbar = descInput.querySelector('.ql-toolbar')
+    descToolbar.setAttribute('x-show', 'isRadioValue("edit")')
+    utils.appendBinding(descToolbar.querySelector('.ql-picker-options'), ':class', `
+      ['bg-'+color+'-100/50! dark:bg-'+color+'-950/50!']: true
+    `)
+  }
 
-    return container
+  addLicenseSection() {
+    const licenseContainer = document.createElement('div')
+    licenseContainer.classList.add('flex', 'flex-col', 'gap-1')
+    licenseContainer.setAttribute('x-data', '{show:true}')
+    this.details.appendChild(licenseContainer)
+
+    const licenseHeader = document.createElement('span')
+    licenseHeader.classList.add('flex', 'flex-nowrap', 'justify-between', 'align-middle', 'font-bold')
+    licenseHeader.setAttribute('@click', 'show=!show')
+    licenseContainer.appendChild(licenseHeader)
+
+    const licenseLabel = document.createElement('span')
+    licenseLabel.innerText = 'License'
+    licenseHeader.appendChild(licenseLabel)
+
+    const licenseCollapse = document.createElement('span')
+    licenseCollapse.classList.add('size-[15px]!', 'self-center')
+    licenseCollapse.setAttribute('x-html', 'show ? svg.chevronUpMini : svg.chevronDownMini')
+    licenseHeader.appendChild(licenseCollapse)
+
+    const licenceInput = document.createElement('span')
+    licenceInput.innerHTML = this.metadata.license
+    licenceInput.setAttribute('name', 'license')
+    licenceInput.setAttribute('contenteditable', "false")
+    licenceInput.setAttribute('x-show', 'show')
+    licenceInput.classList.add(
+      'max-h-[10vh]',
+      'word-break', 
+      'text-wrap', 
+      'truncate', 
+      'text-ellipsis', 
+      'overflow-auto', 
+      'grow',
+    )
+    licenceInput.setAttribute(':class', `{
+      ['scrollbar-thumb-'+color+'-500/10!']: true  
+    }`)
+    licenseContainer.appendChild(licenceInput)
   }
 
   onRemove() {
@@ -471,11 +484,9 @@ export default class MetadataControl {
 
   setDateUpdated() {
     if (!this.updatedSpan) return
-
-    const config = this._map.getConfig()
-    if (!config.id) return
+    if (!this.config.id) return
  
-    const metadata = config.metadata
+    const metadata = this.config.metadata
     const dateUpdated = new Date(metadata.dateUpdated)
     const dateSaved = new Date(metadata.dateSaved)
 
