@@ -66,7 +66,7 @@ export class SaveControl {
                 )
                 const menuBtn = utils.strToEl(button({
                     title: params.title,
-                    icon: params.href ? `<a href='${params.href}' target='_blank'>${params.icon}</a>` : params.icon,
+                    icon: params.href ? `<a href='${params.href}'>${params.icon}</a>` : params.icon,
                     classStr: 'grid place-items-center border-none! rounded! focus:rounded!',
                     ...( dynamicBtn ? {
                         attrs: `
@@ -128,7 +128,7 @@ export class SaveControl {
                 // label: 'Save Menu',
                 buttons: [
                     {
-                        title: 'Open a new map window',
+                        title: 'Open a new map',
                         icon: '➕',
                         highlight: null,
                         href: utils.getBaseURL(window.location.href)

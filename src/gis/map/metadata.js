@@ -13,8 +13,7 @@ export default class MetadataControl {
     const inputSelector = 'input, textarea, [contenteditable], [type="editor"]'
     
     const container = this._container = document.createElement('div')
-    container.style.maxWidth = `80vw`
-    container.classList.add('maplibregl-ctrl','maplibregl-ctrl-group')
+    container.classList.add('maplibregl-ctrl','maplibregl-ctrl-group', 'sm:max-w-[80vw]', 'md:max-w-[60vw]', 'lg:max-w-[40vw]')
     container.setAttribute('x-data', 'collapseGroup({value:false})')
     
     container.innerHTML = button({
@@ -25,7 +24,7 @@ export default class MetadataControl {
     })
     
     const inner = document.createElement('div')
-    inner.classList.add('p-2', 'w-full!', 'relative')
+    inner.classList.add('p-2', 'max-w-[80vw]', 'relative')
     inner.setAttribute('x-show', '!collapsed')
     inner.setAttribute('x-data', 'radioGroup({value:"current"})')
     container.appendChild(inner)
@@ -35,26 +34,22 @@ export default class MetadataControl {
     inner.appendChild(nav)
 
     const form = this.form = document.createElement('form')
-    form.classList.add('flex', 'flex-col', 'gap-2', 'grow')
+    form.classList.add('flex', 'flex-col', 'gap-5', 'grow', 'max-w-full!')
     form.addEventListener('submit', (e) => {
       e.preventDefault()
       e.stopPropagation()
     })
     inner.appendChild(form)
-    
-    const titleContainer = document.createElement('div')
-    titleContainer.classList.add('flex', 'flex-nowrap', 'justify-between', 'gap-3')
-    form.appendChild(titleContainer)
 
     const titleInput = document.createElement('span')
     titleInput.innerHTML = metadata.title
     titleInput.setAttribute('name', 'title')
     titleInput.setAttribute('contenteditable', "false")
-    titleInput.style.maxHeight = `10vh`
-    titleInput.style.minHeight = `25px`
-    titleInput.style.maxWidth = `60vw`
-    titleInput.style.minWidth = `20vw`
     titleInput.classList.add(
+      'max-h-[10vh]',
+      'min-h-[5vh]',
+      'min-w-[20vw]',
+      'max-w-[80vw]',
       'word-break', 
       'text-wrap', 
       'truncate', 
@@ -67,7 +62,7 @@ export default class MetadataControl {
     titleInput.setAttribute(':class', `{
       ['scrollbar-thumb-'+color+'-500/10!']: true  
     }`)
-    titleContainer.appendChild(titleInput)
+    form.appendChild(titleInput)
 
     const editBtn = utils.strToEl(button({
         title: 'Edit metadata',
@@ -313,47 +308,103 @@ export default class MetadataControl {
       createdSpan.innerText = `${utils.formatDate(new Date(metadata.dateCreated), {time:true})}`  
       createdContainer.appendChild(createdSpan)
     
+      const updatedContainer = document.createElement('div')
+      updatedContainer.classList.add('flex', 'flex-nowrap', 'gap-1')
+      attrContainer.appendChild(updatedContainer)
+
+      const updatedIcon = document.createElement('span')
+      updatedIcon.innerText = `⬆️`  
+      updatedContainer.appendChild(updatedIcon)
+
       const updatedSpan = this.updatedSpan = document.createElement('span')
-      updatedSpan.classList.add('flex', 'flex-nowrap', 'gap-1')
-      attrContainer.appendChild(updatedSpan)
+      updatedContainer.appendChild(updatedSpan)
 
-      const abstractContainer = document.createElement('div')
-      abstractContainer.classList.add('flex', 'flex-col', 'gap-1')
-      details.appendChild(abstractContainer)
+      const descContainer = document.createElement('div')
+      descContainer.classList.add('flex', 'flex-col', 'gap-1')
+      descContainer.setAttribute('x-data', '{show:true}')
+      details.appendChild(descContainer)
 
-      const abstractLabel = document.createElement('span')
-      abstractLabel.classList.add('font-bold')
-      abstractLabel.innerText = 'Abstract'
-      abstractContainer.appendChild(abstractLabel)
+      const descHeader = document.createElement('span')
+      descHeader.classList.add('flex', 'flex-nowrap', 'justify-between', 'align-middle', 'font-bold')
+      descHeader.setAttribute('@click', 'show=!show')
+      descContainer.appendChild(descHeader)
 
-      const abstractEditor = document.createElement('div')
-      abstractEditor.classList.add('max-h-[50vh]', 'overflow-auto')
-      abstractEditor.setAttribute('type', 'editor')
-      abstractEditor.setAttribute('name', 'abstract')
-      abstractEditor.setAttribute(':class', `{
+      const descLabel = document.createElement('span')
+      descLabel.innerText = 'Description'
+      descHeader.appendChild(descLabel)
+
+      const descCollapse = document.createElement('span')
+      descCollapse.classList.add('size-[15px]!', 'self-center')
+      descCollapse.setAttribute('x-html', 'show ? svg.chevronUpMini : svg.chevronDownMini')
+      descHeader.appendChild(descCollapse)
+
+      const descInput = document.createElement('div')
+      descInput.setAttribute('type', 'editor')
+      descInput.setAttribute('name', 'description')
+      descInput.setAttribute('x-show', 'show')
+      descInput.setAttribute(':class', `{
         ['scrollbar-thumb-'+color+'-500/10!']: true  
       }`)
-      abstractContainer.appendChild(abstractEditor)
+      descContainer.appendChild(descInput)
 
-      
-      const abstractQuill = document.createElement('div')
-      abstractQuill.innerHTML = metadata.abstract
-      abstractEditor.appendChild(abstractQuill)
-      new Quill(abstractQuill, {theme: 'snow', readOnly: true})
+      const descQuill = document.createElement('div')
+      descQuill.innerHTML = metadata.description
+      descInput.appendChild(descQuill)
+      new Quill(descQuill, {theme: 'snow', readOnly: true})
 
-      Array.from(abstractEditor.children).forEach(i => {
+      Array.from(descInput.children).forEach(i => {
         i.classList.add('border-none!')
       })
-      abstractEditor.querySelector('.ql-editor').classList.add('p-0!')
-      utils.appendBinding(abstractEditor.querySelector('.ql-editor'), ':class', `
-        ['min-h-[25vh]']: isRadioValue("edit")
+
+      const descEditor = descInput.querySelector('.ql-editor')
+      descEditor.classList.add('p-0!', 'overflow-auto', 'max-h-[30vh]')
+      utils.appendBinding(descEditor, ':class', `
+        ['min-h-[20vh]']: isRadioValue("edit")
       `)
       
-      const abstractToolbar = abstractEditor.querySelector('.ql-toolbar')
-      abstractToolbar.setAttribute('x-show', 'isRadioValue("edit")')
-      utils.appendBinding(abstractToolbar.querySelector('.ql-picker-options'), ':class', `
+      const descToolbar = descInput.querySelector('.ql-toolbar')
+      descToolbar.setAttribute('x-show', 'isRadioValue("edit")')
+      utils.appendBinding(descToolbar.querySelector('.ql-picker-options'), ':class', `
         ['bg-'+color+'-100/50! dark:bg-'+color+'-950/50!']: true
       `)
+
+      const licenseContainer = document.createElement('div')
+      licenseContainer.classList.add('flex', 'flex-col', 'gap-1')
+      licenseContainer.setAttribute('x-data', '{show:true}')
+      details.appendChild(licenseContainer)
+
+      const licenseHeader = document.createElement('span')
+      licenseHeader.classList.add('flex', 'flex-nowrap', 'justify-between', 'align-middle', 'font-bold')
+      licenseHeader.setAttribute('@click', 'show=!show')
+      licenseContainer.appendChild(licenseHeader)
+
+      const licenseLabel = document.createElement('span')
+      licenseLabel.innerText = 'License'
+      licenseHeader.appendChild(licenseLabel)
+
+      const licenseCollapse = document.createElement('span')
+      licenseCollapse.classList.add('size-[15px]!', 'self-center')
+      licenseCollapse.setAttribute('x-html', 'show ? svg.chevronUpMini : svg.chevronDownMini')
+      licenseHeader.appendChild(licenseCollapse)
+
+      const licenceInput = document.createElement('span')
+      licenceInput.innerHTML = metadata.license
+      licenceInput.setAttribute('name', 'license')
+      licenceInput.setAttribute('contenteditable', "false")
+      licenceInput.setAttribute('x-show', 'show')
+      licenceInput.classList.add(
+        'max-h-[10vh]',
+        'word-break', 
+        'text-wrap', 
+        'truncate', 
+        'text-ellipsis', 
+        'overflow-auto', 
+        'grow',
+      )
+      licenceInput.setAttribute(':class', `{
+        ['scrollbar-thumb-'+color+'-500/10!']: true  
+      }`)
+      licenseContainer.appendChild(licenceInput)
 
       this.setDateUpdated()
       
@@ -429,7 +480,7 @@ export default class MetadataControl {
     const dateSaved = new Date(metadata.dateSaved)
 
     this.updatedSpan.innerHTML = `
-      <span>⬆️ ${utils.formatRelativeDate(dateUpdated)}</span>
+      <span>${utils.formatRelativeDate(dateUpdated)}</span>
       <span class="italic">${dateUpdated > dateSaved ? '(unsaved)' : ''}</span>
     `
   }
