@@ -81,15 +81,18 @@ export default class Map extends maplibregl.Map {
       autosave: false,
       metadata: {
         title: 'Untitled Map',
+        
         logo: 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==',
         author: 'Unknown Author',
         website: '',
+        dateCreated: date,
+        
         description: '',
         license: 'CC BY-SA (Creative Commons Attribution-ShareAlike)',
-        dateCreated: date,
+        references: null,
+        
         dateUpdated: null,
         dateSaved: null,
-        reference: null
       },
       sources: {
         basemap: {

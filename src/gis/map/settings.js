@@ -579,12 +579,12 @@ export class SettingsControl {
             })
 
             if (newMap) {
-                if (config.id) {
-                config.metadata.reference = {
-                    id: config.id,
-                    src: config.src,
-                    metadata: structuredClone(config.metadata)
-                }
+                if (config.id && !Array('db', 'file').includes(config.src)) {
+                    config.metadata.references = {
+                        id: config.id,
+                        src: config.src,
+                        metadata: structuredClone(config.metadata)
+                    }
                 }
 
                 config.src = 'db'

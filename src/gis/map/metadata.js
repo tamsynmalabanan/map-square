@@ -7,6 +7,7 @@ import { create } from 'lodash';
 export default class MetadataControl {
   onAdd(map) {
     this._map = map
+
     const config = this.config = map.getConfig()
     const metadata = this.metadata = config.metadata
     const defaultMetadata = this.defaultMetadata = Map.getDefaultConfig().metadata
@@ -23,13 +24,13 @@ export default class MetadataControl {
       attrs: `@click='toggleCollapse' x-show='collapsed'`
     })
     
-    const inner = this.inner = document.createElement('div')
+    const inner = document.createElement('div')
     inner.classList.add('p-2', 'max-w-[80vw]', 'relative')
     inner.setAttribute('x-show', '!collapsed')
     inner.setAttribute('x-data', 'radioGroup({value:"current"})')
     container.appendChild(inner)
 
-    this.addNavSection()
+    this.addNavSection(inner)
 
     const form = this.form = document.createElement('form')
     form.classList.add('flex', 'flex-col', 'gap-5', 'grow', 'max-w-full!')
@@ -39,28 +40,7 @@ export default class MetadataControl {
     })
     inner.appendChild(form)
 
-    const titleInput = document.createElement('span')
-    titleInput.innerHTML = metadata.title
-    titleInput.setAttribute('name', 'title')
-    titleInput.setAttribute('contenteditable', "false")
-    titleInput.classList.add(
-      'max-h-[10vh]',
-      'min-h-[5vh]',
-      'min-w-[20vw]',
-      'max-w-[80vw]',
-      'word-break', 
-      'text-wrap', 
-      'truncate', 
-      'text-ellipsis', 
-      'overflow-auto', 
-      'font-bold',
-      'text-xl',
-      'grow',
-    )
-    titleInput.setAttribute(':class', `{
-      ['scrollbar-thumb-'+color+'-500/10!']: true  
-    }`)
-    form.appendChild(titleInput)
+    this.addTitleSection(form)
 
     if (config.id) {
       const details = this.details = document.createElement('div')
@@ -73,137 +53,13 @@ export default class MetadataControl {
       mainContainer.classList.add('flex', 'flex-nowrap')
       details.appendChild(mainContainer)
 
-      const logoForm = document.createElement('div')
-      logoForm.classList.add('flex', 'flex-col', 'gap-2')
-      mainContainer.appendChild(logoForm)
-
-      const logoImg = document.createElement('img')
-      logoImg.classList.add('size-[10vh]', 'rounded', 'me-2')
-      logoImg.src = metadata.logo
-      logoImg.setAttribute('name', 'logo')
-      logoImg.setAttribute('x-data', `{show: ${metadata.logo !== defaultMetadata.logo}}`)
-      logoImg.setAttribute('x-show', `isRadioValue("edit") || show`)
-      logoForm.appendChild(logoImg)
-
-      const logoInputs = document.createElement('div')
-      logoInputs.classList.add('flex', 'flex-nowrap', 'gap-1', 'me-2')
-      logoInputs.setAttribute('x-show', 'isRadioValue("edit")')
-      logoForm.appendChild(logoInputs)
-
-      const logoInputContainer = document.createElement('div')
-      logoInputContainer.classList.add('grow')
-      logoInputs.appendChild(logoInputContainer)
-
-      const logoLabel = document.createElement('label')
-      logoLabel.innerText = '📁'
-      logoLabel.setAttribute(':class', `{ ['bg-'+color+'-500/50!']: true, ['bg-'+color+'-100/100! dark:bg-'+color+'-950/100! enabled:hover:bg-'+color+'-500/50!']: !(true) }`)
-      logoLabel.className = `w-7vh flex justify-center items-center gap-2 rounded py-1 px-2 dark:text-white cursor-pointer grow`
-      logoInputContainer.appendChild(logoLabel)
-      
-      const logoInput = document.createElement('input')
-      logoInput.id = utils.randomId()
-      logoLabel.setAttribute('for', logoInput.id)
-      logoInput.classList.add('w-0', 'invisible')
-      logoInput.setAttribute('name', 'logo')
-      logoInput.setAttribute('type', 'file')
-      logoInput.setAttribute('accept', 'image/*')
-      logoInput.addEventListener('change', async () => {
-        const file = logoInput.files[0]
-        logoImg.src = file ? await utils.fileToDataURL(file) : defaultMetadata.logo
-        Alpine.$data(logoImg).show = file !== undefined
-      })
-      logoInputContainer.appendChild(logoInput)
-
-      const removeLogoBtn = utils.strToEl(button({
-        icon: '🗑️',
-        title: 'Remove current logo',
-        highlightExp: true,
-      }))
-      removeLogoBtn.addEventListener('click', () => {
-        logoInput.value = ''
-        logoInput.dispatchEvent(new CustomEvent("change"))
-      })
-      logoInputs.appendChild(removeLogoBtn)
-
-      const attrContainer = document.createElement('div')
-      attrContainer.classList.add('grid', 'grid-flow-row', 'gap-1', 'grow')
-      mainContainer.appendChild(attrContainer)
-
-      const authorContainer = document.createElement('div')
-      authorContainer.classList.add('flex', 'flex-nowrap', 'gap-1')
-      attrContainer.appendChild(authorContainer)
-
-      const authorSpan = document.createElement('span')
-      authorSpan.innerText = `🆔`  
-      authorContainer.appendChild(authorSpan)
-
-      const authorInput = document.createElement('span')
-      authorInput.innerHTML = metadata.author
-      authorInput.setAttribute('name', 'author')
-      authorInput.setAttribute('contenteditable', "false")
-      authorInput.classList.add(
-        'word-break', 
-        'text-wrap', 
-        'truncate', 
-        'text-ellipsis', 
-        'overflow-auto', 
-        'text-[12px]',
-        'grow',
-      )
-      authorContainer.appendChild(authorInput)
-
-      const websiteContainer = document.createElement('div')
-      websiteContainer.classList.add('flex', 'flex-nowrap', 'gap-1')
-      attrContainer.appendChild(websiteContainer)
-
-      const websiteSpan = document.createElement('span')
-      websiteSpan.innerText = `🌐`  
-      websiteContainer.appendChild(websiteSpan)
-
-      const websiteInput = document.createElement('input')
-      websiteInput.value = metadata.website
-      websiteInput.classList.add('grow')
-      websiteInput.setAttribute('placeholder', 'https://www.your-website.com')
-      websiteInput.setAttribute('type', 'url')
-      websiteInput.setAttribute('name', 'website')
-      websiteInput.setAttribute('readonly', 'true')
-      websiteInput.setAttribute('x-show', 'isRadioValue("edit")')
-      websiteContainer.appendChild(websiteInput)
-
-      const websiteCurrent = document.createElement('a')
-      websiteCurrent.innerHTML = utils.getBaseURL(metadata.website)
-      websiteCurrent.setAttribute('name', 'website')
-      websiteCurrent.setAttribute('href', metadata.website)
-      websiteCurrent.setAttribute('target', '_blank')
-      websiteCurrent.setAttribute('x-show', 'isRadioValue("current")')
-      websiteContainer.appendChild(websiteCurrent)
-
-      const createdContainer = document.createElement('div')
-      createdContainer.classList.add('flex', 'flex-nowrap', 'gap-1')
-      attrContainer.appendChild(createdContainer)
-
-      const createdIcon = document.createElement('span')
-      createdIcon.innerText = `➕`  
-      createdContainer.appendChild(createdIcon)
-
-      const createdSpan = document.createElement('span')
-      createdSpan.innerText = `${utils.formatDate(new Date(metadata.dateCreated), {time:true})}`  
-      createdContainer.appendChild(createdSpan)
-    
-      const updatedContainer = document.createElement('div')
-      updatedContainer.classList.add('flex', 'flex-nowrap', 'gap-1')
-      attrContainer.appendChild(updatedContainer)
-
-      const updatedIcon = document.createElement('span')
-      updatedIcon.innerText = `⬆️`  
-      updatedContainer.appendChild(updatedIcon)
-
-      const updatedSpan = this.updatedSpan = document.createElement('span')
-      updatedContainer.appendChild(updatedSpan)
-
-      this.addDescriptionSection()
-
-      this.addLicenseSection()
+      this.addLogoSection(mainContainer)
+      this.addAttrSection(mainContainer)
+      this.addDescriptionSection(details)
+      this.addLicenseSection(details)
+      if (metadata.references) {
+        this.addReferenceSection(details)
+      }
 
       this.setDateUpdated()
       
@@ -229,10 +85,10 @@ export default class MetadataControl {
     return container
   }
 
-  addNavSection() {
+  addNavSection(parent) {
     const nav = this.nav = document.createElement('div')
     nav.classList.add('flex', 'flex-nowrap', 'gap-2', 'absolute', 'right-0', 'm-1', 'top-0')
-    this.inner.appendChild(nav)
+    parent.appendChild(nav)
 
         const editBtn = utils.strToEl(button({
         title: 'Edit metadata',
@@ -372,11 +228,168 @@ export default class MetadataControl {
     })
   }
 
-  addDescriptionSection() {
+  addTitleSection(parent) {
+    const titleInput = document.createElement('span')
+    titleInput.innerHTML = this.metadata.title
+    titleInput.setAttribute('name', 'title')
+    titleInput.setAttribute('contenteditable', "false")
+    titleInput.classList.add(
+      'max-h-[10vh]',
+      'min-h-[5vh]',
+      'min-w-[20vw]',
+      'max-w-[80vw]',
+      'word-break', 
+      'text-wrap', 
+      'truncate', 
+      'text-ellipsis', 
+      'overflow-auto', 
+      'font-bold',
+      'text-xl',
+      'grow',
+    )
+    titleInput.setAttribute(':class', `{
+      ['scrollbar-thumb-'+color+'-500/10!']: true  
+    }`)
+    parent.appendChild(titleInput)
+  }
+
+  addLogoSection(parent) {
+    const logoForm = document.createElement('div')
+      logoForm.classList.add('flex', 'flex-col', 'gap-2')
+      parent.appendChild(logoForm)
+
+      const logoImg = document.createElement('img')
+      logoImg.classList.add('size-[10vh]', 'rounded', 'me-2')
+      logoImg.src = this.metadata.logo
+      logoImg.setAttribute('name', 'logo')
+      logoImg.setAttribute('x-data', `{show: ${this.metadata.logo !== this.defaultMetadata.logo}}`)
+      logoImg.setAttribute('x-show', `isRadioValue("edit") || show`)
+      logoForm.appendChild(logoImg)
+
+      const logoInputs = document.createElement('div')
+      logoInputs.classList.add('flex', 'flex-nowrap', 'gap-1', 'me-2')
+      logoInputs.setAttribute('x-show', 'isRadioValue("edit")')
+      logoForm.appendChild(logoInputs)
+
+      const logoInputContainer = document.createElement('div')
+      logoInputContainer.classList.add('grow')
+      logoInputs.appendChild(logoInputContainer)
+
+      const logoLabel = document.createElement('label')
+      logoLabel.innerText = '📁'
+      logoLabel.setAttribute(':class', `{ ['bg-'+color+'-500/50!']: true, ['bg-'+color+'-100/100! dark:bg-'+color+'-950/100! enabled:hover:bg-'+color+'-500/50!']: !(true) }`)
+      logoLabel.className = `w-7vh flex justify-center items-center gap-2 rounded py-1 px-2 dark:text-white cursor-pointer grow`
+      logoInputContainer.appendChild(logoLabel)
+      
+      const logoInput = document.createElement('input')
+      logoInput.id = utils.randomId()
+      logoLabel.setAttribute('for', logoInput.id)
+      logoInput.classList.add('w-0', 'invisible')
+      logoInput.setAttribute('name', 'logo')
+      logoInput.setAttribute('type', 'file')
+      logoInput.setAttribute('accept', 'image/*')
+      logoInput.addEventListener('change', async () => {
+        const file = logoInput.files[0]
+        logoImg.src = file ? await utils.fileToDataURL(file) : this.defaultMetadata.logo
+        Alpine.$data(logoImg).show = file !== undefined
+      })
+      logoInputContainer.appendChild(logoInput)
+
+      const removeLogoBtn = utils.strToEl(button({
+        icon: '🗑️',
+        title: 'Remove current logo',
+        highlightExp: true,
+      }))
+      removeLogoBtn.addEventListener('click', () => {
+        logoInput.value = ''
+        logoInput.dispatchEvent(new CustomEvent("change"))
+      })
+      logoInputs.appendChild(removeLogoBtn)
+  }
+
+  addAttrSection(parent) {
+    const attrContainer = document.createElement('div')
+    attrContainer.classList.add('grid', 'grid-flow-row', 'gap-1', 'grow')
+    parent.appendChild(attrContainer)
+
+    const authorContainer = document.createElement('div')
+    authorContainer.classList.add('flex', 'flex-nowrap', 'gap-1')
+    attrContainer.appendChild(authorContainer)
+
+    const authorSpan = document.createElement('span')
+    authorSpan.innerText = `🆔`  
+    authorContainer.appendChild(authorSpan)
+
+    const authorInput = document.createElement('span')
+    authorInput.innerHTML = this.metadata.author
+    authorInput.setAttribute('name', 'author')
+    authorInput.setAttribute('contenteditable', "false")
+    authorInput.classList.add(
+      'word-break', 
+      'text-wrap', 
+      'truncate', 
+      'text-ellipsis', 
+      'overflow-auto', 
+      'text-[12px]',
+      'grow',
+    )
+    authorContainer.appendChild(authorInput)
+
+    const websiteContainer = document.createElement('div')
+    websiteContainer.classList.add('flex', 'flex-nowrap', 'gap-1')
+    attrContainer.appendChild(websiteContainer)
+
+    const websiteSpan = document.createElement('span')
+    websiteSpan.innerText = `🌐`  
+    websiteContainer.appendChild(websiteSpan)
+
+    const websiteInput = document.createElement('input')
+    websiteInput.value = this.metadata.website
+    websiteInput.classList.add('grow')
+    websiteInput.setAttribute('placeholder', 'https://www.your-website.com')
+    websiteInput.setAttribute('type', 'url')
+    websiteInput.setAttribute('name', 'website')
+    websiteInput.setAttribute('readonly', 'true')
+    websiteInput.setAttribute('x-show', 'isRadioValue("edit")')
+    websiteContainer.appendChild(websiteInput)
+
+    const websiteCurrent = document.createElement('a')
+    websiteCurrent.innerHTML = utils.getBaseURL(this.metadata.website)
+    websiteCurrent.setAttribute('name', 'website')
+    websiteCurrent.setAttribute('href', this.metadata.website)
+    websiteCurrent.setAttribute('target', '_blank')
+    websiteCurrent.setAttribute('x-show', 'isRadioValue("current")')
+    websiteContainer.appendChild(websiteCurrent)
+
+    const createdContainer = document.createElement('div')
+    createdContainer.classList.add('flex', 'flex-nowrap', 'gap-1')
+    attrContainer.appendChild(createdContainer)
+
+    const createdIcon = document.createElement('span')
+    createdIcon.innerText = `➕`  
+    createdContainer.appendChild(createdIcon)
+
+    const createdSpan = document.createElement('span')
+    createdSpan.innerText = `${utils.formatDate(new Date(this.metadata.dateCreated), {time:true})}`  
+    createdContainer.appendChild(createdSpan)
+  
+    const updatedContainer = document.createElement('div')
+    updatedContainer.classList.add('flex', 'flex-nowrap', 'gap-1')
+    attrContainer.appendChild(updatedContainer)
+
+    const updatedIcon = document.createElement('span')
+    updatedIcon.innerText = `⬆️`  
+    updatedContainer.appendChild(updatedIcon)
+
+    const updatedSpan = this.updatedSpan = document.createElement('span')
+    updatedContainer.appendChild(updatedSpan)
+  }
+
+  addDescriptionSection(parent) {
     const descContainer = document.createElement('div')
     descContainer.classList.add('flex', 'flex-col', 'gap-1')
     descContainer.setAttribute('x-data', '{show:true}')
-    this.details.appendChild(descContainer)
+    parent.appendChild(descContainer)
 
     const descHeader = document.createElement('span')
     descHeader.classList.add('flex', 'flex-nowrap', 'justify-between', 'align-middle', 'font-bold')
@@ -423,11 +436,11 @@ export default class MetadataControl {
     `)
   }
 
-  addLicenseSection() {
+  addLicenseSection(parent) {
     const licenseContainer = document.createElement('div')
     licenseContainer.classList.add('flex', 'flex-col', 'gap-1')
     licenseContainer.setAttribute('x-data', '{show:true}')
-    this.details.appendChild(licenseContainer)
+    parent.appendChild(licenseContainer)
 
     const licenseHeader = document.createElement('span')
     licenseHeader.classList.add('flex', 'flex-nowrap', 'justify-between', 'align-middle', 'font-bold')
@@ -443,12 +456,12 @@ export default class MetadataControl {
     licenseCollapse.setAttribute('x-html', 'show ? svg.chevronUpMini : svg.chevronDownMini')
     licenseHeader.appendChild(licenseCollapse)
 
-    const licenceInput = document.createElement('span')
-    licenceInput.innerHTML = this.metadata.license
-    licenceInput.setAttribute('name', 'license')
-    licenceInput.setAttribute('contenteditable', "false")
-    licenceInput.setAttribute('x-show', 'show')
-    licenceInput.classList.add(
+    const licenseInput = document.createElement('span')
+    licenseInput.innerHTML = this.metadata.license
+    licenseInput.setAttribute('name', 'license')
+    licenseInput.setAttribute('contenteditable', "false")
+    licenseInput.setAttribute('x-show', 'show')
+    licenseInput.classList.add(
       'max-h-[10vh]',
       'word-break', 
       'text-wrap', 
@@ -457,10 +470,62 @@ export default class MetadataControl {
       'overflow-auto', 
       'grow',
     )
-    licenceInput.setAttribute(':class', `{
+    licenseInput.setAttribute(':class', `{
       ['scrollbar-thumb-'+color+'-500/10!']: true  
     }`)
-    licenseContainer.appendChild(licenceInput)
+    licenseContainer.appendChild(licenseInput)
+  }
+
+  addReferenceSection(parent) {
+    const referencesContainer = document.createElement('div')
+    referencesContainer.classList.add('flex', 'flex-col', 'gap-1')
+    referencesContainer.setAttribute('x-data', '{show:false}')
+    parent.appendChild(referencesContainer)
+
+    const referencesHeader = document.createElement('span')
+    referencesHeader.classList.add('flex', 'flex-nowrap', 'justify-between', 'align-middle', 'font-bold')
+    referencesHeader.setAttribute('@click', 'show=!show')
+    referencesContainer.appendChild(referencesHeader)
+
+    const referencesLabel = document.createElement('span')
+    referencesLabel.innerText = 'References'
+    referencesHeader.appendChild(referencesLabel)
+
+    const referencesCollapse = document.createElement('span')
+    referencesCollapse.classList.add('size-[15px]!', 'self-center')
+    referencesCollapse.setAttribute('x-html', 'show ? svg.chevronUpMini : svg.chevronDownMini')
+    referencesHeader.appendChild(referencesCollapse)
+
+    const referencesContent = document.createElement('div')
+    referencesContent.classList.add('flex', 'flex-col', 'gap-1')
+    referencesContent.setAttribute('x-show', 'show')
+    referencesContainer.appendChild(referencesContent)
+
+    let reference = this.metadata.references
+
+    while (reference) {
+      const referenceContainer = document.createElement('div')
+      referencesContent.appendChild(referenceContainer)
+      const titleContainer = document.createElement('div')
+      titleContainer.classList.add('flex', 'flex-nowrap', 'gap-1')
+      referenceContainer.appendChild(titleContainer)
+  
+      const titleIcon = document.createElement('span')
+      titleIcon.innerText = `🗺️`  
+      titleContainer.appendChild(titleIcon)
+  
+      const mapLink = document.createElement('a')
+      mapLink.innerText = `${reference.metadata.title} (${reference.metadata.author}, ${(new Date(reference.metadata.dateCreated)).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit"
+      })})`
+      mapLink.setAttribute('href', `${utils.getBaseURL(window.location.href)}?src=${reference.src}&id=${reference.id}`)
+      mapLink.setAttribute('target', '_blank')
+      titleContainer.appendChild(mapLink)
+
+      reference = reference.metadata.references
+    }
   }
 
   onRemove() {
