@@ -175,7 +175,7 @@ export default class Map extends maplibregl.Map {
             order: 6,
           },
           
-          save: {
+          file: {
             active: true,
             position: 'bottom-right',
             order: 4,

@@ -5,7 +5,7 @@ import PlaceSearchControl from './placeSearch.js';
 import MetadataControl from './metadata.js';
 import { LegendControl } from './legend.js';
 import { SettingsControl } from './settings.js';
-import { SaveControl } from './save.js';
+import { FileControl } from './file.js';
 
 export default class HandleControls {
     constructor(map) {
@@ -127,10 +127,10 @@ export default class HandleControls {
                     '.maplibregl-ctrl-fit-to-world': {}
                 },
             },
-            save: {
-                constructor: SaveControl,
+            file: {
+                constructor: FileControl,
                 elements: {
-                    '.maplibregl-ctrl-save': {},
+                    '.maplibregl-ctrl-file': {},
                 },
             },
             settings: {

@@ -9,7 +9,7 @@ import button from "../../templates/button.js"
 import modal from '../../templates/modal.js'; 
 import { values } from "lodash";
 
-export class SaveControl {
+export class FileControl {
     constructor(options) {
     
     }
@@ -24,7 +24,7 @@ export class SaveControl {
         container.innerHTML = button({
             title: 'Save',
             icon: svg.folderMini,
-            classStr: 'maplibregl-ctrl-save',
+            classStr: 'maplibregl-ctrl-file',
             attrs: `@click='toggleCollapse' x-show='collapsed'`
         })
 
@@ -103,7 +103,7 @@ export class SaveControl {
         content.appendChild(nav)
         
         nav.appendChild(utils.strToEl(button({
-            title: 'Collapse save menu',
+            title: 'Collapse file menu',
             icon: svg.xMini,
             classStr: 'maplibregl-ctrl-close justify-self-end',
             attrs: `@click='closeCollapse' x-show='!collapsed'`
