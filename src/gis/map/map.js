@@ -83,14 +83,16 @@ export default class Map extends maplibregl.Map {
         title: 'Untitled Map',
         
         logo: 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==',
-        author: 'Unknown Author',
+        creator: 'Unknown',
         website: '',
-        dateCreated: date,
-        
+        email: '',
+        license: 'CC BY-SA 4.0',
+        acknowledgements: '',
+
         description: '',
-        license: 'CC BY-SA (Creative Commons Attribution-ShareAlike)',
         references: null,
         
+        dateCreated: date,
         dateUpdated: null,
         dateSaved: null,
       },

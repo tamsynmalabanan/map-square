@@ -108,6 +108,8 @@ export class SaveControl {
             classStr: 'maplibregl-ctrl-close justify-self-end',
             attrs: `@click='closeCollapse' x-show='!collapsed'`
         })))
+
+        this.handleUpdates()
         
         return container
     }
@@ -174,5 +176,30 @@ export class SaveControl {
                 ]
             },
         ]
+    }
+
+    handleUpdates() {
+        const map = this._map
+        const config = map.getConfig()
+        if (!config.id) return
+
+        let timer
+        Array('themeUpdated', 'configUpdated', 'configSaved').forEach(i => {
+        clearTimeout(timer)
+        setTimeout(() => {
+            map.on(i, (e) => {
+                const metadata = config.metadata
+                const dateUpdated = new Date(metadata.dateUpdated)
+                const dateSaved = new Date(metadata.dateSaved)
+
+                // this.updatedSpan.innerHTML = `
+                //     <span>${utils.formatRelativeDate(dateUpdated)}</span>
+                //     <span class="italic">${dateUpdated > dateSaved ? '(unsaved)' : ''}</span>
+                // `
+                
+                console.log(e)
+            })
+        }, 2000)
+        })
     }
 }
