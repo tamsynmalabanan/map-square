@@ -235,7 +235,6 @@ export default class MetadataControl {
     titleInput.setAttribute('contenteditable', "false")
     titleInput.classList.add(
       'max-h-[10vh]',
-      'min-h-[5vh]',
       'min-w-[20vw]',
       'max-w-[80vw]',
       'word-break', 
