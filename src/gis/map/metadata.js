@@ -62,12 +62,9 @@ export default class MetadataControl {
       details.querySelectorAll('span[contenteditable]').forEach(element => {
         element.classList.add(
           'max-h-[10vh]',
-          'overflow-y-auto',
-          'overflow-x-hidden',
-          'break-all', 
+          'overflow-auto',
+          'break-normal', 
           'text-wrap', 
-          'truncate', 
-          'text-ellipsis', 
           'text-[12px]',
           'grow',
         )
@@ -86,7 +83,7 @@ export default class MetadataControl {
       `)
     })
 
-    form.querySelectorAll('.overflow-y-auto').forEach(i => {
+    form.querySelectorAll('.overflow-auto').forEach(i => {
       utils.appendBinding(i , ':class', `
         ['scrollbar-thumb-'+color+'-500/10!']: true  
       `)
@@ -255,12 +252,9 @@ export default class MetadataControl {
       'max-h-[10vh]',
       'min-w-[20vw]',
       'max-w-[80vw]',
-      'break-all', 
+      'break-normal', 
       'text-wrap', 
-      'truncate', 
-      'text-ellipsis', 
-      'overflow-y-auto', 
-      'overflow-x-hidden', 
+      'overflow-auto', 
       'font-bold',
       'text-xl',
       'grow',
@@ -517,7 +511,7 @@ export default class MetadataControl {
     })
 
     const descEditor = descInput.querySelector('.ql-editor')
-    descEditor.classList.add('p-0!', 'overflow-y-auto', 'overflow-x-hidden', 'max-h-[30vh]')
+    descEditor.classList.add('p-0!', 'overflow-auto', 'max-h-[30vh]')
     descEditor.setAttribute('x-ref', 'descriptionInput')
     utils.appendBinding(descEditor, ':class', `
       ['min-h-[20vh]']: isRadioValue("edit")
