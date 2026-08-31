@@ -11,11 +11,7 @@ import { FileControl } from './file.js';
 export default class HandleControls {
     constructor(map) {
         this._map = map
-        this.addControls()
-    }
-
-    getControlConfig(name) {
-        return {
+        this.controls = {
             nav: {
                 constructor: maplibregl.NavigationControl,
                 elements: {
@@ -32,18 +28,23 @@ export default class HandleControls {
             terrain: {
                 constructor: maplibregl.TerrainControl,
                 handler: (control) => {
+                    const map = this._map
+                    const config = map.getConfig()
+                    const disabled = config.id && config.src !== 'db'
                     const button = control.getContainer().querySelector('button')
-
+                    button.disabled = disabled
+                    
                     control.isEnabled = () => {
                         return button.classList.contains('maplibregl-ctrl-terrain-enabled')
                     }
 
-                    control.toggleTerrain = () => {
+                    control.toggle = () => {
+                        button.disabled = false
                         button.click()
+                        button.disabled = disabled
                     }
 
                     button.addEventListener('click', async (e) => {
-                        const map = this._map
                         const settings = map.getControls('settings')
                         if (!settings) return
                         
@@ -146,7 +147,8 @@ export default class HandleControls {
                     '.maplibregl-ctrl-settings': {},
                 },
             },
-        }[name]
+        }
+        this.addControls()
     }
 
     addControls() {
@@ -160,7 +162,7 @@ export default class HandleControls {
             .map(([name, props]) => {
                 if (!props.active) return
 
-                const config = this.getControlConfig(name)
+                const config = this.controls[name]
                 if (!config) return
 
                 const control = new config.constructor(props.options)

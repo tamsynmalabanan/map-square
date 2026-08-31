@@ -401,7 +401,7 @@ export class SettingsControl {
         this.configBasemap() // suppress config update when basemap and terrain are config
 
         if (settings.terrain && !controls.terrain.isEnabled()) {
-            controls.terrain.toggleTerrain()
+            controls.terrain.toggle()
         }
         
         const systemLayers = controls.legend.getAllSystemLayerNames()

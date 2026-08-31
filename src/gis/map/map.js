@@ -144,15 +144,6 @@ export default class Map extends maplibregl.Map {
                 showCompass: true,
             },
           },
-          terrain: {
-            active: true,
-            position: 'top-right',
-            order: 3,
-            options: {
-                source:'terrain',
-                exaggeration:1,
-            },
-          },
           fitToWorld: {
             active: true,
             position: 'top-right',
@@ -184,12 +175,21 @@ export default class Map extends maplibregl.Map {
           file: {
             active: true,
             position: 'bottom-right',
-            order: 4,
+            order: 5,
           },
           settings: {
             active: true,
             position: 'bottom-right',
+            order: 4,
+          },
+          terrain: {
+            active: true,
+            position: 'bottom-right',
             order: 3,
+            options: {
+                source:'terrain',
+                exaggeration:1,
+            },
           },
           scalebar: {
             active: true,
