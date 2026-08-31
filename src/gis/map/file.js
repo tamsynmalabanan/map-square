@@ -75,7 +75,8 @@ export class FileControl {
                         icon: '💾',
                         highlight: null,
                         handler: async (event) => {
-                            const config = await map.getControls('settings').updateConfig(['id'], utils.randomId())
+                            const config = await map.getControls('settings')
+                            .updateConfig(['id'], utils.randomId())
 
                             const url = new URL(utils.getBaseURL(window.location.href))
                             const id = config?.id
@@ -105,7 +106,7 @@ export class FileControl {
                                 await map.getControls('settings').updateConfig(['autosave'], event.detail.value)
                             },
                         },
-                        ...(Array('db', 'file').includes(config.src) ? [
+                        ...(!Array('db', 'file').includes(config.src) ? [
                             {
                                 title: 'Copy map URL',
                                 icon: `🔗`,
@@ -129,8 +130,38 @@ export class FileControl {
                     },
                     {
                         title: 'Open a map file',
-                        icon: '📁',
+                        icon: '',
                         highlight: null,
+                        init: (button) => {
+                            const label = document.createElement('label')
+                            label.innerText = '📁'
+                            button.appendChild(label)
+                            
+                            const input = document.createElement('input')
+                            input.classList.add('w-0', 'invisible')
+                            input.setAttribute('type', 'file')
+                            input.setAttribute('accept', '*.zip')
+                            input.addEventListener('change', async () => {
+                                const file = input.files[0]
+                                if (!file) return
+                                
+                                const arrayBuffer = await file.arrayBuffer()
+                                const zip = await JSZip.loadAsync(arrayBuffer)
+
+                                Object.keys(zip.files).forEach(async (filename) => {
+                                    const fileObj = zip.files[filename]
+                                    if (!fileObj.dir) {
+                                        const content = await fileObj.async("string");
+                                        console.log("File:", filename);
+                                        console.log("Content:", content);
+                                    }
+                                });
+                            })
+                            button.appendChild(input)
+                            
+                            input.id = utils.randomId()
+                            label.setAttribute('for', input.id)
+                        }
                     },
                 ]
             },
@@ -150,9 +181,14 @@ export class FileControl {
         ]
     }
 
-    async compressMap() {
+    async compressMap({src='file'}={}) {
         const map = this._map
-        const config = map.getConfig()
+        
+        const config = structuredClone(map.getConfig())
+        delete config.id
+        config.src = src
+        config.id = await utils.hashJSON(config)
+
         const zip = new JSZip()
 
         zip.file("config.json", JSON.stringify(config))
@@ -164,14 +200,16 @@ export class FileControl {
         }, null, 2))
 
         const content = await zip.generateAsync({ type: "blob" })
+        
         const {dateCreated, title, dateUpdated} = config.metadata
         const filename = Array(
             utils.formatDate(new Date(dateCreated), {filename: true}),
-            title,
-            `asof${utils.formatDate(new Date(dateUpdated), {filename: true})}`,
+            title, `asof${utils.formatDate(new Date(dateUpdated), {filename: true})}`,
         ).map(i => i.replaceAll(' ', '_')).join('_')
 
-        saveAs(content, filename)
+        if (src === 'file') {
+            saveAs(content, filename)
+        }
     }
 
     handleUpdates() {

@@ -82,7 +82,12 @@ export default (menu) => {
                     }
                 })
             }
+
             buttonsContainer.appendChild(menuBtn)
+        
+            if (params.init) {
+                params.init(menuBtn)
+            }
         })
     })
 

@@ -479,7 +479,7 @@ export class SettingsControl {
         let target = theme || config
 
         property.slice(0, -1).forEach(name => {
-        target = target[name]
+            target = target[name]
         })
 
         const propertyName = property[property.length-1]
