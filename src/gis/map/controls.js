@@ -32,7 +32,7 @@ export default class HandleControls {
                 constructor: maplibregl.TerrainControl,
                 handler: (control) => {
                     const button = control.getContainer().querySelector('button')
-                    
+
                     control.isEnabled = () => {
                         return button.classList.contains('maplibregl-ctrl-terrain-enabled')
                     }

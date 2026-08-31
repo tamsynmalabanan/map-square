@@ -451,7 +451,7 @@ export class SettingsControl {
         }
     }
 
-    async saveConfig(date) {
+    async saveConfig({date=(new Date()).toLocaleString("en-US"), timeout=2000}) {
         return new Promise((resolve, reject) => {
             if (this.saveTimer) {
                 clearTimeout(this.saveTimer)
@@ -461,14 +461,13 @@ export class SettingsControl {
                 const map = this._map
                 const config = map.getConfig()
         
-                date ??= (new Date()).toLocaleString("en-US")
                 config.metadata.dateSaved = date
         
                 await gisDB.saveToGISDB('maps', config)
                 map.fire('configSaved', {details: {config}})
 
                 resolve(config)
-            }, 2000)
+            }, timeout)
         })
     }
 
@@ -520,8 +519,8 @@ export class SettingsControl {
                 details: {property, value}
             })
 
-            if (config.autosave || property[0] === 'autosave' || newMap) {
-                await this.saveConfig(date)
+            if (config.src === 'db' && (config.autosave || property[0] === 'autosave' || newMap)) {
+                await this.saveConfig({date})
             }
         }
 

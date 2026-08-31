@@ -56,7 +56,7 @@ export default class Map extends maplibregl.Map {
 
     const {src, id} = params
     
-    if (src === 'db') {
+    if (Array('db', 'file').includes(src)) {
       if ((await gisDB.getGISDBKeys('maps')).includes(id)) {
         config = await gisDB.getFromGISDB('maps', id)
       } else {

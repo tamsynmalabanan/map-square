@@ -63,12 +63,10 @@ export class FileControl {
     getMenuButtons() {
         const map = this._map
         const config = map.getConfig()
-        const theme = map.getTheme()
-        const settings = theme.settings
         
         return [
             {
-                label: 'Current',
+                // label: 'Current',
                 buttons: [
                     {
                         title: 'Save as new map',
@@ -90,22 +88,24 @@ export class FileControl {
                         },
                     },
                     ...(config.id ? [
-                        {
-                            title: 'Save changes to map',
-                            icon: `⬆️`,
-                            highlight: null,
-                            handler: async (event) => {
-                                await map.getControls('settings').saveConfig()
+                        ...(config.src === 'db' ? [
+                            {
+                                title: 'Save changes to map',
+                                icon: `⬆️`,
+                                highlight: null,
+                                handler: async (event) => {
+                                    await map.getControls('settings').saveConfig({timeout:0})
+                                },
                             },
-                        },
-                        {
-                            title: 'Autosave map changes',
-                            icon: `🔄️`,
-                            highlight: config.autosave,
-                            handler: async (event) => {
-                                await map.getControls('settings').updateConfig(['autosave'], event.detail.value)
+                            {
+                                title: 'Autosave map changes',
+                                icon: `🔄️`,
+                                highlight: config.autosave,
+                                handler: async (event) => {
+                                    await map.getControls('settings').updateConfig(['autosave'], event.detail.value)
+                                },
                             },
-                        },
+                     ] : []),
                         ...(!Array('db', 'file').includes(config.src) ? [
                             {
                                 title: 'Copy map URL',
@@ -116,12 +116,15 @@ export class FileControl {
                                 },
                             }
                         ] : [])
-                    ] : [])
-                ]
-            },
-            {
-                label: 'Open',
-                buttons: [
+                    ] : []),
+                    {
+                        title: 'Download map',
+                        icon: '⬇️',
+                        highlight: null,
+                        handler: async (event) => {
+                            await this.compressMap()
+                        },
+                    },
                     {
                         title: 'Open a new map',
                         icon: '➕',
@@ -134,6 +137,7 @@ export class FileControl {
                         highlight: null,
                         init: (button) => {
                             const label = document.createElement('label')
+                            label.classList.add('cursor-pointer')
                             label.innerText = '📁'
                             button.appendChild(label)
                             
@@ -145,36 +149,13 @@ export class FileControl {
                                 const file = input.files[0]
                                 if (!file) return
                                 
-                                const arrayBuffer = await file.arrayBuffer()
-                                const zip = await JSZip.loadAsync(arrayBuffer)
-
-                                Object.keys(zip.files).forEach(async (filename) => {
-                                    const fileObj = zip.files[filename]
-                                    if (!fileObj.dir) {
-                                        const content = await fileObj.async("string");
-                                        console.log("File:", filename);
-                                        console.log("Content:", content);
-                                    }
-                                });
+                                this.loadMap(file)
                             })
                             button.appendChild(input)
                             
                             input.id = utils.randomId()
                             label.setAttribute('for', input.id)
                         }
-                    },
-                ]
-            },
-            {
-                label: 'Export',
-                buttons: [
-                    {
-                        title: 'Download Map',
-                        icon: '⬇️',
-                        highlight: null,
-                        handler: async (event) => {
-                            await this.compressMap()
-                        },
                     },
                 ]
             },
@@ -210,6 +191,35 @@ export class FileControl {
         if (src === 'file') {
             saveAs(content, filename)
         }
+    }
+
+    async loadMap(file) {
+        const arrayBuffer = await file.arrayBuffer()
+        const zip = await JSZip.loadAsync(arrayBuffer)
+
+        const config = JSON.parse((await zip.files['config.json']?.async('string')) ?? '{}')
+        const {id, src} = config
+        if (!id || !src) return
+
+        console.log('add data to DB')
+        // Object.keys(zip.files).forEach(async (filename) => {
+        //     const fileObj = zip.files[filename]
+        //     if (fileObj.dir) return
+
+        //     const content = await fileObj.async("string");
+        //     console.log("File:", filename);
+        //     console.log("Content:", content);
+        // });
+
+        if (src === 'file') {
+            await gisDB.saveToGISDB('maps', config)
+        }
+
+        const url = new URL(utils.getBaseURL(window.location.href))
+        url.searchParams.set('src', src)
+        url.searchParams.set('id', id)
+        
+        window.location.href = url.toString()
     }
 
     handleUpdates() {

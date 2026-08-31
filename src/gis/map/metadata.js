@@ -98,114 +98,117 @@ export default class MetadataControl {
     nav.classList.add('flex', 'flex-nowrap', 'gap-2', 'absolute', 'right-0', 'm-1', 'top-0')
     parent.appendChild(nav)
 
-        const editBtn = utils.strToEl(button({
+    let editBtn, backBtn, saveBtn, collapseBtn
+    
+    if (!this.config.id || this.config.src === 'db') {
+      editBtn = utils.strToEl(button({
         title: 'Edit metadata',
         icon: svg.pencilSquareMini,
         attrs: `@click='toggleRadio("edit")' x-show='isRadioValue("current")'`
-    }))
-    editBtn.addEventListener('click', () => {
-      this.form.querySelectorAll(this.inputSelector).forEach(i => {
-        if (i.getAttribute('contenteditable')) {
-          i.setAttribute('contenteditable', "true")
-        } else if (i.getAttribute('type') === 'editor') {
-          Quill.find(i.querySelector('.ql-container')).enable(true)
-        } else {
-          i.removeAttribute('readonly')
-        }
+      }))
+      editBtn.addEventListener('click', () => {
+        this.form.querySelectorAll(this.inputSelector).forEach(i => {
+          if (i.getAttribute('contenteditable')) {
+            i.setAttribute('contenteditable', "true")
+          } else if (i.getAttribute('type') === 'editor') {
+            Quill.find(i.querySelector('.ql-container')).enable(true)
+          } else {
+            i.removeAttribute('readonly')
+          }
+        })
       })
-    })
-    nav.appendChild(editBtn)
+      nav.appendChild(editBtn)
 
-    const backBtn = utils.strToEl(button({
-        title: 'Go back',
-        icon: svg.arrowUturnLeftMini,
-        attrs: `@click='toggleRadio("current")' x-show='isRadioValue("edit")'`
-    }))
-    backBtn.addEventListener('click', () => {
-      this.form.querySelectorAll(this.inputSelector).forEach(i => {
-        const name = i.getAttribute('name')
-        if (!name || !(name in this.metadata)) return
-        
-        const type = i.getAttribute('type')
-        const target = this.form.querySelector(`[name="${name}"]:not(input):not([type="editor"])`)
-        const value = this.metadata[name]
-
-        if (type === 'editor') {
-          const quill = Quill.find(i.querySelector('.ql-container'))
-          quill.root.innerHTML = value
-          quill.enable(false)
-        } else if (i.getAttribute('contenteditable')) {
-          i.setAttribute('contenteditable', 'false')
-          i.innerHTML = value
-        } else {
-          i.setAttribute('readonly', 'true')
-          i.value = type === 'file' ? '' : value
+      backBtn = utils.strToEl(button({
+          title: 'Go back',
+          icon: svg.arrowUturnLeftMini,
+          attrs: `@click='toggleRadio("current")' x-show='isRadioValue("edit")'`
+      }))
+      backBtn.addEventListener('click', () => {
+        this.form.querySelectorAll(this.inputSelector).forEach(i => {
+          const name = i.getAttribute('name')
+          if (!name || !(name in this.metadata)) return
           
-          if (type === 'file') {
-            target.src = value
-            Alpine.$data(target).show = value !== this.defaultMetadata[name]
+          const type = i.getAttribute('type')
+          const target = this.form.querySelector(`[name="${name}"]:not(input):not([type="editor"])`)
+          const value = this.metadata[name]
+  
+          if (type === 'editor') {
+            const quill = Quill.find(i.querySelector('.ql-container'))
+            quill.root.innerHTML = value
+            quill.enable(false)
+          } else if (i.getAttribute('contenteditable')) {
+            i.setAttribute('contenteditable', 'false')
+            i.innerHTML = value
+          } else {
+            i.setAttribute('readonly', 'true')
+            i.value = type === 'file' ? '' : value
+            
+            if (type === 'file') {
+              target.src = value
+              Alpine.$data(target).show = value !== this.defaultMetadata[name]
+            }
           }
-        }
-
+  
+        })
       })
-    })
-    nav.appendChild(backBtn)
+      nav.appendChild(backBtn)
 
-    const saveBtn = utils.strToEl(button({
-        title: 'Save changes',
-        icon: svg.checkCircleMini,
-        attrs: `@click='toggleRadio("current")' x-show='isRadioValue("edit")'`
-    }))
-    saveBtn.addEventListener('click', async () => {
-      for (const i of this.form.querySelectorAll(this.inputSelector)) {
-
-        const isInputEl = !i.getAttribute('contenteditable')
+      saveBtn = utils.strToEl(button({
+          title: 'Save changes',
+          icon: svg.checkCircleMini,
+          attrs: `@click='toggleRadio("current")' x-show='isRadioValue("edit")'`
+      }))
+      saveBtn.addEventListener('click', async () => {
+        for (const i of this.form.querySelectorAll(this.inputSelector)) {
   
-        if (isInputEl) {
-          i.setAttribute('readonly', 'true')
-        } else {
-          i.setAttribute('contenteditable', 'false')
+          const isInputEl = !i.getAttribute('contenteditable')
+    
+          if (isInputEl) {
+            i.setAttribute('readonly', 'true')
+          } else {
+            i.setAttribute('contenteditable', 'false')
+          }
+    
+          const name = i.getAttribute('name')
+          if (!name || !(name in this.metadata)) continue
+    
+          const type = i.getAttribute('type')
+          const target = this.form.querySelector(`[name="${name}"]:not(input):not([type="editor"])`)
+    
+          let value = isInputEl ? type === 'file' ? target.src : i.value : i.innerHTML
+          
+          if (type === 'editor') {
+            const quill = Quill.find(i.querySelector('.ql-container'))
+            value = quill.root.innerHTML
+            quill.enable(false)
+          } else if (type === 'file') {
+            i.value = ''
+          } else if (typeof value === 'string') {
+            value = utils.removeWhitespace(value)
+  
+            if (!isInputEl && i.textContent === '') {
+              i.innerHTML = value = this.defaultMetadata[name]            
+            }
+    
+            if (type === 'url') {
+              target.href = value
+              target.innerText = utils.getBaseURL(value)
+            }
+  
+            if (type === 'email') {
+              target.href = `mailto:${value}`
+              target.innerText = value
+            }
+          }
+    
+          if (value === this.metadata[name]) continue
+          map.getControls('settings').updateConfig(['metadata', name], value)
         }
-  
-        const name = i.getAttribute('name')
-        if (!name || !(name in this.metadata)) continue
-  
-        const type = i.getAttribute('type')
-        const target = this.form.querySelector(`[name="${name}"]:not(input):not([type="editor"])`)
-  
-        let value = isInputEl ? type === 'file' ? target.src : i.value : i.innerHTML
-        
-        if (type === 'editor') {
-          const quill = Quill.find(i.querySelector('.ql-container'))
-          value = quill.root.innerHTML
-          quill.enable(false)
-        } else if (type === 'file') {
-          i.value = ''
-        } else if (typeof value === 'string') {
-          value = utils.removeWhitespace(value)
-
-          if (!isInputEl && i.textContent === '') {
-            i.innerHTML = value = this.defaultMetadata[name]            
-          }
-  
-          if (type === 'url') {
-            target.href = value
-            target.innerText = utils.getBaseURL(value)
-          }
-
-          if (type === 'email') {
-            target.href = `mailto:${value}`
-            target.innerText = value
-          }
-        }
-  
-        if (value === this.metadata[name]) continue
-        map.getControls('settings').updateConfig(['metadata', name], value)
-      }
-    })
-    nav.appendChild(saveBtn)
-  
-    let collapseBtn
+      })
+      nav.appendChild(saveBtn)
+    }
+    
     if (this.config.id) {
       collapseBtn = utils.strToEl(button({
         title: 'Toggle details',
