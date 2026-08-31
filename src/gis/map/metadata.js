@@ -80,13 +80,13 @@ export default class MetadataControl {
       }
 
       utils.appendBinding(i, ':class', `
-        ['bg-'+color+'-500/50! p-2!']: isRadioValue("edit")
+        ['bg-'+color+'-600/50! p-2!']: isRadioValue("edit")
       `)
     })
 
     form.querySelectorAll('.overflow-auto').forEach(i => {
       utils.appendBinding(i , ':class', `
-        ['scrollbar-thumb-'+color+'-500/10!']: true  
+        ['scrollbar-thumb-'+color+'-600/10!']: true  
       `)
     })
 
@@ -290,7 +290,7 @@ export default class MetadataControl {
 
     const logoLabel = document.createElement('label')
     logoLabel.innerText = '📁'
-    logoLabel.setAttribute(':class', `{ ['bg-'+color+'-500/50!']: true, ['bg-'+color+'-100/100! dark:bg-'+color+'-950/100! enabled:hover:bg-'+color+'-500/50!']: !(true) }`)
+    logoLabel.setAttribute(':class', `{ ['bg-'+color+'-600/50!']: true, ['bg-'+color+'-200/100! dark:bg-'+color+'-950/100! enabled:hover:bg-'+color+'-600/50!']: !(true) }`)
     logoLabel.className = `w-7vh flex justify-center items-center gap-2 rounded py-1 px-2 dark:text-white cursor-pointer grow`
     logoInputContainer.appendChild(logoLabel)
     
@@ -501,7 +501,7 @@ export default class MetadataControl {
     descInput.setAttribute('name', 'description')
     descInput.setAttribute('x-show', 'show')
     descInput.setAttribute(':class', `{
-      ['scrollbar-thumb-'+color+'-500/10!']: true  
+      ['scrollbar-thumb-'+color+'-600/10!']: true  
     }`)
     container.appendChild(descInput)
 
@@ -524,7 +524,7 @@ export default class MetadataControl {
     const descToolbar = descInput.querySelector('.ql-toolbar')
     descToolbar.setAttribute('x-show', 'isRadioValue("edit")')
     utils.appendBinding(descToolbar.querySelector('.ql-picker-options'), ':class', `
-      ['bg-'+color+'-100/50! dark:bg-'+color+'-950/50!']: true
+      ['bg-'+color+'-200/50! dark:bg-'+color+'-950/50!']: true
     `)
   }
 

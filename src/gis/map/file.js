@@ -67,6 +67,7 @@ export class FileControl {
         return [
             {
                 // label: 'Current',
+                collapsible: false,
                 buttons: [
                     {
                         title: 'Save as new map',

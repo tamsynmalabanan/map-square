@@ -10,34 +10,38 @@ export default (menu) => {
         groupContainer.classList.add('flex', 'flex-col', 'gap-1')
         container.appendChild(groupContainer)
         
-        const header = document.createElement('div')    
-        header.classList.add('flex', 'flex-nowrap', 'justify-between', 'gap-1', 'cursor-pointer')
-        header.setAttribute('@click', `toggleAccordion(${groupIndex})`)
-        groupContainer.appendChild(header)
+        if (group.collapsible !== false) {
+            const header = document.createElement('div')    
+            header.classList.add('flex', 'flex-nowrap', 'justify-between', 'gap-1', 'cursor-pointer')
+            header.setAttribute('@click', `toggleAccordion(${groupIndex})`)
+            groupContainer.appendChild(header)
+    
+            const label = document.createElement('span')
+            label.innerText = group.label || ''
+            header.appendChild(label)
 
-        const label = document.createElement('span')
-        label.innerText = group.label || ''
-        header.appendChild(label)
-
-        const collapse = document.createElement('span')
-        collapse.classList.add(
-            'grid', 
-            'place-items-center', 
-            'rounded!', 
-            'focus:rounded!', 
-            'active:rounded!', 
-            'size-[15px]!', 
-            'opacity-25', 
-            'hover:opacity-100'
-        )
-        collapse.setAttribute('x-html', `isActiveSection(${groupIndex}) ? svg.chevronUpMini : svg.chevronDownMini`)
-        header.appendChild(collapse)
+            const collapse = document.createElement('span')
+            collapse.classList.add(
+                'grid', 
+                'place-items-center', 
+                'rounded!', 
+                'focus:rounded!', 
+                'active:rounded!', 
+                'size-[15px]!', 
+                'opacity-25', 
+                'hover:opacity-100'
+            )
+            collapse.setAttribute('x-html', `isActiveSection(${groupIndex}) ? svg.chevronUpMini : svg.chevronDownMini`)
+            header.appendChild(collapse)
+        }
         
         const buttonsContainer = document.createElement('div')
         buttonsContainer.classList.add('grid', 'grid-cols-4', 'gap-1')
-        buttonsContainer.setAttribute('x-show', `isActiveSection(${groupIndex})`)
-        if (group.radio) {
-            buttonsContainer.setAttribute('x-data', `radioGroup({value:'${group.radio}'})`)
+        if (group.collapsible !== false) {
+            buttonsContainer.setAttribute('x-show', `isActiveSection(${groupIndex})`)
+            if (group.radio) {
+                buttonsContainer.setAttribute('x-data', `radioGroup({value:'${group.radio}'})`)
+            }
         }
         groupContainer.appendChild(buttonsContainer)
 

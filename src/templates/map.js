@@ -19,7 +19,7 @@ export default ({
     x-id="['map']" 
     :id="$id('map')" 
     :class="{
-      ['bg-'+color+'-100/90! dark:bg-'+color+'-950/90!']: true,
+      ['bg-'+color+'-200/100! dark:bg-'+color+'-950/100!']: true,
     }"
     class="size-full z-0" 
     x-data="mapApp({params:'${utils.objToStr(params)}'})"

@@ -86,7 +86,6 @@ export class SettingsControl {
                             this.configBasemap()
                         },
                     },
-                    
                     {
                         title: 'Toggle hillshade',
                         icon: '🏔️',
@@ -140,20 +139,11 @@ export class SettingsControl {
                             console.log('open settings')
                         },
                     },
-                    
                 ]
             },
             {
                 label: 'Bookmark',
                 buttons: [
-                    {
-                        title: 'Zoom to bookmarked view',
-                        icon: '🔍',
-                        highlight: null,
-                        handler: (event) => {
-                            this.goToBookmark()
-                        },
-                    },
                     {
                         title: 'Set new bookmarked view',
                         icon: '🔖',
@@ -212,21 +202,21 @@ export class SettingsControl {
                 }]
             },
             {
-                label: 'Color Scheme',
-                radio: settings.colorScheme,
+                label: 'Color Theme',
+                radio: settings.colorTheme,
                 buttons: Object.entries(displaySettings.colorOptions).map(([name, hex]) => {
                     return {
                         title: utils.toTitleCase(name),
-                        icon: `<div class="bg-${name}-500/100! size-[15px]! rounded!"></div>`,
+                        icon: `<div class="bg-${name}-600/100! size-[15px]! rounded!"></div>`,
                         value: name,
                         handler: async (event) => {
-                            if (name !== displaySettings.colorScheme) {
-                                displaySettings.changeColorScheme(name)
+                            if (name !== displaySettings.colorTheme) {
+                                displaySettings.changeColorTheme(name)
                             }
                             
                             await this.updateConfig([
                                 'settings', 
-                                'colorScheme', 
+                                'colorTheme', 
                             ], name, {theme: map.getTheme()})
                         },
                     }
@@ -244,32 +234,6 @@ export class SettingsControl {
             'settings', 
             'unit', 
         ], value, {theme: map.getTheme()})
-    }
-
-    goToBookmark() {
-        const map = this._map
-        const settings = map.getTheme().settings
-    
-        if (map._locked) return
-
-        const bookmark = settings.bookmark
-        const extent = bookmark.extents[bookmark.active]
-
-        if (bookmark.active === 'centroid') {
-            map.setZoom(extent.params.zoom)
-            map.setCenter(Array('lng','lat').map(i => extent.params[i]))
-        } 
-        
-        if (bookmark.active === 'bbox') {
-            map.fitBounds(Array('w','s','e','n').map(i => extent.params[i]), {
-                padding: extent.params.padding,
-                maxZoom: extent.params.maxZoom,
-                duration: 0
-            })
-        }
-
-        map.setPitch(bookmark.pitch)
-        map.setBearing(bookmark.bearing)
     }
 
     async updateBookmark({
@@ -423,13 +387,13 @@ export class SettingsControl {
             displaySettings.toggleDarkMode()
         }
 
-        if (settings.colorScheme !== displaySettings.colorScheme) {
-            displaySettings.changeColorScheme(settings.colorScheme)
+        if (settings.colorTheme !== displaySettings.colorTheme) {
+            displaySettings.changeColorTheme(settings.colorTheme)
         }
 
         map.setProjection({type:settings.projection})
     
-        this.goToBookmark()
+        controls.zoomToBookmark.goToBookmark()
 
         await this.configScaleBarUnit(settings.unit)
 
@@ -440,7 +404,7 @@ export class SettingsControl {
             controls.terrain.toggleTerrain()
         }
         
-        const systemLayers = map.getControls('legend').getAllSystemLayerNames()
+        const systemLayers = controls.legend.getAllSystemLayerNames()
         theme.layers.forEach(layer => {
             if (systemLayers.includes(layer.id)) return
             map.addLayer(layer)  

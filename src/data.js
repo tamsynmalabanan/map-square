@@ -3,7 +3,7 @@ import { invert, parseInt } from "lodash"
 export default function registerData() {
     Alpine.data('app', () => ({
         get color() {
-            return Alpine.store('displaySettings').colorScheme
+            return Alpine.store('displaySettings').colorTheme
         },
 
         init() {

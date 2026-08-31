@@ -1,6 +1,7 @@
 import maplibregl from 'maplibre-gl';
 import * as svg from '../../svg.js';
 import FitToWorldControl from './fitToWorld.js';
+import ZoomToBookmarkControl from './zoomToBookmark.js';
 import PlaceSearchControl from './placeSearch.js';
 import MetadataControl from './metadata.js';
 import { LegendControl } from './legend.js';
@@ -76,8 +77,8 @@ export default class HandleControls {
                 constructor: maplibregl.ScaleControl,
                 elements: {
                     '.maplibregl-ctrl-scale': {
-                        addClass: ['border-gray-950/100!', 'dark:border-gray-100/100!'],
-                        removeClass: ['border-1!', 'dark:border-gray-100/10!', 'border-gray-500/50!'],
+                        addClass: ['border-gray-950/100!', 'dark:border-gray-200/100!'],
+                        removeClass: ['border-1!', 'dark:border-gray-200/10!', 'border-gray-600/50!'],
                     }
                 },
             },
@@ -97,7 +98,7 @@ export default class HandleControls {
                     },
                     '.maplibregl-ctrl-attrib-button': {
                         addClass: ['dark:invert', 'focus:shadow-none!'],
-                        classBindings: [`['enabled:hover:bg-'+color+'-500/50!']: false`]
+                        classBindings: [`['enabled:hover:bg-'+color+'-600/50!']: false`]
                     },
                 },
             },
@@ -125,6 +126,12 @@ export default class HandleControls {
                 constructor: FitToWorldControl,
                 elements: {
                     '.maplibregl-ctrl-fit-to-world': {}
+                },
+            },
+            zoomToBookmark: {
+                constructor: ZoomToBookmarkControl,
+                elements: {
+                    '.maplibregl-ctrl-zoom-to-bookmark': {}
                 },
             },
             file: {
@@ -162,7 +169,7 @@ export default class HandleControls {
                 const container = control._controlContainer ?? control._container
                 container.classList.add('dark:text-white!')
                 container.setAttribute(':class', `{
-                    ['bg-'+color+'-100/100! dark:bg-'+color+'-950/100!']: true,
+                    ['bg-'+color+'-200/100! dark:bg-'+color+'-950/100!']: true,
                 }`)
 
                 control.getContainer = () => {
@@ -179,7 +186,7 @@ export default class HandleControls {
                     
                     Array(
                         ...(el.tagName.toLowerCase() == 'button' ? [
-                            `['enabled:hover:bg-'+color+'-500/50! rounded! focus:rounded! hover:rounded!']: true`,
+                            `['enabled:hover:bg-'+color+'-600/50! rounded! focus:rounded! hover:rounded!']: true`,
                         ] : []), 
                         ...(params.classBindings ?? [])
                     ).forEach(exp => {
@@ -189,7 +196,7 @@ export default class HandleControls {
                     el.classList.add(
                         'grid', 
                         'place-items-center', 
-                        'dark:border-gray-100/10!', 
+                        'dark:border-gray-200/10!', 
                         ...(params.addClass??[])
                     )
 

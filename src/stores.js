@@ -10,11 +10,11 @@ export default function registerStores() {
             }))
         },
     
-        changeColorScheme(color) {
-            this.colorScheme = color
+        changeColorTheme(color) {
+            this.colorTheme = color
         },
 
-        colorScheme: Alpine.$persist('teal'),
+        colorTheme: Alpine.$persist('teal'),
         
         colorOptions: {
             'yellow': '#f0b100',
@@ -25,7 +25,7 @@ export default function registerStores() {
         },
 
         get hexColor() {
-            return this.colorOptions[this.colorScheme]
+            return this.colorOptions[this.colorTheme]
         },
 
         get hslaColor() {

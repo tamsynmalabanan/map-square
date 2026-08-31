@@ -158,10 +158,15 @@ export default class Map extends maplibregl.Map {
             position: 'top-right',
             order: 4,
           },
-          geolocate: {
+          zoomToBookmark: {
             active: true,
             position: 'top-right',
             order: 5,
+          },
+          geolocate: {
+            active: true,
+            position: 'top-right',
+            order: 6,
             options: {
                 positionOptions: {
                     enableHighAccuracy: true
@@ -173,7 +178,7 @@ export default class Map extends maplibregl.Map {
           fullscreen: {
             active: true,
             position: 'top-right',
-            order: 6,
+            order: 7,
           },
           
           file: {
@@ -215,7 +220,7 @@ export default class Map extends maplibregl.Map {
           projection: 'mercator', // mercator or globe,
           terrain: false,
           darkMode: displaySettings.darkMode,
-          colorScheme: displaySettings.colorScheme,
+          colorTheme: displaySettings.colorTheme,
           bookmark: {
             active: 'centroid',
             extents: {
@@ -375,7 +380,7 @@ export default class Map extends maplibregl.Map {
     const settings = theme.settings ??= cloneSettings
     settings.locked ??= cloneSettings.locked
     settings.darkMode ??= cloneSettings.darkMode
-    settings.colorScheme ??= cloneSettings.colorScheme
+    settings.colorTheme ??= cloneSettings.colorTheme
 
     const bookmark = settings.bookmark ??= cloneSettings.bookmark
     bookmark.pitch ??= cloneSettings.bookmark.pitch

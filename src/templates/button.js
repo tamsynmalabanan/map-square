@@ -17,14 +17,14 @@ export default ({
       x-id="['button']" 
       :id="$id('button')"
       :class="{
-        ['bg-'+color+'-500/50!']: ${highlightExp},
-        ['bg-'+color+'-100/100! dark:bg-'+color+'-950/100! enabled:hover:bg-'+color+'-500/50!']: !(${highlightExp})
+        ['bg-'+color+'-600/50!']: ${highlightExp},
+        ['bg-'+color+'-200/100! dark:bg-'+color+'-950/100! enabled:hover:bg-'+color+'-600/50!']: !(${highlightExp})
       }"
       class="
         flex 
         justify-center 
         items-center
-        border-gray-500/10!
+        border-gray-600/10!
         gap-2 
         rounded 
         py-1
