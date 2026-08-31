@@ -1,5 +1,6 @@
 import Alpine from "alpinejs";
-import button from "../../templates/button.js"
+import button from "../../templates/button.js";
+import menu from '../../templates/menu.js';
 import modal from '../../templates/modal.js'; 
 import _ from 'lodash';
 
@@ -28,84 +29,7 @@ export class SettingsControl {
         content.setAttribute('@click.outside', 'closeCollapse')
         container.appendChild(content)
 
-        const menu = document.createElement('div')
-        menu.classList.add('m-1', 'flex', 'flex-col', 'gap-2')
-        menu.setAttribute('x-data', `accordionGroup({value:0})`)
-        content.appendChild(menu)
-
-        this.getMenuButtons().forEach((group, groupIndex) => {
-            const groupContainer = document.createElement('div')
-            groupContainer.classList.add('flex', 'flex-col', 'gap-1')
-            menu.appendChild(groupContainer)
-            
-            const header = document.createElement('div')    
-            header.classList.add('flex', 'flex-nowrap', 'justify-between', 'gap-1', 'cursor-pointer')
-            header.setAttribute('@click', `toggleAccordion(${groupIndex})`)
-            groupContainer.appendChild(header)
-
-            const label = document.createElement('span')
-            label.innerText = group.label
-            header.appendChild(label)
-
-            const collapse = document.createElement('span')
-            collapse.classList.add(
-                'grid', 
-                'place-items-center', 
-                'rounded!', 
-                'focus:rounded!', 
-                'active:rounded!', 
-                'size-[15px]!', 
-                'opacity-25', 
-                'hover:opacity-100'
-            )
-            collapse.setAttribute('x-html', `isActiveSection(${groupIndex}) ? svg.chevronUpMini : svg.chevronDownMini`)
-            header.appendChild(collapse)
-            
-            const buttonsContainer = document.createElement('div')
-            buttonsContainer.classList.add('grid', 'grid-cols-4', 'gap-1')
-            buttonsContainer.setAttribute('x-show', `isActiveSection(${groupIndex})`)
-            if (group.radio) {
-                buttonsContainer.setAttribute('x-data', `radioGroup({value:'${group.radio}'})`)
-            }
-            groupContainer.appendChild(buttonsContainer)
-
-            group.buttons.forEach((params, btnIndex) => {
-                const dynamicBtn = (
-                    (!group.radio && typeof params.highlight === 'boolean')
-                    ? `highlight${groupIndex}${btnIndex}`
-                    : false
-                )
-                const menuBtn = utils.strToEl(button({
-                    title: params.title,
-                    icon: params.icon,
-                    classStr: 'grid place-items-center border-none! focus:rounded!',
-                    ...( dynamicBtn ? {
-                        attrs: `
-                            x-data="highlightButton({
-                                key: '${dynamicBtn}', 
-                                value: ${params.highlight}
-                            })" 
-                            @click="toggleHighlight({targetKey: '${dynamicBtn}'})"
-                        `,
-                        highlightExp: dynamicBtn,
-                    } : {}),
-                    ...( group.radio && params.value ? {
-                        attrs: `@click="toggleRadio('${params.value}')"`,
-                        highlightExp: `isRadioValue('${params.value}')`,
-                    } : {}),
-                }))
-                menuBtn.addEventListener(dynamicBtn ? 'highlightToggled' : 'click', (event) => {
-                    try {
-                        params.handler(event)
-                    } catch {
-                        if (!dynamicBtn && !group.radio) return
-                        const data = Alpine.$data(menuBtn)
-                        data[data.key] = data.previousValue
-                    }
-                })
-                buttonsContainer.appendChild(menuBtn)
-            })
-        })
+        content.appendChild(menu(this.getMenuButtons()))
 
         const nav = document.createElement('div')
         nav.classList.add('grid', 'justify-items-stretch', 'p-1')
@@ -289,7 +213,7 @@ export class SettingsControl {
             },
             {
                 label: 'Color Scheme',
-                radio: displaySettings.colorScheme,
+                radio: settings.colorScheme,
                 buttons: Object.entries(displaySettings.colorOptions).map(([name, hex]) => {
                     return {
                         title: utils.toTitleCase(name),

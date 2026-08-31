@@ -32,6 +32,7 @@ export default class Map extends maplibregl.Map {
     })
 
     this.getConfig = () => config
+    
     this.getTheme = () => {
       let theme = config.themes.find(i => i.active)
       if (!theme && config.themes.length) {

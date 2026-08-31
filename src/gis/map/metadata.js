@@ -3,6 +3,7 @@ import * as svg from '../../svg.js'
 import button from '../../templates/button.js';
 import Map from './map.js'
 import { create } from 'lodash';
+import { format } from 'maplibre-gl';
 
 export default class MetadataControl {
   onAdd(map) {
@@ -55,9 +56,9 @@ export default class MetadataControl {
       details.appendChild(createdSpan)
 
       this.addDescriptionSection(details)
-      this.addReferenceSection(details)
       this.addAttrSection(details)
       this.addAcknowledgementsSection(details)
+      this.addReferenceSection(details)
 
       details.querySelectorAll('span[contenteditable]').forEach(element => {
         element.classList.add(
@@ -530,7 +531,7 @@ export default class MetadataControl {
     
     const referencesContainer = document.createElement('div')
     referencesContainer.classList.add('flex', 'flex-col', 'gap-1')
-    referencesContainer.setAttribute('x-data', '{show:false}')
+    referencesContainer.setAttribute('x-data', '{show:true}')
     parent.appendChild(referencesContainer)
 
     const referencesHeader = document.createElement('span')
@@ -563,11 +564,11 @@ export default class MetadataControl {
       titleIcon.innerText = `🗺️`  
       titleContainer.appendChild(titleIcon)
   
+      const {title, creator, dateCreated} = reference.metadata
+
       const mapLink = document.createElement('a')
-      mapLink.innerText = `${reference.metadata.title} (${reference.metadata.creator}, ${(new Date(reference.metadata.dateCreated)).toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit"
+      mapLink.innerText = `${title} (${creator}, ${utils.formatDate(new Date(dateCreated), {
+        numeric: true,
       })})`
       mapLink.setAttribute('href', `${utils.getBaseURL(window.location.href)}?src=${reference.src}&id=${reference.id}`)
       mapLink.setAttribute('target', '_blank')

@@ -1,3 +1,4 @@
+
 // save as new map 
 // - if id already exists, change id
 // - after saving, add get params to url, refresh page
@@ -8,6 +9,8 @@ import Alpine from "alpinejs";
 import button from "../../templates/button.js"
 import modal from '../../templates/modal.js'; 
 import { values } from "lodash";
+import menu from '../../templates/menu.js';
+import { saveAs } from "file-saver";
 
 export class FileControl {
     constructor(options) {
@@ -34,70 +37,8 @@ export class FileControl {
         content.setAttribute('@click.outside', 'closeCollapse')
         container.appendChild(content)
 
-        const menu = document.createElement('div')
-        menu.classList.add('m-1', 'flex', 'flex-col', 'gap-2')
-        content.appendChild(menu)
+        content.appendChild(menu(this.getMenuButtons()))
 
-        this.getMenuButtons().forEach((group, groupIndex) => {
-            const groupContainer = document.createElement('div')
-            groupContainer.classList.add('flex', 'flex-col', 'gap-1')
-            menu.appendChild(groupContainer)
-            
-            const header = document.createElement('div')    
-            header.classList.add('flex', 'flex-nowrap', 'justify-between', 'gap-1', 'cursor-pointer')
-            groupContainer.appendChild(header)
-
-            const label = document.createElement('span')
-            label.innerText = group.label || ''
-            header.appendChild(label)
-
-            const buttonsContainer = document.createElement('div')
-            buttonsContainer.classList.add('flex', 'flex-wrap', 'justify-items-start', 'gap-1')
-            if (group.radio) {
-                buttonsContainer.setAttribute('x-data', `radioGroup({value:'${group.radio}'})`)
-            }
-            groupContainer.appendChild(buttonsContainer)
-
-            group.buttons.forEach((params, btnIndex) => {
-                const dynamicBtn = (
-                    (!group.radio && typeof params.highlight === 'boolean')
-                    ? `highlight${groupIndex}${btnIndex}`
-                    : false
-                )
-                const menuBtn = utils.strToEl(button({
-                    title: params.title,
-                    icon: params.href ? `<a href='${params.href}'>${params.icon}</a>` : params.icon,
-                    classStr: 'grid place-items-center border-none! rounded! focus:rounded!',
-                    ...( dynamicBtn ? {
-                        attrs: `
-                            x-data="highlightButton({
-                                key: '${dynamicBtn}', 
-                                value: ${params.highlight}
-                            })" 
-                            @click="toggleHighlight({targetKey: '${dynamicBtn}'})"
-                        `,
-                        highlightExp: dynamicBtn,
-                    } : {}),
-                    ...(group.radio && params.value ? {
-                        attrs: `@click="toggleRadio('${params.value}')"`,
-                        highlightExp: `isRadioValue('${params.value}')`,
-                    } : {}),
-                }))
-
-                if (params.disabled) {
-                    menuBtn.disabled = true
-                }
-                
-                if (params.handler) {
-                    menuBtn.addEventListener(dynamicBtn ? 'highlightToggled' : 'click', async (event) => {
-                        await params.handler(event)
-                    })
-                }
-
-                buttonsContainer.appendChild(menuBtn)
-            })
-        })
-        
         const nav = document.createElement('div')
         nav.classList.add('grid', 'justify-items-stretch', 'p-1')
         content.appendChild(nav)
@@ -127,14 +68,8 @@ export class FileControl {
         
         return [
             {
-                // label: 'Save Menu',
+                label: 'Current',
                 buttons: [
-                    {
-                        title: 'Open a new map',
-                        icon: '➕',
-                        highlight: null,
-                        href: utils.getBaseURL(window.location.href)
-                    },
                     {
                         title: 'Save as new map',
                         icon: '💾',
@@ -158,7 +93,6 @@ export class FileControl {
                             title: 'Save changes to map',
                             icon: `⬆️`,
                             highlight: null,
-                            disabled: !config.id,
                             handler: async (event) => {
                                 await map.getControls('settings').saveConfig()
                             },
@@ -166,16 +100,78 @@ export class FileControl {
                         {
                             title: 'Autosave map changes',
                             icon: `🔄️`,
-                            highlight: config.autosave && config.id !== null,
-                            disabled: !config.id,
+                            highlight: config.autosave,
                             handler: async (event) => {
                                 await map.getControls('settings').updateConfig(['autosave'], event.detail.value)
                             },
                         },
+                        ...(Array('db', 'file').includes(config.src) ? [
+                            {
+                                title: 'Copy map URL',
+                                icon: `🔗`,
+                                highlight: null,
+                                handler: (event) => {
+                                    navigator.clipboard.writeText(window.location.href)
+                                },
+                            }
+                        ] : [])
                     ] : [])
                 ]
             },
+            {
+                label: 'Open',
+                buttons: [
+                    {
+                        title: 'Open a new map',
+                        icon: '➕',
+                        highlight: null,
+                        href: utils.getBaseURL(window.location.href)
+                    },
+                    {
+                        title: 'Open a map file',
+                        icon: '📁',
+                        highlight: null,
+                    },
+                ]
+            },
+            {
+                label: 'Export',
+                buttons: [
+                    {
+                        title: 'Download Map',
+                        icon: '⬇️',
+                        highlight: null,
+                        handler: async (event) => {
+                            await this.compressMap()
+                        },
+                    },
+                ]
+            },
         ]
+    }
+
+    async compressMap() {
+        const map = this._map
+        const config = map.getConfig()
+        const zip = new JSZip()
+
+        zip.file("config.json", JSON.stringify(config))
+
+        const dataFolder = zip.folder("data")
+        dataFolder.file("test.geojson", JSON.stringify({
+            type: "FeatureCollection",
+            features: []
+        }, null, 2))
+
+        const content = await zip.generateAsync({ type: "blob" })
+        const {dateCreated, title, dateUpdated} = config.metadata
+        const filename = Array(
+            utils.formatDate(new Date(dateCreated), {filename: true}),
+            title,
+            `asof${utils.formatDate(new Date(dateUpdated), {filename: true})}`,
+        ).map(i => i.replaceAll(' ', '_')).join('_')
+
+        saveAs(content, filename)
     }
 
     handleUpdates() {

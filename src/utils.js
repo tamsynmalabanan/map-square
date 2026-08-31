@@ -355,11 +355,22 @@ export const formatRelativeDate = (date) => {
   }
 }
 
-export const formatDate = (date, {time=false}={}) => {
-    return date.toLocaleDateString("en-US", {
+export const formatDate = (date, {
+    filename=false,
+    time=false,
+    numeric=false,
+}={}) => {
+    if (filename) {
+        const year = String(date.getFullYear())
+        const month = String(date.getMonth() + 1).padStart(2, "0")
+        const day = String(date.getDate()).padStart(2, "0")
+        return `${year}${month}${day}`
+    }
+
+    return date.toLocaleString("en-US", {
         year: "numeric",
-        month: "long",
-        day: "numeric",
+        month: numeric ? "2-digit" : "long",
+        day: numeric ? "2-digit" : "numeric",
         ...(time ? {
             hour: "numeric",
             minute: "2-digit",

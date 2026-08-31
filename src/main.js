@@ -19,6 +19,9 @@ import Quill from 'quill';
 window.Quill = Quill
 import 'quill/dist/quill.snow.css';
 
+import JSZip from "jszip";
+window.JSZip = JSZip
+
 import persist from '@alpinejs/persist'
 Alpine.plugin(persist)
 
