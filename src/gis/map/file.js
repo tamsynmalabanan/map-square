@@ -103,7 +103,8 @@ export class FileControl {
                                 icon: `🔄️`,
                                 highlight: config.autosave,
                                 handler: async (event) => {
-                                    await map.getControls('settings').updateConfig(['autosave'], event.detail.value)
+                                    await map.getControls('settings')
+                                    .updateConfig(['autosave'], event.detail.value)
                                 },
                             },
                      ] : []),

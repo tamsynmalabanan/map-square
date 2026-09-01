@@ -24,14 +24,14 @@ export default ({
         flex 
         justify-center 
         items-center
-        border-gray-600/10!
+        border-gray-600/25!
         gap-2 
         rounded 
         py-1
         px-2 
         dark:text-white  
         cursor-pointer
-        disabled:bg-gray-950/10!
+        disabled:bg-gray-950/25!
         ${classStr}
       "
     >

@@ -8,11 +8,11 @@ import { format } from 'maplibre-gl';
 export default class MetadataControl {
   onAdd(map) {
     this._map = map
+    this.config = map.getConfig()
+    this.metadata = this.config.metadata
+    this.defaultMetadata = Map.getDefaultConfig().metadata
 
-    const config = this.config = map.getConfig()
-    const metadata = this.metadata = config.metadata
-    const defaultMetadata = this.defaultMetadata = Map.getDefaultConfig().metadata
-    const inputSelector = this.inputSelector = 'input, textarea, [contenteditable], [type="editor"]'
+    const inputSelector = this.inputSelector = 'input, textarea, label, [contenteditable], [type="editor"]'
     
     const container = this._container = document.createElement('div')
     container.classList.add('maplibregl-ctrl','maplibregl-ctrl-group', 'sm:max-w-[80vw]', 'md:max-w-[60vw]', 'lg:max-w-[40vw]')
@@ -43,7 +43,7 @@ export default class MetadataControl {
 
     this.addTitleSection(form)
 
-    if (config.id) {
+    if (this.config.id) {
       const details = this.details = document.createElement('div')
       details.classList.add('flex', 'flex-col', 'gap-5')
       details.setAttribute('x-data', '{show:true}')
@@ -80,13 +80,13 @@ export default class MetadataControl {
       }
 
       utils.appendBinding(i, ':class', `
-        ['bg-'+color+'-600/50! p-2!']: isRadioValue("edit")
+        ['bg-'+color+'-600/25! ${i.tagName === 'LABEL' ? '' : 'p-2!'}']: isRadioValue("edit")
       `)
     })
 
     form.querySelectorAll('.overflow-auto').forEach(i => {
       utils.appendBinding(i , ':class', `
-        ['scrollbar-thumb-'+color+'-600/10!']: true  
+        ['scrollbar-thumb-'+color+'-600/25!']: true  
       `)
     })
 
@@ -176,7 +176,7 @@ export default class MetadataControl {
           const type = i.getAttribute('type')
           const target = this.form.querySelector(`[name="${name}"]:not(input):not([type="editor"])`)
     
-          let value = isInputEl ? type === 'file' ? target.src : i.value : i.innerHTML
+          let value = isInputEl ? i.value : i.innerHTML
           
           if (type === 'editor') {
             const quill = Quill.find(i.querySelector('.ql-container'))
@@ -184,6 +184,9 @@ export default class MetadataControl {
             quill.enable(false)
           } else if (type === 'file') {
             i.value = ''
+            if (i.getAttribute('accept') === 'image/*') {
+              value = target.src
+            }
           } else if (typeof value === 'string') {
             value = utils.removeWhitespace(value)
   
@@ -203,7 +206,7 @@ export default class MetadataControl {
           }
     
           if (value === this.metadata[name]) continue
-          map.getControls('settings').updateConfig(['metadata', name], value)
+          this._map.getControls('settings').updateConfig(['metadata', name], value)
         }
       })
       nav.appendChild(saveBtn)
@@ -290,7 +293,6 @@ export default class MetadataControl {
 
     const logoLabel = document.createElement('label')
     logoLabel.innerText = '📁'
-    logoLabel.setAttribute(':class', `{ ['bg-'+color+'-600/50!']: true, ['bg-'+color+'-200/100! dark:bg-'+color+'-950/100! enabled:hover:bg-'+color+'-600/50!']: !(true) }`)
     logoLabel.className = `w-7vh flex justify-center items-center gap-2 rounded py-1 px-2 dark:text-white cursor-pointer grow`
     logoInputContainer.appendChild(logoLabel)
     
@@ -501,7 +503,7 @@ export default class MetadataControl {
     descInput.setAttribute('name', 'description')
     descInput.setAttribute('x-show', 'show')
     descInput.setAttribute(':class', `{
-      ['scrollbar-thumb-'+color+'-600/10!']: true  
+      ['scrollbar-thumb-'+color+'-600/25!']: true  
     }`)
     container.appendChild(descInput)
 

@@ -48,8 +48,12 @@ export default class HandleControls {
                         const settings = map.getControls('settings')
                         if (!settings) return
                         
-                        await settings.updateConfig(['settings', 'terrain'], control.isEnabled(), {theme: map.getTheme()})
                         settings.configHillshade()
+                        await settings.updateConfig(
+                            ['settings', 'terrain'], 
+                            control.isEnabled(), 
+                            {theme: map.getTheme()}
+                        )
                     })
                 },
                 elements: {
@@ -79,7 +83,7 @@ export default class HandleControls {
                 elements: {
                     '.maplibregl-ctrl-scale': {
                         addClass: ['border-gray-950/100!', 'dark:border-gray-200/100!'],
-                        removeClass: ['border-1!', 'dark:border-gray-200/10!', 'border-gray-600/50!'],
+                        removeClass: ['border-1!', 'dark:border-gray-200/25!', 'border-gray-600/50!'],
                     }
                 },
             },
@@ -198,8 +202,8 @@ export default class HandleControls {
                     el.classList.add(
                         'grid', 
                         'place-items-center', 
-                        'dark:border-gray-200/10!', 
-                        'disabled:bg-gray-950/10!',
+                        'dark:border-gray-200/25!', 
+                        'disabled:bg-gray-950/25!',
                         ...(params.addClass??[])
                     )
 

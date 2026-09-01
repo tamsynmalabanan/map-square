@@ -506,10 +506,10 @@ export default class Map extends maplibregl.Map {
     this.touchZoomRotate.disable();
     this._locked = true
 
-    // Array('nav', 'fitToWorld', 'zoomToBookmark').forEach(i => {
-    //   this.getControls(i).getContainer().querySelectorAll('button')
-    //   .forEach(btn => btn.disabled = true)
-    // })
+    Array('nav', 'fitToWorld', 'zoomToBookmark').forEach(i => {
+      this.getControls(i).getContainer().querySelectorAll('button')
+      .forEach(btn => btn.disabled = true)
+    })
   }
   
   unlock() {
@@ -520,9 +520,9 @@ export default class Map extends maplibregl.Map {
     this.touchZoomRotate.enable();
     this._locked = false
     
-    // Array('nav', 'fitToWorld', 'zoomToBookmark').forEach(i => {
-    //   this.getControls(i).getContainer().querySelectorAll('button')
-    //     .forEahc(btn => btn.disabled = false)
-    // })
+    Array('nav', 'fitToWorld', 'zoomToBookmark').forEach(i => {
+      this.getControls(i).getContainer().querySelectorAll('button')
+        .forEach(btn => btn.disabled = false)
+    })
   }
 }

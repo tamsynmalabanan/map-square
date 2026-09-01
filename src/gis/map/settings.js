@@ -126,11 +126,11 @@ export class SettingsControl {
                         highlight: settings.locked,
                         handler: async (event) => {
                             const value = event.detail.value
+                            value ? map.lock() : map.unlock()
                             await this.updateConfig([
                                 'settings', 
                                 'locked', 
                             ], value, {theme: map.getTheme()})
-                            value ? map.lock() : map.unlock()
                         },
                     },
                     {

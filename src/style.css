@@ -2,7 +2,7 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-@source inline("{bg,dark:bg,enabled:hover:bg,enabled:bg,hover:bg,scrollbar-track,scrollbar-thumb}-{yellow,teal,blue,pink,gray}-{200,600,950}/{10,50,100}!");
+@source inline("{bg,dark:bg,enabled:hover:bg,enabled:bg,hover:bg,scrollbar-track,scrollbar-thumb}-{yellow,teal,blue,pink,gray}-{200,600,950}/{25,50,100}!");
 
 .dark .ql-stroke {
   stroke: white !important;

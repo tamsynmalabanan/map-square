@@ -35,7 +35,7 @@ export default ({
         <div 
           :id="$id('tabs', 'contents')"
           :class="{
-            ['bg-'+color+'-600/10!']: true,
+            ['bg-'+color+'-600/25!']: true,
           }"
           class="flex flex-col grow p-5 rounded"
         >
