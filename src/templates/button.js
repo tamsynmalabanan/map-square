@@ -31,6 +31,7 @@ export default ({
         px-2 
         dark:text-white  
         cursor-pointer
+        disabled:bg-gray-950/10!
         ${classStr}
       "
     >

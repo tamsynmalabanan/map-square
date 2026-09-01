@@ -505,8 +505,13 @@ export default class Map extends maplibregl.Map {
     this.keyboard.disable();
     this.touchZoomRotate.disable();
     this._locked = true
-  }
 
+    // Array('nav', 'fitToWorld', 'zoomToBookmark').forEach(i => {
+    //   this.getControls(i).getContainer().querySelectorAll('button')
+    //   .forEach(btn => btn.disabled = true)
+    // })
+  }
+  
   unlock() {
     this.scrollZoom.enable();
     this.doubleClickZoom.enable();
@@ -514,5 +519,10 @@ export default class Map extends maplibregl.Map {
     this.keyboard.enable();
     this.touchZoomRotate.enable();
     this._locked = false
+    
+    // Array('nav', 'fitToWorld', 'zoomToBookmark').forEach(i => {
+    //   this.getControls(i).getContainer().querySelectorAll('button')
+    //     .forEahc(btn => btn.disabled = false)
+    // })
   }
 }

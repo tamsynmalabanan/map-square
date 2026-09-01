@@ -199,6 +199,7 @@ export default class HandleControls {
                         'grid', 
                         'place-items-center', 
                         'dark:border-gray-200/10!', 
+                        'disabled:bg-gray-950/10!',
                         ...(params.addClass??[])
                     )
 

@@ -11,6 +11,8 @@ export class SettingsControl {
 
     onAdd(map) {
         this._map = map
+
+        const config = map.getConfig()
         
         const container = this._container = document.createElement('div')
         container.classList.add('maplibregl-ctrl','maplibregl-ctrl-group')
@@ -20,7 +22,7 @@ export class SettingsControl {
             title: 'Settings',
             icon: svg.cog8ToothMini,
             classStr: 'maplibregl-ctrl-settings',
-            attrs: `@click='toggleCollapse' x-show='collapsed'`
+            attrs: `@click='toggleCollapse' x-show='collapsed' ${config.id && config.src !== 'db' ? 'disabled=true' : ''}`
         })
 
         const content = document.createElement('div')
