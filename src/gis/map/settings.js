@@ -417,7 +417,7 @@ export class SettingsControl {
         }
     }
 
-    async saveConfig({date=(new Date()).toLocaleString("en-US"), timeout=250}) {
+    async saveConfig({date=(new Date()).toLocaleString("en-US"), timeout=2000}) {
         return new Promise((resolve, reject) => {
             if (this.saveTimer) {
                 clearTimeout(this.saveTimer)

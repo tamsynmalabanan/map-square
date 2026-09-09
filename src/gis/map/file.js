@@ -83,6 +83,7 @@ export class FileControl {
                             title: 'Save changes to map',
                             icon: `⬆️`,
                             highlight: null,
+                            keyboard: 'S',
                             handler: async (event) => {
                                 await map.getControls('settings').saveConfig({timeout:0})
                             },

@@ -52,7 +52,7 @@ export default (menu) => {
                 : false
             )
             const menuBtn = utils.strToEl(button({
-                title: params.title,
+                title: `${params.title}${params.keyboard? ` (CTRL+${params.keyboard})` : ''}`,
                 icon: params.href ? `<a href='${params.href}'>${params.icon}</a>` : params.icon,
                 classStr: 'grid place-items-center border-none! focus:rounded!',
                 ...( dynamicBtn ? {
@@ -76,7 +76,7 @@ export default (menu) => {
             }
 
             if (params.handler) {
-                menuBtn.addEventListener(dynamicBtn ? 'highlightToggled' : 'click', async (event) => {
+                const handler = async (event) => {
                     try {
                         await params.handler(event)
                     } catch {
@@ -84,7 +84,21 @@ export default (menu) => {
                         const data = Alpine.$data(menuBtn)
                         data[data.key] = data.previousValue
                     }
+                }
+
+                menuBtn.addEventListener(dynamicBtn ? 'highlightToggled' : 'click', async (event) => {
+                    await handler(event)    
                 })
+
+                if (params.keyboard) {
+                    document.addEventListener('keydown', async (event) => {
+                        if (!event.ctrlKey && !event.metaKey) return
+                        if (event.key.toLowerCase() !== params.keyboard.toLowerCase()) return
+                        event.preventDefault()
+                        event.stopPropagation()
+                        await handler()
+                    })
+                }
             }
 
             buttonsContainer.appendChild(menuBtn)
