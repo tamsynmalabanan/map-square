@@ -504,6 +504,9 @@ export default class Map extends maplibregl.Map {
     this.dragPan.disable();
     this.keyboard.disable();
     this.touchZoomRotate.disable();
+    this.boxZoom.disable()
+    this.dragRotate.disable()
+
     this._locked = true
 
     Array('nav', 'fitToWorld', 'zoomToBookmark').forEach(i => {
@@ -518,6 +521,9 @@ export default class Map extends maplibregl.Map {
     this.dragPan.enable();
     this.keyboard.enable();
     this.touchZoomRotate.enable();
+    this.boxZoom.enable()
+    this.dragRotate.enable()
+
     this._locked = false
     
     Array('nav', 'fitToWorld', 'zoomToBookmark').forEach(i => {

@@ -30,7 +30,7 @@ export default class HandleControls {
                 handler: (control) => {
                     const map = this._map
                     const config = map.getConfig()
-                    const disabled = config.id && config.src !== 'db'
+                    const disabled = config.src !== 'db'
                     const button = control.getContainer().querySelector('button')
                     button.disabled = disabled
                     

@@ -22,7 +22,7 @@ export class SettingsControl {
             title: 'Settings',
             icon: svg.cog8ToothMini,
             classStr: 'maplibregl-ctrl-settings',
-            attrs: `@click='toggleCollapse' x-show='collapsed' ${config.id && config.src !== 'db' ? 'disabled=true' : ''}`
+            attrs: `@click='toggleCollapse' x-show='collapsed' ${config.src !== 'db' ? 'disabled=true' : ''}`
         })
 
         const content = document.createElement('div')
@@ -417,7 +417,7 @@ export class SettingsControl {
         }
     }
 
-    async saveConfig({date=(new Date()).toLocaleString("en-US"), timeout=2000}) {
+    async saveConfig({date=(new Date()).toLocaleString("en-US"), timeout=250}) {
         return new Promise((resolve, reject) => {
             if (this.saveTimer) {
                 clearTimeout(this.saveTimer)
