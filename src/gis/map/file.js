@@ -170,6 +170,7 @@ export class FileControl {
         const config = structuredClone(map.getConfig())
         delete config.id
         config.src = src
+        config.autosave = false
         config.id = await utils.hashJSON(config)
 
         const zip = new JSZip()
