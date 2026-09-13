@@ -12,8 +12,6 @@ export class SettingsControl {
     onAdd(map) {
         this._map = map
 
-        const config = map.getConfig()
-        
         const container = this._container = document.createElement('div')
         container.classList.add('maplibregl-ctrl','maplibregl-ctrl-group')
         container.setAttribute('x-data', 'collapseGroup')
