@@ -66,37 +66,38 @@ export class FileControl {
         
         return [
             {
-                // label: 'Current',
                 collapsible: false,
                 buttons: [
-                    ...(config.src === 'db' ? [
-                        {
-                            title: 'Autosave map changes',
-                            icon: `🔄️`,
-                            highlight: config.autosave,
-                            handler: async (event) => {
-                                await map.getControls('settings')
-                                .updateConfig(['autosave'], event.detail.value)
+                    ...(config.id ? [
+                        ...(!map.isStaticConfig() ? [
+                            {
+                                title: 'Autosave map changes',
+                                icon: `🔄️`,
+                                highlight: config.autosave,
+                                handler: async (event) => {
+                                    await map.getControls('settings')
+                                    .updateConfig(['autosave'], event.detail.value)
+                                },
                             },
-                        },
-                        {
-                            title: 'Save changes to map',
-                            icon: `⬆️`,
-                            highlight: null,
-                            keyboard: 'S',
-                            handler: async (event) => {
-                                await map.getControls('settings').saveConfig({timeout:0})
+                            {
+                                title: 'Save changes to map',
+                                icon: `⬆️`,
+                                highlight: null,
+                                keyboard: 'S',
+                                handler: async (event) => {
+                                    await map.getControls('settings').saveConfig({timeout:0})
+                                },
                             },
-                        },
-                    ] : config.src !== 'file' ? [
-                        {
-                            title: 'Copy map URL',
-                            icon: `🔗`,
-                            highlight: null,
-                            handler: (event) => {
-                                navigator.clipboard.writeText(window.location.href)
-                            },
-                        }
+                        ] : map.isWebConfig() ? [
+                            {
+                                title: 'Copy map URL',
+                                icon: `🔗`,
+                                highlight: null,
+                                handler: (event) => {
+                                    navigator.clipboard.writeText(window.location.href)
+                                },
+                            }
+                        ] : []),
                     ] : []),
                     {
                         title: 'Save as new map',

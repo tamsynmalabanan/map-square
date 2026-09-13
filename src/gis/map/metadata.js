@@ -100,7 +100,7 @@ export default class MetadataControl {
 
     let editBtn, backBtn, saveBtn, collapseBtn
     
-    if (!this.config.id || this.config.src === 'db') {
+    if (!this._map.isStaticConfig()) {
       editBtn = utils.strToEl(button({
         title: 'Edit metadata',
         icon: svg.pencilSquareMini,

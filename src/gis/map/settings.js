@@ -22,7 +22,7 @@ export class SettingsControl {
             title: 'Settings',
             icon: svg.cog8ToothMini,
             classStr: 'maplibregl-ctrl-settings',
-            attrs: `@click='toggleCollapse' x-show='collapsed' ${config.src !== 'db' ? 'disabled=true' : ''}`
+            attrs: `@click='toggleCollapse' x-show='collapsed' ${map.isStaticConfig() ? 'disabled=true' : ''}`
         })
 
         const content = document.createElement('div')
@@ -468,7 +468,7 @@ export class SettingsControl {
             })
 
             if (newMap) {
-                if (config.id && !Array('db', 'file').includes(config.src)) {
+                if (map.isWebConfig()) {
                     config.metadata.references = {
                         id: config.id,
                         src: config.src,
@@ -477,6 +477,7 @@ export class SettingsControl {
                 }
 
                 config.src = 'db'
+                config.autosave = false
             }
 
             target[propertyName] = value
@@ -485,7 +486,7 @@ export class SettingsControl {
                 details: {property, value}
             })
 
-            if (config.src === 'db' && (config.autosave || property[0] === 'autosave' || newMap)) {
+            if (!map.isStaticConfig() && (config.autosave || property[0] === 'autosave' || newMap)) {
                 await this.saveConfig({date})
             }
         }

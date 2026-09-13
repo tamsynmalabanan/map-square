@@ -509,10 +509,10 @@ export default class Map extends maplibregl.Map {
 
     this._locked = true
 
-    Array('nav', 'fitToWorld', 'zoomToBookmark').forEach(i => {
-      this.getControls(i).getContainer().querySelectorAll('button')
-      .forEach(btn => btn.disabled = true)
-    })
+    // Array('nav', 'fitToWorld', 'zoomToBookmark').forEach(i => {
+    //   this.getControls(i).getContainer().querySelectorAll('button')
+    //   .forEach(btn => btn.disabled = true)
+    // })
   }
   
   unlock() {
@@ -526,9 +526,19 @@ export default class Map extends maplibregl.Map {
 
     this._locked = false
     
-    Array('nav', 'fitToWorld', 'zoomToBookmark').forEach(i => {
-      this.getControls(i).getContainer().querySelectorAll('button')
-        .forEach(btn => btn.disabled = false)
-    })
+    // Array('nav', 'fitToWorld', 'zoomToBookmark').forEach(i => {
+    //   this.getControls(i).getContainer().querySelectorAll('button')
+    //     .forEach(btn => btn.disabled = false)
+    // })
+  }
+
+  isStaticConfig() {
+    const config = this.getConfig()
+    return config.id && config.src !== 'db'
+  }
+  
+  isWebConfig() {
+    const config = this.getConfig()
+    return config.id && !Array('db', 'file').includes(config.src)
   }
 }

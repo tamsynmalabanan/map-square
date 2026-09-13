@@ -29,8 +29,7 @@ export default class HandleControls {
                 constructor: maplibregl.TerrainControl,
                 handler: (control) => {
                     const map = this._map
-                    const config = map.getConfig()
-                    const disabled = config.src !== 'db'
+                    const disabled = map.isStaticConfig()
                     const button = control.getContainer().querySelector('button')
                     button.disabled = disabled
                     
