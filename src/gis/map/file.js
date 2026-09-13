@@ -75,8 +75,9 @@ export class FileControl {
                                 icon: `🔄️`,
                                 highlight: config.autosave,
                                 handler: async (event) => {
-                                    await map.getControls('settings')
-                                    .updateConfig(['autosave'], event.detail.value)
+                                    const value = event.detail.value
+                                    await map.getControls('settings').updateConfig(['autosave'], value)
+                                    this._container.firstElementChild.firstElementChild.nextElementSibling.innerText = value ? `🟢` : ''
                                 },
                             },
                             {
@@ -226,25 +227,40 @@ export class FileControl {
     handleUpdates() {
         const map = this._map
         const config = map.getConfig()
-        if (!config.id) return
+        
+        const icon = utils.strToEl(`<span class="absolute top-0 right-0"></span>`)
+        this._container.firstElementChild.appendChild(icon)
+
+        if (!config.id) {
+            icon.innerText = `⚪`
+            return
+        } 
+
+        if (map.isStaticConfig()) {
+            icon.innerText = `🔵`
+            return
+        }
+        
+        if (config.autosave) {
+            icon.innerText = `🟢`
+        }
 
         let timer
         Array('themeUpdated', 'configUpdated', 'configSaved').forEach(i => {
-        clearTimeout(timer)
-        setTimeout(() => {
-            map.on(i, (e) => {
-                const metadata = config.metadata
-                const dateUpdated = new Date(metadata.dateUpdated)
-                const dateSaved = new Date(metadata.dateSaved)
-
-                // this.updatedSpan.innerHTML = `
-                //     <span>${utils.formatRelativeDate(dateUpdated)}</span>
-                //     <span class="italic">${dateUpdated > dateSaved ? '(unsaved)' : ''}</span>
-                // `
-                
-                console.log(e)
-            })
-        }, 2000)
+            clearTimeout(timer)
+            setTimeout(() => {
+                map.on(i, (e) => {
+                    if (e.type === "configSaved") {
+                        if (config.autosave) {
+                            icon.innerText = `🟢`
+                        } else {
+                            icon.innerText = ``
+                        }
+                    } else {
+                        icon.innerText = `🔴`
+                    }
+                })
+            }, 1000)
         })
     }
 }

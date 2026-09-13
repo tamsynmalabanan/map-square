@@ -498,30 +498,6 @@ export default class Map extends maplibregl.Map {
     }
   }
 
-  lock() {
-    this.scrollZoom.disable();
-    this.doubleClickZoom.disable();
-    this.dragPan.disable();
-    this.keyboard.disable();
-    this.touchZoomRotate.disable();
-    this.boxZoom.disable()
-    this.dragRotate.disable()
-
-    this._locked = true
-  }
-  
-  unlock() {
-    this.scrollZoom.enable();
-    this.doubleClickZoom.enable();
-    this.dragPan.enable();
-    this.keyboard.enable();
-    this.touchZoomRotate.enable();
-    this.boxZoom.enable()
-    this.dragRotate.enable()
-
-    this._locked = false
-  }
-
   isStaticConfig() {
     const config = this.getConfig()
     return config.id && config.src !== 'db'

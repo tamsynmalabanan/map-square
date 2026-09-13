@@ -124,7 +124,7 @@ export class SettingsControl {
                         highlight: settings.locked,
                         handler: async (event) => {
                             const value = event.detail.value
-                            value ? map.lock() : map.unlock()
+                            value ? this.lock() : this.unlock()
                             await this.updateConfig([
                                 'settings', 
                                 'locked', 
@@ -398,7 +398,7 @@ export class SettingsControl {
         await this.configScaleBarUnit(settings.unit)
 
         
-        this.configBasemap() // suppress config update when basemap and terrain are config
+        this.configBasemap()
 
         if (settings.terrain && !controls.terrain.isEnabled()) {
             controls.terrain.toggle()
@@ -411,11 +411,43 @@ export class SettingsControl {
         })
             
         if (settings.locked) {
-            map.lock()
+            this.lock()
         }
     }
 
-    async saveConfig({date=(new Date()).toLocaleString("en-US"), timeout=2000}) {
+    lock() {
+        const map = this._map
+        map.scrollZoom.disable();
+        map.doubleClickZoom.disable();
+        map.dragPan.disable();
+        map.keyboard.disable();
+        map.touchZoomRotate.disable();
+        map.boxZoom.disable()
+        map.dragRotate.disable()
+
+        map._locked = true
+
+        this.getContainer().firstElementChild
+        .appendChild(utils.strToEl(`<span class="absolute top-0 right-0">🔒</span>`))
+    }
+    
+    unlock() {
+        const map = this._map
+        map.scrollZoom.enable();
+        map.doubleClickZoom.enable();
+        map.dragPan.enable();
+        map.keyboard.enable();
+        map.touchZoomRotate.enable();
+        map.boxZoom.enable()
+        map.dragRotate.enable()
+
+        map._locked = false
+     
+        this.getContainer().firstElementChild
+        .firstElementChild.nextElementSibling?.remove()
+    }
+
+    async saveConfig({date=(new Date()).toLocaleString("en-US"), timeout=1000}) {
         return new Promise((resolve, reject) => {
             if (this.saveTimer) {
                 clearTimeout(this.saveTimer)
@@ -447,13 +479,13 @@ export class SettingsControl {
 
         const propertyName = property[property.length-1]
         const currentValue = target[propertyName]
-        const valueChanged = !_.isEqual(currentValue, value)
-
-        if (propertyName && (valueChanged || (
+        const valueChanged = !_.isEqual(currentValue, value) || (
             theme && property[0] === 'layers' 
-            && utils.removeWhitespace(JSON.stringify(currentValue)) 
-            !== utils.removeWhitespace(JSON.stringify(value))
-        ))) {
+            && utils.removeWhitespace(JSON.stringify(currentValue.map(i => i.id))) 
+            !== utils.removeWhitespace(JSON.stringify(value.map(i => i.id)))
+        )
+
+        if (propertyName && valueChanged) {
             const newMap = !theme && property[0] === 'id'
             const date = (new Date()).toLocaleString("en-US")
             
@@ -461,8 +493,10 @@ export class SettingsControl {
             .filter(Boolean)
             .forEach(i => {
                 i.metadata.dateUpdated = date
-                if (!newMap) return
-                i.metadata.dateCreated = date
+                
+                if (newMap) {
+                    i.metadata.dateCreated = date
+                }
             })
 
             if (newMap) {
