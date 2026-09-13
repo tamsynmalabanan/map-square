@@ -508,11 +508,6 @@ export default class Map extends maplibregl.Map {
     this.dragRotate.disable()
 
     this._locked = true
-
-    // Array('nav', 'fitToWorld', 'zoomToBookmark').forEach(i => {
-    //   this.getControls(i).getContainer().querySelectorAll('button')
-    //   .forEach(btn => btn.disabled = true)
-    // })
   }
   
   unlock() {
@@ -525,11 +520,6 @@ export default class Map extends maplibregl.Map {
     this.dragRotate.enable()
 
     this._locked = false
-    
-    // Array('nav', 'fitToWorld', 'zoomToBookmark').forEach(i => {
-    //   this.getControls(i).getContainer().querySelectorAll('button')
-    //     .forEach(btn => btn.disabled = false)
-    // })
   }
 
   isStaticConfig() {
