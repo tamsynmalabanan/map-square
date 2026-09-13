@@ -21,7 +21,7 @@ export const searchNominatimOSM = async (place, {signal}={}) => {
         const data = await utils.parseJSONResponse(response, {id})
         if (data?.features?.length) {
             await gisUtils.normalizeGeoJSON(data)
-            saveToGISDB('data', {id, data, group: 'Searched Places', name: place})
+            saveToGISDB('data', {id, data, group: 'place_search', name: place})
         }
         return data
     }}).catch(error => {})
