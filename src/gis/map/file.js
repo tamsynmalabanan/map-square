@@ -251,6 +251,7 @@ export class FileControl {
             clearTimeout(timer)
             setTimeout(() => {
                 map.on(i, (e) => {
+                    console.log(e)
                     if (e.type === "configSaved") {
                         if (config.autosave) {
                             icon.innerText = `🟢`

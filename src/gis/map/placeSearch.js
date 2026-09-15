@@ -14,13 +14,6 @@ export default class PlaceSearchControl {
         container.classList.add('maplibregl-ctrl','maplibregl-ctrl-group', 'flex', 'flex-nowrap', 'items-center')
         container.setAttribute('x-data', 'collapseGroup')
 
-        // container.innerHTML = button({
-        //     title: 'Place Search',
-        //     icon: svg.magnifyingGlassMini,
-        //     classStr: 'maplibregl-ctrl-place-search',
-        //     attrs: `@click='toggleCollapse'`
-        // })
-
         const form = document.createElement('div')
         form.classList.add('grid', 'place-items-center')
         form.setAttribute('x-show', '!collapsed')
@@ -48,6 +41,7 @@ export default class PlaceSearchControl {
                 
                 map.stop()
                 map.getSource('placeSearch')?.setData(turf.featureCollection([]))
+                map.getControls('legend').removeSourceLayers('placeSearch')
                 
                 const value = input.value.trim()
                 if (value.length < 3) return
@@ -97,7 +91,7 @@ export default class PlaceSearchControl {
         source.setData(data)
         const legendControl = map.getControls('legend')
         const layers = legendControl.addGeoJSONLayers(source.id, {
-            properties: this.layerProperties ??= {
+            properties: {
                 metadata: {
                     name: 'default',
                     params: {

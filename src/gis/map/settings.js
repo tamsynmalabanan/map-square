@@ -351,23 +351,31 @@ export class SettingsControl {
 
     async applyMapSettings() {
         const map = this._map
+        const systemOverlays = map.getControls('legend').getSystemOverlayNames()
 
         let sourceTimer
-        Array('sourceadded', 'sourceremoved').forEach(i => {
-            map.on(i, () => {
+        Array('sourceadded', 'sourceremoved', 'geojsonupdated').forEach(i => {
+            map.on(i, (e) => {
+                if (systemOverlays.includes(e.sourceId)) return
+
                 clearTimeout(sourceTimer)
                 sourceTimer = setTimeout(async () => {
-                    await this.updateConfig(['sources'], map.getStyle().sources)
+                    const sources = map.getStyle().sources
+                    await this.updateConfig(['sources'], sources)
                 }, 1000);
             })
         })
 
         let layerTimer
-        Array('layeradded', 'layerremoved').forEach(i => {
-            map.on(i, () => {
+        Array('layeradded', 'layerremoved', 'layersreordered').forEach(i => {
+            map.on(i, (e) => {
+                const layerId = e.layer?.id || e.layerId
+                if (systemOverlays.find(i => layerId.startsWith(i))) return
+                
                 clearTimeout(layerTimer)
                 layerTimer = setTimeout(async () => {
-                    await this.updateConfig(['layers'], map.getStyle().layers, {theme: map.getTheme()})
+                    const layers = map.getStyle().layers
+                    await this.updateConfig(['layers'], layers, {theme: map.getTheme()})
                 }, 1000);
             })
         })
@@ -395,8 +403,7 @@ export class SettingsControl {
     
         controls.zoomToBookmark.goToBookmark()
 
-        await this.configScaleBarUnit(settings.unit)
-
+        this.configScaleBarUnit(settings.unit)
         
         this.configBasemap()
 

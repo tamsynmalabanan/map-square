@@ -48,7 +48,13 @@ export default class Map extends maplibregl.Map {
     this.configRemoveLayer()
     this.configMovementFns()
 
-    window.map = this
+    this.on('data', (e) => {
+      if (e.dataType === 'source' && e.source.type === 'geojson') {
+        this.fire('geojsonupdated', {sourceId: e.sourceId, source: e.source})
+      }
+    })
+
+    // window.map = this
   }
 
   static async create(container, params=null) {

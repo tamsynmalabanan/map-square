@@ -64,9 +64,7 @@ export class LegendControl {
     }
 
     getAllSystemLayerNames() {
-        const base = this.getBaseLayerNames()
-        const overlay = this.getSystemOverlayNames()
-        return [...base, ...overlay]
+        return [...this.getBaseLayerNames(), ...this.getSystemOverlayNames()]
     }
 
     getGeometryFilters() {
@@ -588,6 +586,8 @@ export class LegendControl {
         const name = metadata.name ??= utils.randomId()
         const layerName = metadata.layerName ??= `${sourceId}-${name}`
         beforeId = this.getBeforeId(layerName, beforeId)
+
+        metadata.legendGroup ??= ['root']
 
         const params = metadata.params ??= {}
         const styles = params.styles ??= {default: [this.getVectorGroupParams()]}
