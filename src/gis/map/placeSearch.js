@@ -35,7 +35,7 @@ export default class PlaceSearchControl {
         form.appendChild(input)
 
         container.appendChild(utils.strToEl(button({
-            title: 'Place Search',
+            title: 'Place search',
             icon: svg.magnifyingGlassMini,
             classStr: 'maplibregl-ctrl-place-search',
             attrs: `@click='toggleCollapse'`

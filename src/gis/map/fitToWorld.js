@@ -9,7 +9,7 @@ export default class FitToWorldControl {
     container.classList.add('maplibregl-ctrl','maplibregl-ctrl-group')
 
     container.innerHTML = button({
-        title: 'Fit to World',
+        title: 'Fit to world',
         icon: svg.globeAmericasMini,
         classStr: 'maplibregl-ctrl-fit-to-world',
     })

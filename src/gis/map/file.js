@@ -25,7 +25,7 @@ export class FileControl {
         container.setAttribute('x-data', 'collapseGroup')
 
         container.innerHTML = button({
-            title: 'Save',
+            title: 'File manager',
             icon: svg.folderMini,
             classStr: 'maplibregl-ctrl-file',
             attrs: `@click='toggleCollapse' x-show='collapsed'`
@@ -229,7 +229,7 @@ export class FileControl {
         const map = this._map
         const config = map.getConfig()
         
-        const icon = utils.strToEl(`<span class="absolute top-0 right-0"></span>`)
+        const icon = utils.strToEl(`<span class="absolute top-0 right-0 grow-shrink"></span>`)
         this._container.firstElementChild.appendChild(icon)
 
         if (!config.id) {

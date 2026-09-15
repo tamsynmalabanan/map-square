@@ -9,7 +9,7 @@ export default class ZoomToBookmarkControl {
     container.classList.add('maplibregl-ctrl','maplibregl-ctrl-group')
 
     container.innerHTML = button({
-        title: 'Zoom to Bookmarked Location',
+        title: 'Zoom to bookmarked location',
         icon: svg.mapPinMini,
         classStr: 'maplibregl-ctrl-zoom-to-bookmark',
     })

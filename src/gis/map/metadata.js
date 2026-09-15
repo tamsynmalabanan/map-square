@@ -293,6 +293,7 @@ export default class MetadataControl {
 
     const logoLabel = document.createElement('label')
     logoLabel.innerText = '📁'
+    logoLabel.setAttribute('title', 'Select an image')
     logoLabel.className = `w-7vh flex justify-center items-center gap-2 rounded py-1 px-2 dark:text-white cursor-pointer grow`
     logoInputContainer.appendChild(logoLabel)
     
@@ -300,8 +301,8 @@ export default class MetadataControl {
     logoInput.id = utils.randomId()
     logoLabel.setAttribute('for', logoInput.id)
     logoInput.classList.add('w-0', 'invisible')
-    logoInput.setAttribute('name', 'logo')
     logoInput.setAttribute('type', 'file')
+    logoInput.setAttribute('name', 'logo')
     logoInput.setAttribute('accept', 'image/*')
     logoInput.addEventListener('change', async () => {
       const file = logoInput.files[0]
@@ -312,7 +313,7 @@ export default class MetadataControl {
 
     const removeLogoBtn = utils.strToEl(button({
       icon: '🗑️',
-      title: 'Remove current logo',
+      title: 'Remove current image',
       highlightExp: true,
     }))
     removeLogoBtn.addEventListener('click', () => {
