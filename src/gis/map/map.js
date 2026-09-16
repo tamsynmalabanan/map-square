@@ -6,7 +6,7 @@ import * as gisUtils from '../utils.js';
 import HandleControls from './controls.js';
 import * as turf from '@turf/turf'
 import { getGISDBKeys } from '../db.js';
-import _ from 'lodash';
+import _, { before } from 'lodash';
 
 export default class Map extends maplibregl.Map { 
   constructor(container, config=null) {
@@ -46,6 +46,7 @@ export default class Map extends maplibregl.Map {
     this.configRemoveSource()
     this.configAddLayer()
     this.configRemoveLayer()
+    this.configMoveLayer()
     this.configMovementFns()
 
     this.on('data', (e) => {
@@ -458,6 +459,24 @@ export default class Map extends maplibregl.Map {
       const result = originalRemoveLayer(layerId)
       this.fire('layerremoved', { layerId })
       return result
+    }
+  }
+
+  configMoveLayer() {
+    const original = this.moveLayer.bind(this)
+
+    this.moveLayer = (layerName, beforeId) => {
+      beforeId = this.getControls('legend').getBeforeId(layerName, beforeId)
+
+      const results = (
+        this.getStyle().layers.map(l => l.id)
+        .filter(id => id.startsWith(layerName))
+        .map(id => original(id, beforeId))
+      )
+
+      this.fire('layermoved', { layerName, beforeId, results })
+
+      return results
     }
   }
 

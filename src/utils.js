@@ -390,6 +390,10 @@ export const getBaseURL = (urlString) => {
     }
 }
 
+export const getURLDomain = (urlString) => {
+    return (new URL(urlString)).host.split('.').slice(-2).join('.')
+}
+
 export const fileToDataURL = async (file) => {
     return new Promise((resolve, reject) => {
         const reader = new FileReader()

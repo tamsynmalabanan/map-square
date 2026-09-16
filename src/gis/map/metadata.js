@@ -180,7 +180,7 @@ export default class MetadataControl {
           
           if (type === 'editor') {
             const quill = Quill.find(i.querySelector('.ql-container'))
-            value = quill.root.innerHTML
+            value = quill.root.textContent ? quill.root.innerHTML : ''
             quill.enable(false)
           } else if (type === 'file') {
             i.value = ''

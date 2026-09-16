@@ -85,6 +85,18 @@ export class LegendControl {
         return ["==", "!=", ">", ">=", "<", "<=", 'has', '!has', 'in', '!in']
     }
 
+    // "==", "!=", ">", "<", ">=", "<=", "has", "!has", "in", "!in"
+    // ["==", "highway", "primary"] 
+    
+    // "has", "!has"
+    // ["has", "name"]
+    
+    // "in", "!in"
+    // ["in", "class", "park", "forest"]
+
+    // ["within", {"type": "Polygon", "coordinates": [...]}]
+    //  - this wont work in filter so create a temp property defining spatial relationship with geom
+
     getBeforeId(layerName, beforeId) {
         const layerIds = this._map.getStyle().layers.map(l => l.id)
         
@@ -112,7 +124,7 @@ export class LegendControl {
         return layerIds.find(id => systemOverlays.find(i => id.startsWith(i)))
     }
 
-    getVectorTypeParams({color=utils.randomColor()}={}) {
+    getDefaultVectorTypeParams({color=utils.randomColor()}={}) {
         const hsla = utils.hslaColor(color)
         const opacity = hsla.a
         const fillColor = hsla.toString({a:1})
@@ -342,6 +354,66 @@ export class LegendControl {
         }
     }
 
+    filterGeoJSONFeatures(geojson, filters) {
+        const {geometryFilters, propertyFilters, spatialFilters} = filters
+        
+        return geojson.features.filter(f => {
+            if (!geometryFilters.find(i => f.geometry.type.endsWith(i))) return false
+            if (propertyFilters.length) {
+                if (!propertyFilters.every(({combinator, properties}) => {
+                    return properties[combinator === 'any' ? 'some' : 'every'](({operator, property, values}) => {
+                        const value = f.properties[property]
+                        let isTrue = true
+
+                        if (operator === '==') {
+                            isTrue = value == values[0]
+                        }
+
+                        if (operator === '!=') {
+                            isTrue = value != values[0]
+                        }
+
+                        if (operator === '>') {
+                            isTrue = value > values[0]
+                        }
+
+                        if (operator === '>=') {
+                            isTrue = value >= values[0]
+                        }
+
+                        if (operator === '<') {
+                            isTrue = value < values[0]
+                        }
+
+                        if (operator === '<=') {
+                            isTrue = value <= values[0]
+                        }
+
+                        if (operator === 'has') {
+                            isTrue = !Array(null, undefined).includes(value)
+                        }
+
+                        if (operator === '!has') {
+                            isTrue = Array(null, undefined).includes(value)
+                        }
+
+                        if (operator === 'in') {
+                            isTrue = values.includes(value)
+                        }
+
+                        if (operator === '!in') {
+                            isTrue = !values.includes(value)
+                        }
+
+                        return combinator === 'none' ? !isTrue : isTrue
+                    })
+                })) return false
+            } 
+
+            return true
+        })
+    }
+
     getVectorGroupParams({
         title='',
         color=utils.randomColor(),
@@ -354,7 +426,7 @@ export class LegendControl {
         propertyFilters=[],
         spatialFilters=[],
     }={}) {
-        const typeParams = this.getVectorTypeParams({color})
+        const typeParams = this.getDefaultVectorTypeParams({color})
         const misc = typeParams.misc
 
         const layers = Array(
@@ -585,10 +657,33 @@ export class LegendControl {
         return map.getLayer(layer)
     }
 
+    async addLayerFromParams(properties, {sourceId}={}) {
+        const params = (properties.metadata ??= {}).params = this.normalizeLayerParams(properties.metadata?.params ?? {})
+
+        if (!sourceId) {
+            sourceId = await utils.hashJSON(params) 
+        }
+
+        if (Array('xyz', 'wms').includes(params.type)) {
+            this.addRasterLayer(sourceId, properties)
+        }
+        
+        if (Array('wfs').includes(params.type)) {
+            this.addGeoJSONLayers(sourceId, {properties: structuredClone(properties)})
+        }
+    }
+
     addGeoJSONLayers(sourceId, {beforeId, properties={}}={}) {
         const map = this._map
-        const source = map.getSource(sourceId)
-        if (!source) return
+        
+        let source = map.getSource(sourceId)
+        if (!source) {
+            if (properties) {
+                source = this.getOrCreateSource(sourceId, {properties})
+            } else {
+                return
+            }
+        }
         
         const metadata = properties.metadata ??= {}
         const name = metadata.name ??= utils.randomId()
@@ -673,6 +768,44 @@ export class LegendControl {
         return map.getStyle().layers.filter(l => l.id.startsWith(layerName))
     }
 
+    addRasterLayer (sourceId, {properties={}}={}) {
+        const map = this._map
+
+        let source = map.getSource(sourceId)
+        if (!source) {
+            if (properties) {
+                source = this.getOrCreateSource(sourceId, {properties})
+            } else {
+                return
+            }
+        }
+        
+        const metadata = properties.metadata ??= {}
+        const params = metadata.params ??= {}
+        const name = metadata.name ??= utils.randomId()
+        const id = `${source.id}-${name}`
+
+        map.addLayer({
+            id,
+            type: "raster",
+            source: source.id,
+            metadata: {
+                ...source.metadata,
+                ...metadata,
+                params: {
+                    ...source.metadata.params,
+                    ...params,
+                    popup: {
+                        active: Array('wms').includes(params.type) ? true : false,
+                    },
+                },
+                layerName: id,
+            },
+        }, this.getBeforeId(id))   
+        
+        return map.getLayer(id)
+    }
+
     removeSourceLayers(sourceId) {
         const map = this._map
         const source = map.getSource(sourceId)
@@ -682,5 +815,130 @@ export class LegendControl {
             if (l.source !== sourceId) return
             map.removeLayer(l.id)
         })
+    }
+
+    getLayersByName(layerName) {
+        return this._map.getStyle().layers.filter(l => l.id.startsWith(layerName))
+    }
+
+    getOrCreateSource(id, {properties}={}) {
+        let source = this._map.getSource(id)
+        
+        if (!source) {
+            const type = properties?.metadata?.params?.type
+            
+            if (type === 'xyz') {
+                source = this.createXYZSource(id, {properties})
+            } else if (type === 'wms') {
+                source = this.createWMSSource(id, {properties})
+            } else {
+                source = this.createGeoJSONSource(id, {properties})
+            }
+        }
+
+        if (source && properties) {
+            Object.entries(properties).forEach(([k,v]) => source[k] = v)
+        }
+
+        return source
+    }
+
+    createXYZSource(id, {properties}={}) {
+        const map = this._map
+  
+        const {url, get} = properties?.metadata?.params
+        if (!url) return
+
+        map.addSource(id, {
+            type: "raster",
+            tileSize: 256,
+            tiles: [utils.pushURLParams(url, get ?? {})],
+        })
+
+        return map.getSource(id)
+    }
+
+    createWMSSource(id, {properties}={}) {
+        const map = this._map
+
+        const {url, name, style, get} = properties?.metadata?.params 
+        if (!url || !name || !style) return
+
+        map.addSource(id, {
+            type: "raster",
+            tileSize: 256,
+            tiles: [pushURLParams(url, {
+                ...get ?? {},
+                SERVICE: 'WMS',
+                VERSION: '1.1.1',
+                REQUEST: 'GetMap',
+                LAYERS: name,
+                BBOX: "{bbox-epsg-3857}",
+                WIDTH: 256,
+                HEIGHT: 256,
+                SRS: "EPSG:3857",
+                FORMAT: "image/png",
+                TRANSPARENT: true,
+                STYLES: style,
+            })],
+        })
+
+        return map.getSource(id)
+    }
+
+    createGeoJSONSource(id, {properties={}}={}) {
+        const map = this._map
+
+        map.addSource(id, {
+            type: "geojson",
+            data: turf.featureCollection([])
+        })
+     
+        return map.getSource(id)
+    }
+
+    normalizeLayerParams(params) {
+        if (!params.type) {
+            params.type = params.format
+        }
+        
+        if (!params.bbox) {
+            params.bbox = [-180, -90, 180, 90]
+        }
+        
+        if (!params.crs) {
+            params.crs = 'EPSG:4326'
+        }
+        
+        if (!params.title) {
+            params.title = params.name
+        }
+
+        if (params.styles) {
+            if (!params.style || !(params.style in params.styles)) {
+                params.style = Object.keys(params.styles)[0]
+            }
+        }
+
+        if (!params.attribution && params.url) {
+            const domain = utils.getURLDomain(params.url)
+            params.attribution = `<span class='text-gray-600/100! font-thin'>Data from <a class='' href="https://www.${domain}/" target="_blank">${domain}</a></span>`
+        }
+
+        if (params.type === 'wfs') {
+            params.get = Object.fromEntries(
+                Object.entries(params.get ?? {})
+                .map(([k,v]) => [k.toLowerCase(), v])
+            )
+        }
+
+        if (params.type === 'wms') {
+            params.get = Object.fromEntries(
+                Object.entries(params.get ?? {})
+                .map(([k,v]) => [k.toUpperCase(), v])
+            )
+        }
+        
+        return params
     }
 }
