@@ -300,37 +300,37 @@ export default class Map extends maplibregl.Map {
           },
           hillshade: {
             render: true,
-            methods: [{
-              active: true,
-              name: 'standard',
-              title: 'Standard',
-              params: {
-                'hillshade-illumination-direction': 315,
-                'hillshade-illumination-altitude': 45,
-                'hillshade-highlight-color': '#FFFFFF',
-                'hillshade-shadow-color': '#000000',
-              }
-            }, {
-              active: false,
-              name: 'multi',
-              title: 'Multidirectional',
-              params: {
-                'hillshade-illumination-direction': [315, 45, 135, 225],
-                'hillshade-illumination-altitude': [45, 45, 45, 45],
-                'hillshade-highlight-color': [
-                  '#ff0000',
-                  '#80ff00',
-                  '#00ffff',
-                  '#7f00ff',
-                ],
-                'hillshade-shadow-color': [
-                  '#503030',
-                  '#405030',
-                  '#305050',
-                  '#403050',
-                ],
-              }
-            }],
+            active: 'standard',
+            methods: {
+              standard: {
+                title: 'Standard',
+                params: {
+                  'hillshade-illumination-direction': 315,
+                  'hillshade-illumination-altitude': 45,
+                  'hillshade-highlight-color': '#FFFFFF',
+                  'hillshade-shadow-color': '#000000',
+                }
+              },
+              multi: {
+                title: 'Multidirectional',
+                params: {
+                  'hillshade-illumination-direction': [315, 45, 135, 225],
+                  'hillshade-illumination-altitude': [45, 45, 45, 45],
+                  'hillshade-highlight-color': [
+                    '#ff0000',
+                    '#80ff00',
+                    '#00ffff',
+                    '#7f00ff',
+                  ],
+                  'hillshade-shadow-color': [
+                    '#503030',
+                    '#405030',
+                    '#305050',
+                    '#403050',
+                  ],
+                }
+              },
+            },
             exaggeration: 0.1,
             accent: '#000000',
           },
@@ -362,7 +362,7 @@ export default class Map extends maplibregl.Map {
 
   static normalizeConfig(config) {
     const cloneConfig = Map.getDefaultConfig()
-
+    
     if (!config) {
       return cloneConfig
     }
@@ -371,7 +371,7 @@ export default class Map extends maplibregl.Map {
     sources.basemap ??= cloneConfig.sources.basemap
     sources.terrain ??= cloneConfig.sources.terrain
 
-    const controls = config.controls ??= cloneConfig.controls
+    config.controls ??= cloneConfig.controls
 
     const cloneTheme = cloneConfig.themes.find(theme => theme.active)
     const cloneSettings = cloneTheme.settings

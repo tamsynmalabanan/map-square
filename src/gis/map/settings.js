@@ -299,13 +299,13 @@ export class SettingsControl {
  
         const source = map.getTerrain()?.source
         if (source && hillshade.render) {
-            const method = hillshade.methods.find(i => i.active)
+            const method = hillshade.methods[hillshade.active]
             map.addLayer({
                 id: 'hillshade',
                 type: 'hillshade',
                 source,
                 paint: {
-                    'hillshade-method': method.name,
+                    'hillshade-method': hillshade.active,
                     'hillshade-exaggeration': hillshade.exaggeration,
                     'hillshade-accent-color': hillshade.accent,
                     ...method.params

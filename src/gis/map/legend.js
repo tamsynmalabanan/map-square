@@ -73,6 +73,14 @@ export class LegendControl {
         ).map(i => [i, ["==", "$type", i]]))
     }
 
+    createPropertyFilter(property, {
+        combinator='all', // 'all', 'any', 'none'
+        operator='==', // "==", "!=", ">", "<", ">=", "<=", "has", "!has", "in", "!in"
+        values=[],
+    }={}) {
+        return {combinator, properties: [{operator, property, values}]}
+    }
+
     getFilterOperators() {
         return ["==", "!=", ">", ">=", "<", "<=", 'has', '!has', 'in', '!in']
     }
