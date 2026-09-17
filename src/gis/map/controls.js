@@ -161,10 +161,10 @@ export default class HandleControls {
             .map(([name, props]) => {
                 if (!props.active) return
 
-                const config = this.controls[name]
-                if (!config) return
+                const params = this.controls[name]
+                if (!params) return
 
-                const control = new config.constructor(props.options)
+                const control = new params.constructor(props.options)
                 this._map.addControl(control, props.position)
 
                 const container = control._controlContainer ?? control._container
@@ -177,7 +177,7 @@ export default class HandleControls {
                     return container
                 }
 
-                Object.entries(config.elements ??= {}).forEach(([selector, params]) => {
+                Object.entries(params.elements ??= {}).forEach(([selector, params]) => {
                     const el = container.querySelector(selector) ?? container.parentElement.querySelector(selector)
                     if(!el) return
 
@@ -209,7 +209,7 @@ export default class HandleControls {
                     el.classList.add('grid', 'place-items-center', 'size-[15px]!', 'border-none!', 'rounded!', 'hover:rounded!', 'active:rounded!')
                 })
 
-                config.handler?.(control)
+                params.handler?.(control)
 
                 return [name, control]
             }).filter(Boolean)

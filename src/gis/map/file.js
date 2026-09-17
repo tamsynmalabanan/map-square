@@ -4,6 +4,7 @@ import modal from '../../templates/modal.js';
 import { values } from "lodash";
 import menu from '../../templates/menu.js';
 import { saveAs } from "file-saver";
+import Map from './map.js'
 
 export class FileControl {
     constructor(options) {
@@ -83,22 +84,7 @@ export class FileControl {
                                     await map.getControls('settings').saveConfig({timeout:0})
                                 },
                             },
-                            {
-                                title: 'View change logs',
-                                icon: `◀️`,
-                                highlight: null,
-                                init: (button) => {
-                                    button.disabled = !config.logs?.length
-                                    Array('themeUpdated', 'configUpdated').forEach(i => {
-                                        map.once(i, (e) => {
-                                            button.disabled = !config.logs.length
-                                        })
-                                    })
-                                },
-                                // handler: async (event) => {
-                                //     console.log()
-                                // },
-                            },
+
                         ] : map.isWebConfig() ? [
                             {
                                 title: 'Copy map URL',
@@ -111,22 +97,29 @@ export class FileControl {
                         ] : []),
                     ] : []),
                     {
+                        title: 'View change logs',
+                        icon: `◀️`,
+                        highlight: null,
+                        init: (button) => {
+                            button.disabled = !config.logs?.length
+                            Array('themeUpdated', 'configUpdated').forEach(i => {
+                                map.once(i, (e) => {
+                                    button.disabled = !config.logs.length
+                                })
+                            })
+                        },
+                        // handler: async (event) => {
+                        //     console.log()
+                        // },
+                    },
+                    {
                         title: 'Save as new map',
                         icon: '💾',
                         highlight: null,
                         handler: async (event) => {
                             const config = await map.getControls('settings')
                             .updateConfig(['id'], utils.randomId())
-
-                            const url = new URL(utils.getBaseURL(window.location.href))
-                            const id = config?.id
-
-                            if (id) {
-                                url.searchParams.set('src', 'db')
-                                url.searchParams.set('id', id)
-                            }
-                            
-                            window.location.href = url.toString()
+                            this.loadMapFromConfig(config)
                         },
                     },
                 ]
@@ -163,7 +156,10 @@ export class FileControl {
                                 const file = input.files[0]
                                 if (!file) return
                                 
-                                this.loadMap(file)
+                                const config = await this.extractMapConfig(file)
+                                if (!config) return
+
+                                this.loadMapFromConfig(config)
                             })
                             button.appendChild(input)
                             
@@ -182,7 +178,7 @@ export class FileControl {
                         icon: '⬇️',
                         highlight: null,
                         handler: async (event) => {
-                            await this.compressMap()
+                            await this.exportMapConfig()
                         },
                     },
                 ]
@@ -190,24 +186,26 @@ export class FileControl {
         ]
     }
 
-    async compressMap({src='file'}={}) {
+    async exportMapConfig({src='file'}={}) {
         const map = this._map
         
         const config = structuredClone(map.getConfig())
         delete config.id
+        
         config.src = src
         config.autosave = false
+        config.logs = []
         config.id = await utils.hashJSON(config)
 
         const zip = new JSZip()
 
         zip.file("config.json", JSON.stringify(config))
 
-        const dataFolder = zip.folder("data")
-        dataFolder.file("test.geojson", JSON.stringify({
-            type: "FeatureCollection",
-            features: []
-        }, null, 2))
+        // const dataFolder = zip.folder("data")
+        // dataFolder.file("test.geojson", JSON.stringify({
+        //     type: "FeatureCollection",
+        //     features: []
+        // }, null, 2))
 
         const content = await zip.generateAsync({ type: "blob" })
         
@@ -222,7 +220,7 @@ export class FileControl {
         }
     }
 
-    async loadMap(file) {
+    async extractMapConfig(file) {
         const arrayBuffer = await file.arrayBuffer()
         const zip = await JSZip.loadAsync(arrayBuffer)
 
@@ -240,15 +238,22 @@ export class FileControl {
         //     console.log("Content:", content);
         // });
 
-        if (src === 'file') {
-            await gisDB.saveToGISDB('maps', config)
-        }
+        return config
+    }
 
+    loadMapFromConfig(config) {
+        const {id, src} = config
+        if (!id || !src) return
+        
         const url = new URL(utils.getBaseURL(window.location.href))
         url.searchParams.set('src', src)
         url.searchParams.set('id', id)
-        
-        window.location.href = url.toString()
+        window.history.replaceState({}, '', url)
+
+        const map = this._map
+        const container = map.getContainer()
+        map.remove()
+        new Map(container, config)
     }
 
     handleUpdates() {

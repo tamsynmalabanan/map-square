@@ -362,7 +362,12 @@ export class SettingsControl {
     
                 clearTimeout(sourceTimer)
                 sourceTimer = setTimeout(async () => {
-                    const sources = map.getStyle().sources
+                    const sources = Object.fromEntries(Object.entries(structuredClone(map.getStyle().sources)).map(([id, source]) => {
+                        if (source.metadata?.params?.url && source.data) {
+                            delete source.data
+                        }
+                        return [id, source]
+                    }))
                     await this.updateConfig(['sources'], sources)
                 }, 1000);
             })
@@ -384,6 +389,8 @@ export class SettingsControl {
     }
 
     async applyMapSettings() {
+
+
         await this.applyThemeSettings()
     }
 
@@ -492,7 +499,8 @@ export class SettingsControl {
         const map = this._map
         const config = map.getConfig()
         const theme = config.themes.find(i => i.id === themeId)
-
+        if (themeId && !theme) return
+        
         let target = theme || config
 
         property.slice(0, -1).forEach(name => {
@@ -515,10 +523,7 @@ export class SettingsControl {
             .filter(Boolean)
             .forEach(i => {
                 i.metadata.dateUpdated = date
-                
-                if (newMap) {
-                    i.metadata.dateCreated = date
-                }
+                if (newMap) i.metadata.dateCreated = date
             })
 
             if (newMap) {

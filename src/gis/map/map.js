@@ -63,17 +63,19 @@ export default class Map extends maplibregl.Map {
 
     const {src, id} = params
     
-    if (Array('db', 'file').includes(src)) {
+    if (src === 'db') {
       if ((await gisDB.getGISDBKeys('maps')).includes(id)) {
         config = await gisDB.getFromGISDB('maps', id)
-      } else {
-        window.location.href = utils.getBaseURL(window.location.href)
       }
     } else {
       if (config) {
         config.id = id
         config.src = src
       }
+    }
+
+    if (!config) {
+      window.history.replaceState({}, '', new URL(utils.getBaseURL(window.location.href)))
     }
 
     return new Map(container, config)
