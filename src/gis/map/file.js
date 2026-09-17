@@ -84,7 +84,7 @@ export class FileControl {
                                 },
                             },
                             {
-                                title: 'Undo last change',
+                                title: 'View change logs',
                                 icon: `◀️`,
                                 highlight: null,
                                 init: (button) => {

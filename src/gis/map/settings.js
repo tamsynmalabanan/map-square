@@ -353,12 +353,12 @@ export class SettingsControl {
 
     async configMap() {
         const map = this._map
-        const systemOverlays = map.getControls('legend').getSystemOverlayNames()
+        const systemLayers = map.getControls('legend').getAllSystemLayerNames()
     
         let sourceTimer
         Array('sourceadded', 'sourceremoved', 'geojsonupdated').forEach(i => {
             map.on(i, (e) => {
-                if (systemOverlays.includes(e.sourceId)) return
+                if (systemLayers.includes(e.sourceId)) return
     
                 clearTimeout(sourceTimer)
                 sourceTimer = setTimeout(async () => {
@@ -372,7 +372,7 @@ export class SettingsControl {
         Array('layeradded', 'layerremoved', 'layersreordered').forEach(i => {
             map.on(i, (e) => {
                 const layerId = e.layer?.id || e.layerId
-                if (systemOverlays.find(i => layerId.startsWith(i))) return
+                if (systemLayers.find(i => layerId.startsWith(i))) return
                 
                 clearTimeout(layerTimer)
                 layerTimer = setTimeout(async () => {
@@ -534,7 +534,12 @@ export class SettingsControl {
                 config.autosave = false
                 config.logs = []
             } else {
-                (config.logs ??= []).push({property, value: currentValue, themeId})
+                (config.logs ??= []).push({
+                    property, 
+                    themeId,
+                    date,
+                    value: currentValue, 
+                })
                 config.logs = config.logs.slice(-100)
             }
 
