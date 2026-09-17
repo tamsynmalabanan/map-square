@@ -1,10 +1,3 @@
-
-// save as new map 
-// - if id already exists, change id
-// - after saving, add get params to url, refresh page
-// save changes to existing map
-// autosave changes
-
 import Alpine from "alpinejs";
 import button from "../../templates/button.js"
 import modal from '../../templates/modal.js'; 
@@ -66,7 +59,8 @@ export class FileControl {
         
         return [
             {
-                collapsible: false,
+                label: 'Current',
+                collapsible: true,
                 buttons: [
                     ...(config.id ? [
                         ...(!map.isStaticConfig() ? [
@@ -119,19 +113,21 @@ export class FileControl {
                             window.location.href = url.toString()
                         },
                     },
-                    {
-                        title: 'Download map',
-                        icon: '⬇️',
-                        highlight: null,
-                        handler: async (event) => {
-                            await this.compressMap()
-                        },
-                    },
+                ]
+            },
+            {
+                label: 'Open',
+                collapsible: true,
+                buttons: [
                     {
                         title: 'Open a new map',
                         icon: '➕',
                         highlight: null,
                         href: utils.getBaseURL(window.location.href)
+                    },
+                    {
+                        title: 'Open a local map',
+                        icon: '🗄️',
                     },
                     {
                         title: 'Open a map file',
@@ -161,6 +157,20 @@ export class FileControl {
                     },
                 ]
             },
+            {
+                label: 'Export',
+                collapsible: true,
+                buttons: [
+                    {
+                        title: 'Download map',
+                        icon: '⬇️',
+                        highlight: null,
+                        handler: async (event) => {
+                            await this.compressMap()
+                        },
+                    },
+                ]
+            }
         ]
     }
 
@@ -250,7 +260,7 @@ export class FileControl {
         Array('themeUpdated', 'configUpdated', 'configSaved').forEach(i => {
             clearTimeout(timer)
             setTimeout(() => {
-                map.on(i, (e) => {
+                map.on(i, async (e) => {
                     console.log(e)
                     if (e.type === "configSaved") {
                         if (config.autosave) {

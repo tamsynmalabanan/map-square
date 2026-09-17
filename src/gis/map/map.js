@@ -171,6 +171,7 @@ export default class Map extends maplibregl.Map {
                 },
                 trackUserLocation: true,
                 showUserHeading: true,
+                fitBoundsOptions: { maxZoom: 18 }
             },
           },
           fullscreen: {

@@ -434,6 +434,11 @@ export class SettingsControl {
 
         map._locked = true
 
+        Array('nav', 'zoomToBookmark', 'fitToWorld').forEach(i => {
+            map.getControls(i).getContainer().querySelectorAll('button')
+            .forEach(b => b.disabled = true)
+        })
+
         this.getContainer().firstElementChild
         .appendChild(utils.strToEl(`<span class="absolute top-0 right-0">🔒</span>`))
     }
@@ -450,6 +455,11 @@ export class SettingsControl {
 
         map._locked = false
      
+        Array('nav', 'zoomToBookmark', 'fitToWorld').forEach(i => {
+            map.getControls(i).getContainer().querySelectorAll('button')
+            .forEach(b => b.disabled = false)
+        })
+
         this.getContainer().firstElementChild
         .firstElementChild.nextElementSibling?.remove()
     }

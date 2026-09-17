@@ -191,7 +191,7 @@ export default class HandleControls {
                     
                     Array(
                         ...(el.tagName.toLowerCase() == 'button' ? [
-                            `['enabled:hover:bg-'+color+'-600/50! rounded! focus:rounded! hover:rounded!']: true`,
+                            `['enabled:hover:bg-'+color+'-600/50! rounded! focus:rounded! hover:rounded! disabled:text-gray-600/100!']: true`,
                         ] : []), 
                         ...(params.classBindings ?? [])
                     ).forEach(exp => {
