@@ -48,11 +48,7 @@ export default class HandleControls {
                         if (!settings) return
                         
                         settings.configHillshade()
-                        await settings.updateConfig(
-                            ['settings', 'terrain'], 
-                            control.isEnabled(), 
-                            {theme: map.getTheme()}
-                        )
+                        await settings.updateConfig(['settings', 'terrain'], control.isEnabled(), {themeId: map.getTheme().id})
                     })
                 },
                 elements: {

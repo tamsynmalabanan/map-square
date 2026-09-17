@@ -83,6 +83,22 @@ export class FileControl {
                                     await map.getControls('settings').saveConfig({timeout:0})
                                 },
                             },
+                            {
+                                title: 'Undo last change',
+                                icon: `◀️`,
+                                highlight: null,
+                                init: (button) => {
+                                    button.disabled = !config.logs?.length
+                                    Array('themeUpdated', 'configUpdated').forEach(i => {
+                                        map.once(i, (e) => {
+                                            button.disabled = !config.logs.length
+                                        })
+                                    })
+                                },
+                                // handler: async (event) => {
+                                //     console.log()
+                                // },
+                            },
                         ] : map.isWebConfig() ? [
                             {
                                 title: 'Copy map URL',

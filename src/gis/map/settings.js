@@ -43,6 +43,7 @@ export class SettingsControl {
         })))    
         
         map.once('load', async () => {
+            await this.configMap()
             await this.applyMapSettings()
         })
         
@@ -70,7 +71,7 @@ export class SettingsControl {
                         handler: async (event) => {
                             const type = event.detail.value ? 'globe' : 'mercator'
                             map.setProjection({type})
-                            await this.updateConfig(['settings', 'projection'], type, {theme: map.getTheme()})
+                            await this.updateConfig(['settings', 'projection'], type, {themeId: map.getTheme().id})
                         },
                     },
                     {
@@ -82,7 +83,7 @@ export class SettingsControl {
                                 'settings', 
                                 'basemap', 
                                 'render'
-                            ], event.detail.value, {theme: map.getTheme()})
+                            ], event.detail.value, {themeId: map.getTheme().id})
                             this.configBasemap()
                         },
                     },
@@ -95,7 +96,7 @@ export class SettingsControl {
                                 'settings', 
                                 'hillshade', 
                                 'render'
-                            ], event.detail.value, {theme: map.getTheme()})
+                            ], event.detail.value, {themeId: map.getTheme().id})
                             this.configHillshade()
                         },
                     },
@@ -113,7 +114,7 @@ export class SettingsControl {
                             await this.updateConfig([
                                 'settings', 
                                 'darkMode', 
-                            ], isDark, {theme: map.getTheme()})
+                            ], isDark, {themeId: map.getTheme().id})
 
                             this.configBasemap()
                         },
@@ -128,7 +129,7 @@ export class SettingsControl {
                             await this.updateConfig([
                                 'settings', 
                                 'locked', 
-                            ], value, {theme: map.getTheme()})
+                            ], value, {themeId: map.getTheme().id})
                         },
                     },
                     {
@@ -170,7 +171,7 @@ export class SettingsControl {
                                 'settings', 
                                 'bookmark', 
                                 'active',
-                            ], active, {theme: map.getTheme()})
+                            ], active, {themeId: map.getTheme().id})
                         },
                     },
                 ]
@@ -217,7 +218,7 @@ export class SettingsControl {
                             await this.updateConfig([
                                 'settings', 
                                 'colorTheme', 
-                            ], name, {theme: map.getTheme()})
+                            ], name, {themeId: map.getTheme().id})
                         },
                     }
                 })
@@ -233,7 +234,7 @@ export class SettingsControl {
         await this.updateConfig([
             'settings', 
             'unit', 
-        ], value, {theme: map.getTheme()})
+        ], value, {themeId: map.getTheme().id})
     }
 
     async updateBookmark({
@@ -244,6 +245,7 @@ export class SettingsControl {
     }={}) {
         const map = this._map
         const theme = map.getTheme()
+        const themeId = theme.id
         const bookmark = theme.settings.bookmark
 
         const bbox = bookmark.extents.bbox
@@ -260,7 +262,7 @@ export class SettingsControl {
             n: n || bbox.params.n,
             padding: padding || bbox.params.padding,
             maxZoom: maxZoom || bbox.params.maxZoom,
-        }, {theme})
+        }, {themeId})
         
         const centroid = bookmark.extents.centroid
         await this.updateConfig([
@@ -273,19 +275,19 @@ export class SettingsControl {
             zoom: zoom || centroid.params.zoom,
             lng: lng || centroid.params.lng,
             lat: lat || centroid.params.lat,
-        }, {theme})
+        }, {themeId})
         
         await this.updateConfig([
             'settings', 
             'bookmark', 
             'pitch',
-        ], pitch || bookmark.pitch, {theme})
+        ], pitch || bookmark.pitch, {themeId})
         
         await this.updateConfig([
             'settings', 
             'bookmark', 
             'bearing',
-        ], bearing || bookmark.bearing, {theme})
+        ], bearing || bookmark.bearing, {themeId})
     }
 
     configHillshade(){
@@ -349,15 +351,15 @@ export class SettingsControl {
         }
     }
 
-    async applyMapSettings() {
+    async configMap() {
         const map = this._map
         const systemOverlays = map.getControls('legend').getSystemOverlayNames()
-
+    
         let sourceTimer
         Array('sourceadded', 'sourceremoved', 'geojsonupdated').forEach(i => {
             map.on(i, (e) => {
                 if (systemOverlays.includes(e.sourceId)) return
-
+    
                 clearTimeout(sourceTimer)
                 sourceTimer = setTimeout(async () => {
                     const sources = map.getStyle().sources
@@ -365,7 +367,7 @@ export class SettingsControl {
                 }, 1000);
             })
         })
-
+    
         let layerTimer
         Array('layeradded', 'layerremoved', 'layersreordered').forEach(i => {
             map.on(i, (e) => {
@@ -375,11 +377,13 @@ export class SettingsControl {
                 clearTimeout(layerTimer)
                 layerTimer = setTimeout(async () => {
                     const layers = map.getStyle().layers
-                    await this.updateConfig(['layers'], layers, {theme: map.getTheme()})
+                    await this.updateConfig(['layers'], layers, {themeId: map.getTheme().id})
                 }, 1000);
             })
         })
+    }
 
+    async applyMapSettings() {
         await this.applyThemeSettings()
     }
 
@@ -484,9 +488,10 @@ export class SettingsControl {
         })
     }
 
-    async updateConfig(property, value, {theme}={}) {
+    async updateConfig(property, value, {themeId}={}) {
         const map = this._map
         const config = map.getConfig()
+        const theme = config.themes.find(i => i.id === themeId)
 
         let target = theme || config
 
@@ -527,13 +532,19 @@ export class SettingsControl {
 
                 config.src = 'db'
                 config.autosave = false
+                config.logs = []
+            } else {
+                (config.logs ??= []).push({property, value: currentValue, themeId})
+                config.logs = config.logs.slice(-100)
             }
 
             target[propertyName] = value
 
-            map.fire(theme ? 'themeUpdated' : 'configUpdated', {
-                details: {property, value}
-            })
+            if (!newMap) {
+                map.fire(theme ? 'themeUpdated' : 'configUpdated', {
+                    details: {property, value}
+                })
+            }
 
             if (!map.isStaticConfig() && (config.autosave || property[0] === 'autosave' || newMap)) {
                 await this.saveConfig({date})

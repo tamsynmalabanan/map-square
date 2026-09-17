@@ -358,7 +358,8 @@ export default class Map extends maplibregl.Map {
           dateUpdated: null,
         },
         layers: [] 
-      }]
+      }],
+      logs: []
     }
   }
 
