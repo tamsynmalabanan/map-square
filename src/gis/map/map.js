@@ -1,5 +1,5 @@
 import Alpine from 'alpinejs';
-import maplibregl from 'maplibre-gl';
+import maplibregl, { Padding } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import * as utils from '../../utils.js'; 
 import * as gisUtils from '../utils.js'; 
@@ -34,11 +34,15 @@ export default class Map extends maplibregl.Map {
     this.getConfig = () => config
     
     this.getTheme = () => {
-      let theme = config.themes.find(i => i.active)
-      if (!theme && config.themes.length) {
-        theme = config.themes[0]
-        theme.active = true
+      const themes = config.themes
+      if (!themes?.length) return
+
+      let theme = themes.find(i => i.id === config.activeTheme)
+      if (!theme) {
+        theme = themes[0]
+        config.activeTheme = theme.id
       }
+   
       return theme
     }
 
@@ -47,6 +51,7 @@ export default class Map extends maplibregl.Map {
     this.configAddLayer()
     this.configRemoveLayer()
     this.configMoveLayer()
+    this.configSetProjection()
     this.configMovementFns()
 
     this.on('data', (e) => {
@@ -84,11 +89,13 @@ export default class Map extends maplibregl.Map {
   static getDefaultConfig() {
     const date = (new Date()).toLocaleString("en-US")
     const displaySettings = Alpine.store('displaySettings')
+    const themeId = utils.randomId()
 
     return {
       id: null,
       src: null,
       autosave: false,
+      activeTheme: themeId,
       metadata: {
         title: 'Untitled Map',
         
@@ -158,7 +165,7 @@ export default class Map extends maplibregl.Map {
             position: 'top-right',
             order: 4,
           },
-          zoomToBookmark: {
+          bookmark: {
             active: true,
             position: 'top-right',
             order: 5,
@@ -221,8 +228,7 @@ export default class Map extends maplibregl.Map {
           },
       },
       themes: [{
-        id: utils.randomId(),
-        active: true,
+        id: themeId,
         settings: {
           locked: false,
           unit: 'metric', // metric, imperial, nautical
@@ -233,29 +239,20 @@ export default class Map extends maplibregl.Map {
           colorTheme: displaySettings.colorTheme,
           bookmark: {
             active: 'centroid',
-            extents: {
-              centroid: {
-                title: 'Centroid',
-                params: {
-                  zoom: 1,
-                  lng: 0,
-                  lat: 3,
-                },
-              },
-              bbox: {
-                title: 'Bounding Box',
-                params: {
-                  w: -140,
-                  s: -70,
-                  e: 160,
-                  n: 90,
-                  padding: 0,
-                  maxZoom: 22,
-                }
-              }
+            view: {
+              pitch: 0,
+              bearing: 0,
+              zoom: 1,
+              lng: 0,
+              lat: 3,
+              west: -140,
+              south: -70,
+              east: 160,
+              north: 90,
             },
-            pitch: 0,
-            bearing: 0,
+            maxZoom: 22,
+            padding: 0,
+            duration: 0,
           },  
           basemap: {
             render: true,
@@ -378,14 +375,15 @@ export default class Map extends maplibregl.Map {
 
     config.controls ??= cloneConfig.controls
 
-    const cloneTheme = cloneConfig.themes.find(theme => theme.active)
+    const cloneTheme = cloneConfig.themes.find(i => i.id === cloneConfig.activeTheme)
     const cloneSettings = cloneTheme.settings
-    const cloneCentroid = cloneSettings.bookmark.extents.centroid
+    const cloneBookmark = cloneSettings.bookmark
 
-    let theme = (config.themes ??= []).find(theme => theme.active)
+    const themes = config.themes ??= []
+    let theme = themes.find(theme => theme.active)
     if (!theme) {
-      theme = config.themes[0] ??= cloneTheme
-      theme.active = true
+      theme = themes[0] ??= cloneTheme
+      config.activeTheme = theme.id
     }
 
     const settings = theme.settings ??= cloneSettings
@@ -393,21 +391,22 @@ export default class Map extends maplibregl.Map {
     settings.darkMode ??= cloneSettings.darkMode
     settings.colorTheme ??= cloneSettings.colorTheme
 
-    const bookmark = settings.bookmark ??= cloneSettings.bookmark
-    bookmark.pitch ??= cloneSettings.bookmark.pitch
-    bookmark.bearing ??= cloneSettings.bookmark.bearing
-    
-    const extent = bookmark.extents[bookmark.active]
-    if (extent) {
-      const centroidExtent = bookmark.extents.centroid
-      if (centroidExtent) {
-        centroidExtent.params.zoom ??= cloneCentroid.params.zoom
-        Array('lng', 'lat').forEach(i => centroidExtent.params[i] ??= cloneCentroid.params[i])
+    const bookmark = settings.bookmark
+    if (bookmark) {
+      Array('active', 'maxZoom', 'padding', 'duration').forEach(i => {
+        bookmark[i] ??= cloneBookmark[i]
+      })
+
+      const view = bookmark.view
+      if (view) {
+        Object.entries(cloneBookmark.view).forEach(([k,v]) => {
+          view[k] ??= v
+        })
       } else {
-        bookmark.extents['centroid'] = cloneCentroid
+        bookmark.view = cloneBookmark.view
       }
     } else {
-      bookmark.extents = cloneSettings.bookmark.extents
+      settings.bookmark = cloneBookmark
     }
 
     const basemap = settings.basemap ??= cloneSettings.basemap
@@ -484,6 +483,20 @@ export default class Map extends maplibregl.Map {
     }
   }
 
+  configSetProjection() {
+    const original = this.setProjection.bind(this)
+
+    this.setProjection = (options) => {
+      if (options.type === this.getStyle().projection?.type) return
+      
+      const result = original(options)
+      
+      this.fire('projectionchanged', { options, result })
+      
+      return result
+    }
+  }
+
   configMovementFns() {
     Array(
       'fitBounds',
@@ -511,19 +524,23 @@ export default class Map extends maplibregl.Map {
     return this.getBounds().toArray().flatMap(i => i)
   }
 
+  getNormalizedBbox() {
+    return gisUtils.normalizeBbox(this.getBbox())
+  }
+
   getView() {
-    const center = this.getCenter()
-    const bounds = this.getBounds()
+    const {lng, lat} = this.getCenter()
+    const [west, south, east, north] = this.getBbox()
     return {
-        zoom: this.getZoom(),
-        lng: center.lng,
-        lat: center.lat,
-        w: bounds.getWest(),
-        s: bounds.getSouth(),
-        e: bounds.getEast(),
-        n: bounds.getNorth(),
-        pitch: this.getPitch(),
-        bearing: this.getBearing()
+      pitch: this.getPitch(),
+      bearing: this.getBearing(),
+      zoom: this.getZoom(),
+      lng,
+      lat,
+      west,
+      south,
+      east,
+      north,
     }
   }
 

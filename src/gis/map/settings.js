@@ -149,8 +149,13 @@ export class SettingsControl {
                         title: 'Set new bookmarked view',
                         icon: '🔖',
                         highlight: null,
-                        handler: (event) => {
-                            this.updateBookmark(map.getView())
+                        keyboard: 'B',
+                        handler: async (event) => {
+                            await this.updateConfig(
+                                ['settings', 'bookmark', 'view'], 
+                                map.getView(), 
+                                {themeId: map.getTheme().id}
+                            )
                         },
                     },
                     {
@@ -228,66 +233,15 @@ export class SettingsControl {
 
     async configScaleBarUnit(value) {
         const map = this._map
-        
+        const scalebar = map.getControls('scalebar')
+        if (scalebar.options.unit === value) return
+
         map.getControls('scalebar').setUnit(value)
 
         await this.updateConfig([
             'settings', 
             'unit', 
         ], value, {themeId: map.getTheme().id})
-    }
-
-    async updateBookmark({
-        zoom,lng,lat,
-        w,s,e,n,
-        padding,maxZoom,
-        pitch,bearing
-    }={}) {
-        const map = this._map
-        const theme = map.getTheme()
-        const themeId = theme.id
-        const bookmark = theme.settings.bookmark
-
-        const bbox = bookmark.extents.bbox
-        await this.updateConfig([
-            'settings', 
-            'bookmark', 
-            'extents',
-            'bbox',
-            'params',
-        ], {
-            w: w || bbox.params.w,
-            s: s || bbox.params.s,
-            e: e || bbox.params.e,
-            n: n || bbox.params.n,
-            padding: padding || bbox.params.padding,
-            maxZoom: maxZoom || bbox.params.maxZoom,
-        }, {themeId})
-        
-        const centroid = bookmark.extents.centroid
-        await this.updateConfig([
-            'settings', 
-            'bookmark', 
-            'extents',
-            'centroid',
-            'params',
-        ], {
-            zoom: zoom || centroid.params.zoom,
-            lng: lng || centroid.params.lng,
-            lat: lat || centroid.params.lat,
-        }, {themeId})
-        
-        await this.updateConfig([
-            'settings', 
-            'bookmark', 
-            'pitch',
-        ], pitch || bookmark.pitch, {themeId})
-        
-        await this.updateConfig([
-            'settings', 
-            'bookmark', 
-            'bearing',
-        ], bearing || bookmark.bearing, {themeId})
     }
 
     configHillshade(){
@@ -318,37 +272,48 @@ export class SettingsControl {
 
     configBasemap() {
         const map = this._map
-        
-        Array('basemap', 'mask').forEach(i => {
-            if (map.getLayer(i)) {
-                map.removeLayer(i)
-            }
-        })
-        
-        const style = structuredClone(map.getStyle())
-        if (style.sky) {
-            delete style.sky
-            map.setStyle(style)
+        const settings = map.getTheme().settings
+        const basemap = settings.basemap        
+        const paints = basemap.paints[settings.darkMode ? 'dark' : 'default']
+        const currentBasemap = map.getLayer('basemap')
+        const paintChanged = !_.isEqual(currentBasemap?.paint?._values, paints.basemap)
+
+        if (currentBasemap && (!basemap.render || paintChanged)) {
+            map.removeLayer('basemap')
+            this.setSky()
         }
 
-        const settings = map.getTheme().settings
-        const basemap = settings.basemap
-        if (!basemap.render) return
-        
-        const theme = settings.darkMode ? 'dark' : 'default'
-        const paints = basemap.paints[theme]
-        style.sky = paints.sky
-        map.setStyle(style)
-        
-        const source = map.getSource('basemap')
-        if (source?.tiles?.length) {
+        if (basemap.render && (!currentBasemap || paintChanged) && map.getSource('basemap')?.tiles?.length) {
             map.addLayer({
                 id: 'basemap',
                 type: 'raster',
                 source: 'basemap',
                 paint: paints.basemap
             }, map.getControls('legend').getBeforeId('basemap'))
+            this.setSky(paints.sky)
         }
+    }
+
+    setSky(values) {
+        const map = this._map
+        const style = structuredClone(map.getStyle())
+        values ? style.sky = values : style.sky ? delete style.sky : null
+        map.setStyle(style)
+    }
+
+    configDarkMode() {
+        const displaySettings = Alpine.store('displaySettings')
+        if (this._map.getTheme().settings.darkMode === displaySettings.darkMode) return
+        
+        displaySettings.toggleDarkMode()
+    }
+
+    configColorTheme() {
+        const colorTheme = this._map.getTheme().settings.colorTheme
+        const displaySettings = Alpine.store('displaySettings')
+        if (colorTheme === displaySettings.colorTheme) return
+        
+        displaySettings.changeColorTheme(colorTheme)
     }
 
     async configMap() {
@@ -389,42 +354,34 @@ export class SettingsControl {
     }
 
     async applyMapSettings() {
-
+        const map = this._map
+        const config = map.getConfig()        
 
         await this.applyThemeSettings()
     }
 
     async applyThemeSettings() {
         const map = this._map
-        const theme = map.getTheme()
-        const settings = theme.settings
         const controls = map.getControls()
 
-        const displaySettings = Alpine.store('displaySettings')
+        const theme = map.getTheme()
+        const settings = theme.settings
         
-        if (settings.darkMode !== displaySettings.darkMode) {
-            displaySettings.toggleDarkMode()
-        }
-
-        if (settings.colorTheme !== displaySettings.colorTheme) {
-            displaySettings.changeColorTheme(settings.colorTheme)
-        }
-
         map.setProjection({type:settings.projection})
-    
-        controls.zoomToBookmark.goToBookmark()
-
-        this.configScaleBarUnit(settings.unit)
         
-        this.configBasemap()
-
+        controls.bookmark.goToBookmark()
         if (settings.terrain && !controls.terrain.isEnabled()) {
             controls.terrain.toggle()
         }
+
+        this.configColorTheme()
+        this.configDarkMode()
+        this.configScaleBarUnit(settings.unit)
+        this.configBasemap()
         
         const systemLayers = controls.legend.getAllSystemLayerNames()
         theme.layers.forEach(layer => {
-            if (systemLayers.includes(layer.id)) return
+            if (systemLayers.find(i => layer.id.startsWith(i))) return
             map.addLayer(layer)  
         })
             
@@ -445,7 +402,7 @@ export class SettingsControl {
 
         map._locked = true
 
-        Array('nav', 'zoomToBookmark', 'fitToWorld').forEach(i => {
+        Array('nav', 'bookmark', 'fitToWorld').forEach(i => {
             map.getControls(i).getContainer().querySelectorAll('button')
             .forEach(b => b.disabled = true)
         })
@@ -466,7 +423,7 @@ export class SettingsControl {
 
         map._locked = false
      
-        Array('nav', 'zoomToBookmark', 'fitToWorld').forEach(i => {
+        Array('nav', 'bookmark', 'fitToWorld').forEach(i => {
             map.getControls(i).getContainer().querySelectorAll('button')
             .forEach(b => b.disabled = false)
         })
@@ -500,7 +457,7 @@ export class SettingsControl {
         const config = map.getConfig()
         const theme = config.themes.find(i => i.id === themeId)
         if (themeId && !theme) return
-        
+
         let target = theme || config
 
         property.slice(0, -1).forEach(name => {

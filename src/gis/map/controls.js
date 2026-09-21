@@ -1,7 +1,7 @@
 import maplibregl from 'maplibre-gl';
 import * as svg from '../../svg.js';
 import FitToWorldControl from './fitToWorld.js';
-import ZoomToBookmarkControl from './zoomToBookmark.js';
+import BookmarkControl from './bookmark.js';
 import PlaceSearchControl from './placeSearch.js';
 import MetadataControl from './metadata.js';
 import { LegendControl } from './legend.js';
@@ -128,8 +128,8 @@ export default class HandleControls {
                     '.maplibregl-ctrl-fit-to-world': {}
                 },
             },
-            zoomToBookmark: {
-                constructor: ZoomToBookmarkControl,
+            bookmark: {
+                constructor: BookmarkControl,
                 elements: {
                     '.maplibregl-ctrl-zoom-to-bookmark': {}
                 },

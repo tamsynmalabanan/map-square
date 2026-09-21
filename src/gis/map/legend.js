@@ -58,7 +58,6 @@ export class LegendControl {
     getBaseLayerNames() {
         return [
             'basemap',
-            'mask',
             'hillshade', 
         ]
     }
