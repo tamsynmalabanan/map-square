@@ -53,7 +53,7 @@ export class FileControl {
         this._container.parentNode.removeChild(this._container);
         this._map = undefined;
     }
-    
+
     getMenuButtons() {
         const map = this._map
         const config = map.getConfig()

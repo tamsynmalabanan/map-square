@@ -44,7 +44,6 @@ export class SettingsControl {
         
         map.once('load', async () => {
             await this.configMap()
-            await this.applyMapSettings()
         })
         
         return container
@@ -351,16 +350,11 @@ export class SettingsControl {
                 }, 1000);
             })
         })
+
+        await this.applyThemeConfig()
     }
 
-    async applyMapSettings() {
-        const map = this._map
-        const config = map.getConfig()        
-
-        await this.applyThemeSettings()
-    }
-
-    async applyThemeSettings() {
+    async applyThemeConfig() {
         const map = this._map
         const controls = map.getControls()
 
@@ -477,8 +471,7 @@ export class SettingsControl {
             const date = (new Date()).toLocaleString("en-US")
             
             Array(config, ...(newMap ? config.themes : [theme]))
-            .filter(Boolean)
-            .forEach(i => {
+            .filter(Boolean).forEach(i => {
                 i.metadata.dateUpdated = date
                 if (newMap) i.metadata.dateCreated = date
             })
@@ -513,9 +506,11 @@ export class SettingsControl {
                 })
             }
 
-            if (!map.isStaticConfig() && (config.autosave || property[0] === 'autosave' || newMap)) {
-                await this.saveConfig({date})
-            }
+            if (!map.isStaticConfig() && (
+                config.autosave || 
+                property[0] === 'autosave' || 
+                newMap
+            )) {await this.saveConfig({date})}
         }
 
         return theme || config
