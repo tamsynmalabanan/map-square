@@ -363,46 +363,49 @@ export class SettingsControl {
 
     async applyThemeConfig() {
         this.unlock()
-
-        const map = this._map
-        map.getStyle().layers.forEach(l => {
-            map.removeLayer(l.id)
-        })
-
-        const controls = map.getControls()
-        if (controls.geolocate.isEnabled()) {
-            controls.geolocate.toggle()
-        }
-
-        const theme = map.getTheme()
-        const settings = theme.settings
-
-        controls.bookmark.goToBookmark()
-        if (settings.geolocate) {
-            controls.geolocate.toggle()
-        }
         
-        map.setProjection({type:settings.projection})
-        
-        if (settings.terrain !== controls.terrain.isEnabled()) {
-            controls.terrain.toggle()
-        }
+        await new Promise((resolve, reject) => {
+    
+            const map = this._map
+            map.getStyle().layers.forEach(l => {
+                map.removeLayer(l.id)
+            })
+    
+            const controls = map.getControls()
+            if (controls.geolocate.isEnabled()) {
+                controls.geolocate.toggle()
+            }
+    
+            const theme = map.getTheme()
+            const settings = theme.settings
+    
+            controls.bookmark.goToBookmark()
+            if (settings.geolocate) {
+                controls.geolocate.toggle()
+            }
+            
+            map.setProjection({type:settings.projection})
+            
+            if (settings.terrain !== controls.terrain.isEnabled()) {
+                controls.terrain.toggle()
+            }
+    
+            this.configColorTheme()
+            this.configDarkMode()
+            this.configScaleBarUnit(settings.unit)
+            this.configBasemap()
+            
+            const systemLayers = controls.legend.getAllSystemLayerNames()
+            theme.layers.forEach(layer => {
+                if (systemLayers.find(i => layer.id.startsWith(i))) return
+                map.addLayer(layer)  
+            })
 
-        this.configColorTheme()
-        this.configDarkMode()
-        this.configScaleBarUnit(settings.unit)
-        this.configBasemap()
-        
-        const systemLayers = controls.legend.getAllSystemLayerNames()
-        theme.layers.forEach(layer => {
-            if (systemLayers.find(i => layer.id.startsWith(i))) return
-            map.addLayer(layer)  
+            resolve(true)
         })
             
         if (settings.locked) {
-            map.once('idle', (e) => {
-                this.lock()
-            })
+            this.lock()
         }
     }
 
@@ -419,11 +422,11 @@ export class SettingsControl {
         map._locked = true
 
         Array('nav', 'bookmark', 'fitToWorld').forEach(i => {
-            map.getControls(i).getContainer().querySelectorAll('button')
+            map.getControls(i)?.getContainer().querySelectorAll('button')
             .forEach(b => b.disabled = true)
         })
 
-        this.getContainer().firstElementChild
+        this.getContainer()?.firstElementChild
         .appendChild(utils.strToEl(`<span class="absolute top-0 right-0">🔒</span>`))
     }
     
@@ -440,11 +443,11 @@ export class SettingsControl {
         map._locked = false
      
         Array('nav', 'bookmark', 'fitToWorld').forEach(i => {
-            map.getControls(i).getContainer().querySelectorAll('button')
+            map.getControls(i)?.getContainer().querySelectorAll('button')
             .forEach(b => b.disabled = false)
         })
 
-        this.getContainer().firstElementChild
+        this.getContainer()?.firstElementChild
         .firstElementChild.nextElementSibling?.remove()
     }
 
