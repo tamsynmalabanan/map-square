@@ -362,48 +362,49 @@ export class SettingsControl {
     }
 
     async applyThemeConfig() {
-        this.unlock()
+        const map = this._map
+        const controls = map.getControls()
+        const theme = map.getTheme()
+        const settings = theme.settings
         
-        await new Promise((resolve, reject) => {
-    
-            const map = this._map
-            map.getStyle().layers.forEach(l => {
-                map.removeLayer(l.id)
-            })
-    
-            const controls = map.getControls()
-            if (controls.geolocate.isEnabled()) {
-                controls.geolocate.toggle()
-            }
-    
-            const theme = map.getTheme()
-            const settings = theme.settings
-    
-            controls.bookmark.goToBookmark()
-            if (settings.geolocate) {
-                controls.geolocate.toggle()
-            }
-            
-            map.setProjection({type:settings.projection})
-            
-            if (settings.terrain !== controls.terrain.isEnabled()) {
-                controls.terrain.toggle()
-            }
-    
-            this.configColorTheme()
-            this.configDarkMode()
-            this.configScaleBarUnit(settings.unit)
-            this.configBasemap()
-            
-            const systemLayers = controls.legend.getAllSystemLayerNames()
-            theme.layers.forEach(layer => {
-                if (systemLayers.find(i => layer.id.startsWith(i))) return
-                map.addLayer(layer)  
-            })
+        this.unlock()
 
-            resolve(true)
+        map.getStyle().layers.forEach(l => {
+            map.removeLayer(l.id)
         })
-            
+
+        if (controls.geolocate.isEnabled()) {
+            controls.geolocate.toggle()
+        }
+
+        controls.bookmark.goToBookmark()
+
+        let geolocatePromise = Promise.resolve()
+        if (settings.geolocate) {
+            geolocatePromise = new Promise(resolve => {
+                controls.geolocate.once('geolocate', () => resolve())
+            })
+            controls.geolocate.toggle()
+        }
+        
+        map.setProjection({type:settings.projection})
+        
+        if (settings.terrain !== controls.terrain.isEnabled()) {
+            controls.terrain.toggle()
+        }
+
+        this.configColorTheme()
+        this.configDarkMode()
+        this.configScaleBarUnit(settings.unit)
+        this.configBasemap()
+        
+        const systemLayers = controls.legend.getAllSystemLayerNames()
+        theme.layers.forEach(layer => {
+            if (systemLayers.find(i => layer.id.startsWith(i))) return
+            map.addLayer(layer)  
+        })
+
+        await geolocatePromise
         if (settings.locked) {
             this.lock()
         }
@@ -421,10 +422,7 @@ export class SettingsControl {
 
         map._locked = true
 
-        Array('nav', 'bookmark', 'fitToWorld').forEach(i => {
-            map.getControls(i)?.getContainer().querySelectorAll('button')
-            .forEach(b => b.disabled = true)
-        })
+        console.log(map.getControls('nav'))
 
         this.getContainer()?.firstElementChild
         .appendChild(utils.strToEl(`<span class="absolute top-0 right-0">🔒</span>`))
@@ -441,11 +439,6 @@ export class SettingsControl {
         map.dragRotate.enable()
 
         map._locked = false
-     
-        Array('nav', 'bookmark', 'fitToWorld').forEach(i => {
-            map.getControls(i)?.getContainer().querySelectorAll('button')
-            .forEach(b => b.disabled = false)
-        })
 
         this.getContainer()?.firstElementChild
         .firstElementChild.nextElementSibling?.remove()

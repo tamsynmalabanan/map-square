@@ -60,7 +60,8 @@ export default class HandleControls {
                     const button = control.getContainer().querySelector('button')
 
                     control.isEnabled = () => {
-                        return !Array('OFF', undefined).includes(control._watchState) 
+                        const state = control._watchState
+                        return !Array('OFF', undefined).includes(state) ? state : false
                     }
 
                     control.isActive = () => {
@@ -85,16 +86,17 @@ export default class HandleControls {
                     }
 
                     button.addEventListener('click', async (e) => {
-                        map.once('moveend', async (e) => {
-                            const settings = map.getControls('settings')
-                            if (!settings) return
+                        const settings = map.getControls('settings')
+                        if (!settings) return
+                        
+                        const state = control.isEnabled()
+                        if (state === 'BACKGROUND') return
 
-                            await settings.updateConfig(
-                                ['settings', 'geolocate'], 
-                                control.isEnabled(), 
-                                {themeId: map.getTheme().id}
-                            )
-                        })
+                        await settings.updateConfig(
+                            ['settings', 'geolocate'], 
+                            state ? false : true, 
+                            {themeId: map.getTheme().id}
+                        )
                     })
                 },
                 elements: {
