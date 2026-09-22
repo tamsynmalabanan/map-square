@@ -42,7 +42,7 @@ export class SettingsControl {
             attrs: `@click='closeCollapse' x-show='!collapsed'`
         })))    
         
-        map.once('load', async () => {
+        map.once('idle', async () => {
             await this.configMap()
         })
         
@@ -212,7 +212,7 @@ export class SettingsControl {
                 buttons: Object.entries(displaySettings.colorOptions).map(([name, hex]) => {
                     return {
                         title: utils.toTitleCase(name),
-                        icon: `<div class="bg-${name}-600/100! size-[15px]! rounded!"></div>`,
+                        icon: `<div class="bg-${name}-200/100! dark:bg-${name}-950/100! size-[15px]! rounded!"></div>`,
                         value: name,
                         handler: async (event) => {
                             if (name !== displaySettings.colorTheme) {
@@ -355,16 +355,30 @@ export class SettingsControl {
     }
 
     async applyThemeConfig() {
+        this.unlock()
+
         const map = this._map
+        map.getStyle().layers.forEach(l => {
+            map.removeLayer(l.id)
+        })
+
         const controls = map.getControls()
+        if (controls.geolocate.isEnabled()) {
+            controls.geolocate.toggle()
+        }
 
         const theme = map.getTheme()
         const settings = theme.settings
+
+        if (settings.geolocate) {
+            controls.geolocate.toggle()
+        } else {
+            controls.bookmark.goToBookmark()
+        }
         
         map.setProjection({type:settings.projection})
         
-        controls.bookmark.goToBookmark()
-        if (settings.terrain && !controls.terrain.isEnabled()) {
+        if (settings.terrain !== controls.terrain.isEnabled()) {
             controls.terrain.toggle()
         }
 
@@ -461,7 +475,7 @@ export class SettingsControl {
         const propertyName = property[property.length-1]
         const currentValue = target[propertyName]
         const valueChanged = !_.isEqual(currentValue, value) || (
-            theme && property[0] === 'layers' 
+            Array('layers', 'themes').includes(property[0])
             && utils.removeWhitespace(JSON.stringify(currentValue.map(i => i.id))) 
             !== utils.removeWhitespace(JSON.stringify(value.map(i => i.id)))
         )
@@ -502,7 +516,7 @@ export class SettingsControl {
 
             if (!newMap) {
                 map.fire(theme ? 'themeUpdated' : 'configUpdated', {
-                    details: {property, value}
+                    details: {property, value, themeId, date}
                 })
             }
 

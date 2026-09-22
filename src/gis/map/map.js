@@ -60,7 +60,7 @@ export default class Map extends maplibregl.Map {
       }
     })
 
-    // window.map = this
+    window.map = this
   }
 
   static async create(container, params=null) {
@@ -180,7 +180,7 @@ export default class Map extends maplibregl.Map {
                 },
                 trackUserLocation: true,
                 showUserHeading: true,
-                fitBoundsOptions: { maxZoom: 18 }
+                fitBoundsOptions: { maxZoom: 16 }
             },
           },
           fullscreen: {
@@ -229,12 +229,19 @@ export default class Map extends maplibregl.Map {
       },
       themes: [{
         id: themeId,
+        metadata: {
+          title: 'Untitled Theme',
+          description: '',
+          dateCreated: date,
+          dateUpdated: null,
+        },
         settings: {
           locked: false,
           unit: 'metric', // metric, imperial, nautical
           precision: 1000000,
           projection: 'mercator', // mercator or globe,
           terrain: false,
+          geolocate: false,
           darkMode: displaySettings.darkMode,
           colorTheme: displaySettings.colorTheme,
           bookmark: {
@@ -348,13 +355,6 @@ export default class Map extends maplibregl.Map {
               }
             }
           },
-          controls: {}
-        },
-        metadata: {
-          title: 'Untitled Theme',
-          description: '',
-          dateCreated: date,
-          dateUpdated: null,
         },
         layers: [] 
       }],
@@ -380,47 +380,58 @@ export default class Map extends maplibregl.Map {
     const cloneBookmark = cloneSettings.bookmark
 
     const themes = config.themes ??= []
-    let theme = themes.find(theme => theme.active)
-    if (!theme) {
-      theme = themes[0] ??= cloneTheme
-      config.activeTheme = theme.id
+    let activeTheme = themes.find(theme => theme.id === config.activeTheme)
+    if (!activeTheme) {
+      activeTheme = themes[0] ??= cloneTheme
+      config.activeTheme = activeTheme.id
     }
 
-    const settings = theme.settings ??= cloneSettings
-    settings.locked ??= cloneSettings.locked
-    settings.darkMode ??= cloneSettings.darkMode
-    settings.colorTheme ??= cloneSettings.colorTheme
-
-    const bookmark = settings.bookmark
-    if (bookmark) {
-      Array('active', 'maxZoom', 'padding', 'duration').forEach(i => {
-        bookmark[i] ??= cloneBookmark[i]
+    themes.forEach(theme => {
+      const settings = theme.settings ??= cloneSettings
+      Array(
+        'locked',
+        'unit',
+        'precision',
+        'projection',
+        'terrain',
+        'geolocate',
+        'darkMode',
+        'colorTheme'
+      ).forEach(i => {
+        settings[i] ??= cloneSettings[i]
       })
 
-      const view = bookmark.view
-      if (view) {
-        Object.entries(cloneBookmark.view).forEach(([k,v]) => {
-          view[k] ??= v
+      const bookmark = settings.bookmark
+      if (bookmark) {
+        Array('active', 'maxZoom', 'padding', 'duration').forEach(i => {
+          bookmark[i] ??= cloneBookmark[i]
         })
+  
+        const view = bookmark.view
+        if (view) {
+          Object.entries(cloneBookmark.view).forEach(([k,v]) => {
+            view[k] ??= v
+          })
+        } else {
+          bookmark.view = cloneBookmark.view
+        }
       } else {
-        bookmark.view = cloneBookmark.view
+        settings.bookmark = cloneBookmark
       }
-    } else {
-      settings.bookmark = cloneBookmark
-    }
-
-    const basemap = settings.basemap ??= cloneSettings.basemap
-    basemap.render ??= cloneSettings.basemap.render
-    basemap.color ??= cloneSettings.basemap.color
-    
-    const basemapTheme = settings.darkMode ? 'dark' : 'default'
-    const paints = basemap.paints[basemapTheme]
-    if (paints && Object.keys(basemap.paints).includes(basemapTheme)) {
-      paints.basemap ??= cloneSettings.basemap.paints[basemapTheme].basemap
-      paints.sky ??= cloneSettings.basemap.paints[basemapTheme].sky
-    } else {
-      basemap.paints = cloneSettings.basemap.paints
-    }
+  
+      const basemap = settings.basemap ??= cloneSettings.basemap
+      basemap.render ??= cloneSettings.basemap.render
+      basemap.color ??= cloneSettings.basemap.color
+      
+      const basemapTheme = settings.darkMode ? 'dark' : 'default'
+      const paints = basemap.paints[basemapTheme]
+      if (paints && Object.keys(basemap.paints).includes(basemapTheme)) {
+        paints.basemap ??= cloneSettings.basemap.paints[basemapTheme].basemap
+        paints.sky ??= cloneSettings.basemap.paints[basemapTheme].sky
+      } else {
+        basemap.paints = cloneSettings.basemap.paints
+      }
+    })
 
     return config
   }

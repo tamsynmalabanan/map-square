@@ -2,17 +2,22 @@ import Alpine from 'alpinejs';
 import * as svg from '../../svg.js'
 import button from '../../templates/button.js';
 import Map from './map.js'
-import { create } from 'lodash';
+import { add, create, head, map } from 'lodash';
 import { format } from 'maplibre-gl';
+import Container from 'quill/blots/container.js';
+import { indexOf } from "lodash"
 
 export default class MetadataControl {
   onAdd(map) {
     this._map = map
     this.config = map.getConfig()
     this.metadata = this.config.metadata
-    this.defaultMetadata = Map.getDefaultConfig().metadata
 
-    const inputSelector = this.inputSelector = 'input, textarea, label, [contenteditable], [type="editor"]'
+    this.defaultConfig = Map.getDefaultConfig()
+    this.defaultMetadata = this.defaultConfig.metadata
+    this.defaultThemeMetadata = this.defaultConfig.themes[0].metadata
+
+    this.inputSelector = 'input, textarea, label, [contenteditable], [type="editor"]'
     
     const container = this._container = document.createElement('div')
     container.classList.add('maplibregl-ctrl','maplibregl-ctrl-group', 'sm:max-w-[80vw]', 'md:max-w-[60vw]', 'lg:max-w-[40vw]')
@@ -45,7 +50,7 @@ export default class MetadataControl {
 
     if (this.config.id) {
       const details = this.details = document.createElement('div')
-      details.classList.add('flex', 'flex-col', 'gap-5')
+      details.classList.add('flex', 'flex-col', 'gap-5', 'overflow-auto', 'max-h-[75vh]', 'pe-2')
       details.setAttribute('x-data', '{show:true}')
       details.setAttribute('x-show', 'show')
       form.appendChild(details)
@@ -56,23 +61,19 @@ export default class MetadataControl {
       details.appendChild(createdSpan)
 
       this.addDescriptionSection(details)
+      this.addThemesSection(details)
       this.addAttrSection(details)
       this.addAcknowledgementsSection(details)
       this.addReferenceSection(details)
-
-      details.querySelectorAll('span[contenteditable]').forEach(element => {
-        element.classList.add(
-          'max-h-[10vh]',
-          'overflow-auto',
-          'break-normal', 
-          'text-wrap', 
-          'text-[12px]',
-          'grow',
-        )
-      })
     }
 
-    form.querySelectorAll(inputSelector).forEach(i => {
+    this.configInputElements(form)
+
+    return container
+  }
+
+  configInputElements(parent) {
+    parent.querySelectorAll(this.inputSelector).forEach(i => {
       i.classList.add('focus:outline-none', 'rounded!')
       
       if (!i.getAttribute('contenteditable')) {
@@ -84,13 +85,20 @@ export default class MetadataControl {
       `)
     })
 
-    form.querySelectorAll('.overflow-auto').forEach(i => {
-      utils.appendBinding(i , ':class', `
-        ['scrollbar-thumb-'+color+'-600/25!']: true  
-      `)
+    parent.querySelectorAll('.overflow-auto').forEach(i => {
+      utils.appendBinding(i , ':class', `['scrollbar-thumb-'+color+'-600/25!']: true`)
     })
 
-    return container
+    parent.querySelectorAll('span[contenteditable]').forEach(element => {
+      element.classList.add(
+        'max-h-[20vh]',
+        'overflow-auto',
+        'break-normal', 
+        'text-wrap', 
+        'text-[12px]',
+        'grow',
+      )
+    })
   }
 
   addNavSection(parent) {
@@ -126,12 +134,19 @@ export default class MetadataControl {
       }))
       backBtn.addEventListener('click', () => {
         this.form.querySelectorAll(this.inputSelector).forEach(i => {
-          const name = i.getAttribute('name')
-          if (!name || !(name in this.metadata)) return
-          
+          const rawName = i.getAttribute('name')
+          if (!rawName) return
+
+          const [name, themeId] = rawName.split('_')
+          const theme = themeId && this.config.themes.find(theme => theme.id === themeId)
+          if (themeId && !theme) return
+
+          const metadata = theme?.metadata || this.metadata
+          if (!(name in metadata)) return
+
           const type = i.getAttribute('type')
-          const target = this.form.querySelector(`[name="${name}"]:not(input):not([type="editor"])`)
-          const value = this.metadata[name]
+          const target = this.form.querySelector(`[name="${rawName}"]:not(input):not([type="editor"])`)
+          const value = metadata[name]
   
           if (type === 'editor') {
             const quill = Quill.find(i.querySelector('.ql-container'))
@@ -146,7 +161,6 @@ export default class MetadataControl {
             
             if (type === 'file') {
               target.src = value
-              Alpine.$data(target).show = value !== this.defaultMetadata[name]
             }
           }
   
@@ -161,22 +175,29 @@ export default class MetadataControl {
       }))
       saveBtn.addEventListener('click', async () => {
         for (const i of this.form.querySelectorAll(this.inputSelector)) {
-  
-          const isInputEl = !i.getAttribute('contenteditable')
+          const editableContent = i.getAttribute('contenteditable')
     
-          if (isInputEl) {
-            i.setAttribute('readonly', 'true')
-          } else {
+          if (editableContent) {
             i.setAttribute('contenteditable', 'false')
+          } else {
+            i.setAttribute('readonly', 'true')
           }
-    
-          const name = i.getAttribute('name')
-          if (!name || !(name in this.metadata)) continue
-    
+
+          const rawName = i.getAttribute('name')
+          if (!rawName) continue
+
+          const [name, themeId] = rawName.split('_')
+          const theme = themeId && this.config.themes.find(theme => theme.id === themeId)
+          if (themeId && !theme) continue
+
+          const metadata = theme?.metadata || this.metadata
+          if (!(name in metadata)) continue
+
+          const defaultMetadata = theme ? this.defaultThemeMetadata : this.defaultMetadata
+          
           const type = i.getAttribute('type')
-          const target = this.form.querySelector(`[name="${name}"]:not(input):not([type="editor"])`)
-    
-          let value = isInputEl ? i.value : i.innerHTML
+          const target = this.form.querySelector(`[name="${rawName}"]:not(input):not([type="editor"])`)
+          let value = editableContent ? i.innerHTML : i.value
           
           if (type === 'editor') {
             const quill = Quill.find(i.querySelector('.ql-container'))
@@ -190,8 +211,8 @@ export default class MetadataControl {
           } else if (typeof value === 'string') {
             value = utils.removeWhitespace(value)
   
-            if (!isInputEl && i.textContent === '') {
-              i.innerHTML = value = this.defaultMetadata[name]            
+            if (editableContent && i.textContent === '') {
+              i.innerHTML = value = defaultMetadata[name]            
             }
     
             if (type === 'url') {
@@ -205,8 +226,8 @@ export default class MetadataControl {
             }
           }
     
-          if (value === this.metadata[name]) continue
-          this._map.getControls('settings').updateConfig(['metadata', name], value)
+          if (value === metadata[name]) continue
+          this._map.getControls('settings').updateConfig(['metadata', name], value, {themeId})
         }
       })
       nav.appendChild(saveBtn)
@@ -256,15 +277,11 @@ export default class MetadataControl {
     titleInput.setAttribute('name', 'title')
     titleInput.setAttribute('contenteditable', "false")
     titleInput.classList.add(
-      'max-h-[10vh]',
       'min-w-[20vw]',
       'max-w-[80vw]',
-      'break-normal', 
-      'text-wrap', 
       'overflow-auto', 
-      'font-bold',
-      'text-xl',
-      'grow',
+      'font-bold!',
+      'text-xl!',
     )
     container.appendChild(titleInput)
   }
@@ -278,7 +295,7 @@ export default class MetadataControl {
     logoImg.classList.add('size-[10vh]', 'rounded', 'me-2')
     logoImg.src = this.metadata.logo
     logoImg.setAttribute('name', 'logo')
-    logoImg.setAttribute('x-data', `{show: ${this.metadata.logo !== this.defaultMetadata.logo}}`)
+    logoImg.setAttribute('x-data', `{show: $el.src !== "${this.defaultMetadata.logo}"}`)
     logoImg.setAttribute('x-show', `isRadioValue("edit") || show`)
     logoForm.appendChild(logoImg)
 
@@ -307,7 +324,6 @@ export default class MetadataControl {
     logoInput.addEventListener('change', async () => {
       const file = logoInput.files[0]
       logoImg.src = file ? await utils.fileToDataURL(file) : this.defaultMetadata.logo
-      Alpine.$data(logoImg).show = file !== undefined
     })
     logoInputContainer.appendChild(logoInput)
 
@@ -331,7 +347,6 @@ export default class MetadataControl {
 
     const header = document.createElement('span')
     header.classList.add('flex', 'flex-nowrap', 'justify-between', 'align-middle', 'font-bold')
-    header.setAttribute('@click', 'show=!show')
     container.appendChild(header)
 
     const label = document.createElement('span')
@@ -341,6 +356,7 @@ export default class MetadataControl {
     const collapse = document.createElement('span')
     collapse.classList.add('size-[15px]!', 'self-center')
     collapse.setAttribute('x-html', 'show ? svg.chevronUpMini : svg.chevronDownMini')
+    collapse.setAttribute('@click', 'show=!show')
     header.appendChild(collapse)
 
     const content = document.createElement('div')
@@ -439,7 +455,7 @@ export default class MetadataControl {
     licenseContainer.appendChild(licenseInput)
 
     content.querySelectorAll('span:not([contenteditable])').forEach(i => {
-      i.classList.add('w-[45px]', 'opacity-50')
+      i.classList.add('w-[45px]', 'opacity-50', 'self-center')
     })
   }
 
@@ -452,7 +468,6 @@ export default class MetadataControl {
 
     const header = document.createElement('span')
     header.classList.add('flex', 'flex-nowrap', 'justify-between', 'align-middle', 'font-bold')
-    header.setAttribute('@click', 'show=!show')
     container.appendChild(header)
 
     const label = document.createElement('span')
@@ -462,6 +477,7 @@ export default class MetadataControl {
     const collapse = document.createElement('span')
     collapse.classList.add('size-[15px]!', 'self-center')
     collapse.setAttribute('x-html', 'show ? svg.chevronUpMini : svg.chevronDownMini')
+    collapse.setAttribute('@click', 'show=!show')
     header.appendChild(collapse)
 
     const acknowledgementsContainer = document.createElement('div')
@@ -487,7 +503,6 @@ export default class MetadataControl {
 
     const header = document.createElement('span')
     header.classList.add('flex', 'flex-nowrap', 'justify-between', 'align-middle', 'font-bold')
-    header.setAttribute('@click', 'show=!show')
     container.appendChild(header)
 
     const label = document.createElement('span')
@@ -497,6 +512,7 @@ export default class MetadataControl {
     const collapse = document.createElement('span')
     collapse.classList.add('size-[15px]!', 'self-center')
     collapse.setAttribute('x-html', 'show ? svg.chevronUpMini : svg.chevronDownMini')
+    collapse.setAttribute('@click', 'show=!show')
     header.appendChild(collapse)
 
     const descInput = document.createElement('div')
@@ -518,7 +534,7 @@ export default class MetadataControl {
     })
 
     const descEditor = descInput.querySelector('.ql-editor')
-    descEditor.classList.add('p-0!', 'overflow-auto', 'max-h-[30vh]')
+    descEditor.classList.add('p-0!')
     descEditor.setAttribute('x-ref', 'descriptionInput')
     utils.appendBinding(descEditor, ':class', `
       ['min-h-[20vh]']: isRadioValue("edit")
@@ -530,38 +546,211 @@ export default class MetadataControl {
       ['bg-'+color+'-200/50! dark:bg-'+color+'-950/50!']: true
     `)
   }
+  
+  addThemesSection(parent) {
+    const container = document.createElement('div')
+    container.classList.add('flex', 'flex-col', 'gap-1')
+    container.setAttribute('x-data', `{show:true, activeTheme:'${this.config.activeTheme}'}`)
+    parent.appendChild(container)
+  
+    const header = document.createElement('span')
+    header.classList.add('flex', 'flex-nowrap', 'justify-between', 'align-middle', 'font-bold', 'gap-1')
+    container.appendChild(header)
+  
+    const label = document.createElement('span')
+    label.classList.add('grow!')
+    label.innerText = 'Themes'
+    header.appendChild(label)
+  
+    const navBtns = Object.fromEntries(Object.entries({
+      first: {
+        title: 'Go to first theme',
+        icon: svg.chevronDoubleLeftMini,
+      },
+      previous: {
+        title: 'Go to previous theme',
+        icon: svg.chevronLeftMini,
+      },
+      next: {
+        title: 'Go to next theme',
+        icon: svg.chevronRightMini,
+      },
+      last: {
+        title: 'Go to last theme',
+        icon: svg.chevronDoubleRightMini,
+      },
+    }).map(([name, params]) => {
+      params.isDisabled = Array('first', 'previous').includes(name) ? () => {
+        return this.config.activeTheme === this.config.themes[0].id
+      } : () => {
+        const themes = this.config.themes
+        return this.config.activeTheme === themes[themes.length-1].id
+      }
+
+      const btn = params.btn = utils.strToEl(button({
+        title: params.title,
+        icon: params.icon,
+        classStr: 'size-[15px]! self-center border-none!',
+        minimal: true,
+        attrs: `x-show=isRadioValue("current") ${params.isDisabled() ? 'disabled' : ''}`,
+      }))
+      btn.addEventListener('click', async (e) => {
+        const themes = this.config.themes
+        
+        let theme
+        if (name === 'first') {
+          theme = themes[0]
+        } else if (name === 'last') {
+          theme = themes[themes.length-1]
+        } else {
+          let index = themes.findIndex(i => i.id === this.config.activeTheme)
+          index = name === 'previous' ? Math.max(index-1, 0) : Math.min(index+1, themes.length-1)
+          theme = themes[index]
+        }
+
+        if (!theme || theme.id === this.config.activeTheme) return
+        Alpine.$data(container).activeTheme = theme.id
+        
+        const settings = this._map.getControls('settings')
+        await settings.updateConfig(['activeTheme'], theme.id)
+        await settings.applyThemeConfig()
+      })
+      header.appendChild(btn)
+      return [name, params]
+    }))
+
+    this._map.on('configUpdated', (e) => {
+      if (e.details.property[0] === 'activeTheme') {
+        Object.entries(navBtns).forEach(([name, params]) => {
+          params.btn.disabled = params.isDisabled?.()
+          console.log(name, params.btn.disabled)
+        })
+      }
+    })
+
+    const addTheme = utils.strToEl(button({
+      title: 'Add new theme',
+      icon: svg.plusMini,
+      classStr: 'size-[15px]! self-center border-none! bg-green-600/100!',
+    }))
+    addTheme.addEventListener('click', async (e) => {
+      const theme = Map.getDefaultConfig().themes[0]
+      
+      this.createThemeSection(theme)
+      Alpine.$data(container).activeTheme = theme.id
+
+      const settings = this._map.getControls('settings')
+      await settings.updateConfig(['themes'], [...this.config.themes, theme])
+      await settings.updateConfig(['activeTheme'], theme.id)
+      await settings.applyThemeConfig()
+    })
+    header.appendChild(addTheme)
+
+    const collapse = document.createElement('span')
+    collapse.classList.add('size-[15px]!', 'self-center')
+    collapse.setAttribute('x-html', 'show ? svg.chevronUpMini : svg.chevronDownMini')
+    collapse.setAttribute('@click', 'show=!show')
+    header.appendChild(collapse)
+  
+    const themesContainer = this.themesContainer = document.createElement('div')
+    themesContainer.classList.add('flex', 'flex-col', 'gap-5')
+    themesContainer.setAttribute('x-show', 'show')
+    themesContainer.setAttribute(':class', `{['scrollbar-thumb-'+color+'-600/25!']: true}`)
+    container.appendChild(themesContainer)
+
+    this.config.themes.forEach(theme => {
+      this.createThemeSection(theme)
+    })
+  }
+
+  createThemeSection(theme) {
+    const themeContainer = document.createElement('div')
+    themeContainer.setAttribute('x-show', `isRadioValue("edit") || activeTheme === "${theme.id}"`)
+    themeContainer.classList.add('flex', 'flex-col', 'gap-1')
+    this.themesContainer.appendChild(themeContainer)
+
+    const titleContainer = document.createElement('div')
+    titleContainer.classList.add('flex', 'flex-nowrap', 'gap-1')
+    themeContainer.appendChild(titleContainer)
+
+    const titleSpan = document.createElement('span')
+    titleSpan.innerText = `Title`  
+    titleContainer.appendChild(titleSpan)
+
+    const titleInput = document.createElement('span')
+    titleInput.innerHTML = theme.metadata.title
+    titleInput.classList.add('font-bold!')
+    titleInput.setAttribute('name', `title_${theme.id}`)
+    titleInput.setAttribute('contenteditable', 'false')
+    titleInput.setAttribute('x-init', `$el.setAttribute('contenteditable', isRadioValue("edit"))`)
+    titleContainer.appendChild(titleInput)
+    
+    // duplicate
+    // remove
+    // move
+    // set as active
+    // insert before
+    // insert after
+    
+    const descContainer = document.createElement('div')
+    descContainer.classList.add('flex', 'flex-nowrap', 'gap-1')
+    themeContainer.appendChild(descContainer)
+
+    const descSpan = document.createElement('span')
+    descSpan.innerText = `Description`  
+    descContainer.appendChild(descSpan)
+
+    const descInput = document.createElement('span')
+    descInput.innerHTML = theme.metadata.description
+    descInput.setAttribute('name', `description_${theme.id}`)
+    descInput.setAttribute('contenteditable', 'false')
+    descInput.setAttribute('x-init', `$el.setAttribute('contenteditable', isRadioValue("edit"))`)
+    descContainer.appendChild(descInput)
+
+    this.configInputElements(themeContainer)
+    themeContainer.querySelectorAll('span:not([contenteditable])').forEach(i => {
+      i.setAttribute('x-show', `isRadioValue("edit")`)
+      i.classList.add(
+        'opacity-50', 
+        'min-w-[65px]', 
+        i.parentElement.classList.contains('flex-col') 
+        ? 'self.start' 
+        : 'self-center'
+      )
+    })
+  }
 
   addReferenceSection(parent) {
     let reference = this.metadata.references
     if (!reference) return
     
-    const referencesContainer = document.createElement('div')
-    referencesContainer.classList.add('flex', 'flex-col', 'gap-1')
-    referencesContainer.setAttribute('x-data', '{show:true}')
-    parent.appendChild(referencesContainer)
+    const container = document.createElement('div')
+    container.classList.add('flex', 'flex-col', 'gap-1')
+    container.setAttribute('x-data', '{show:true}')
+    parent.appendChild(container)
 
-    const referencesHeader = document.createElement('span')
-    referencesHeader.classList.add('flex', 'flex-nowrap', 'justify-between', 'align-middle', 'font-bold')
-    referencesHeader.setAttribute('@click', 'show=!show')
-    referencesContainer.appendChild(referencesHeader)
+    const header = document.createElement('span')
+    header.classList.add('flex', 'flex-nowrap', 'justify-between', 'align-middle', 'font-bold')
+    container.appendChild(header)
 
     const referencesLabel = document.createElement('span')
     referencesLabel.innerText = 'References'
-    referencesHeader.appendChild(referencesLabel)
+    header.appendChild(referencesLabel)
 
-    const referencesCollapse = document.createElement('span')
-    referencesCollapse.classList.add('size-[15px]!', 'self-center')
-    referencesCollapse.setAttribute('x-html', 'show ? svg.chevronUpMini : svg.chevronDownMini')
-    referencesHeader.appendChild(referencesCollapse)
+    const collapse = document.createElement('span')
+    collapse.classList.add('size-[15px]!', 'self-center')
+    collapse.setAttribute('@click', 'show=!show')
+    collapse.setAttribute('x-html', 'show ? svg.chevronUpMini : svg.chevronDownMini')
+    header.appendChild(collapse)
 
-    const referencesContent = document.createElement('div')
-    referencesContent.classList.add('flex', 'flex-col', 'gap-1')
-    referencesContent.setAttribute('x-show', 'show')
-    referencesContainer.appendChild(referencesContent)
+    const content = document.createElement('div')
+    content.classList.add('flex', 'flex-col', 'gap-1')
+    content.setAttribute('x-show', 'show')
+    container.appendChild(content)
 
     while (reference) {
       const referenceContainer = document.createElement('div')
-      referencesContent.appendChild(referenceContainer)
+      content.appendChild(referenceContainer)
       const titleContainer = document.createElement('div')
       titleContainer.classList.add('flex', 'flex-nowrap', 'gap-1')
       referenceContainer.appendChild(titleContainer)

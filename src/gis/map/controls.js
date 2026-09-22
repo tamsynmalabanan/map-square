@@ -4,7 +4,7 @@ import FitToWorldControl from './fitToWorld.js';
 import BookmarkControl from './bookmark.js';
 import PlaceSearchControl from './placeSearch.js';
 import MetadataControl from './metadata.js';
-import { LegendControl } from './legend.js';
+import { LayersControl } from './layers.js';
 import { SettingsControl } from './settings.js';
 import { FileControl } from './file.js';
 
@@ -29,18 +29,14 @@ export default class HandleControls {
                 constructor: maplibregl.TerrainControl,
                 handler: (control) => {
                     const map = this._map
-                    const disabled = map.isStaticConfig()
                     const button = control.getContainer().querySelector('button')
-                    button.disabled = disabled
                     
                     control.isEnabled = () => {
                         return button.classList.contains('maplibregl-ctrl-terrain-enabled')
                     }
 
                     control.toggle = () => {
-                        button.disabled = false
                         button.click()
-                        button.disabled = disabled
                     }
 
                     button.addEventListener('click', async (e) => {
@@ -59,6 +55,48 @@ export default class HandleControls {
             },
             geolocate: {
                 constructor: maplibregl.GeolocateControl,
+                handler: (control) => {
+                    const map = this._map
+                    const button = control.getContainer().querySelector('button')
+
+                    control.isEnabled = () => {
+                        return !Array('OFF', undefined).includes(control._watchState) 
+                    }
+
+                    control.isActive = () => {
+                        return button.classList.contains('maplibregl-ctrl-geolocate-active')
+                    }
+
+                    control.toggle = () => {
+                        const enable = !control.isEnabled()
+                        while (control.isEnabled() !== enable) {
+                            control.trigger()
+                        }
+                        return control.isEnabled()
+                    }
+
+                    const originalTrigger = control.trigger.bind(control)
+                    control.trigger = () => {
+                        if (control._watchState === 'BACKGROUND') {
+                            control._watchState = 'OFF'
+                        }
+                        const result = originalTrigger()
+                        return result
+                    }
+
+                    button.addEventListener('click', async (e) => {
+                        map.once('moveend', async (e) => {
+                            const settings = map.getControls('settings')
+                            if (!settings) return
+
+                            await settings.updateConfig(
+                                ['settings', 'geolocate'], 
+                                control.isEnabled(), 
+                                {themeId: map.getTheme().id}
+                            )
+                        })
+                    })
+                },
                 elements: {
                     '.maplibregl-ctrl-geolocate': {
                         innerHTML: '<span class="maplibregl-ctrl-icon dark:invert" aria-hidden="true"></span>'
@@ -110,9 +148,9 @@ export default class HandleControls {
                 },
             },
             legend: {
-                constructor: LegendControl,
+                constructor: LayersControl,
                 elements: {
-                  '.maplibregl-ctrl-legend': {},
+                //   '.maplibregl-ctrl-legend': {},
                 },
             },
             placeSearch: {
@@ -187,7 +225,7 @@ export default class HandleControls {
                     
                     Array(
                         ...(el.tagName.toLowerCase() == 'button' ? [
-                            `['enabled:hover:bg-'+color+'-600/50! rounded! focus:rounded! hover:rounded! disabled:text-gray-600/100!']: true`,
+                            `['enabled:hover:bg-'+color+'-600/50! rounded! focus:rounded! hover:rounded! disabled:text-gray-600/100! p-1!']: true`,
                         ] : []), 
                         ...(params.classBindings ?? [])
                     ).forEach(exp => {

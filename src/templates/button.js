@@ -6,6 +6,7 @@ export default ({
   icon='',
   classStr='',
   attrs='',
+  minimal=false,
   collapsible=false,
   highlightExp=false,
 }={}) => {
@@ -31,7 +32,7 @@ export default ({
         px-2 
         dark:text-white  
         cursor-pointer
-        disabled:bg-gray-950/25!
+        ${minimal ? 'disabled:text-gray-950/25!' : 'disabled:bg-gray-950/25!'}
         ${classStr}
       "
     >

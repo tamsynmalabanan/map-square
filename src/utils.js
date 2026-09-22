@@ -409,3 +409,7 @@ export const fileToDataURL = async (file) => {
         }
     })
 }
+
+export const sleep = (ms) => {
+  return new Promise(resolve => setTimeout(resolve, ms))
+}
