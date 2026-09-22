@@ -45,6 +45,13 @@ export class SettingsControl {
         map.once('idle', async () => {
             await this.configMap()
         })
+
+        map.on('configUpdated', (e) => {
+            if (e.details.property[0] !== 'activeTheme') return
+            const container = content.firstElementChild
+            container.innerHTML = ''
+            menu(this.getMenuButtons(), {container})
+        })
         
         return container
     }
@@ -212,7 +219,7 @@ export class SettingsControl {
                 buttons: Object.entries(displaySettings.colorOptions).map(([name, hex]) => {
                     return {
                         title: utils.toTitleCase(name),
-                        icon: `<div class="bg-${name}-200/100! dark:bg-${name}-950/100! size-[15px]! rounded!"></div>`,
+                        icon: `<div class="bg-${name}-600/100! size-[15px]! rounded!"></div>`,
                         value: name,
                         handler: async (event) => {
                             if (name !== displaySettings.colorTheme) {
@@ -370,10 +377,9 @@ export class SettingsControl {
         const theme = map.getTheme()
         const settings = theme.settings
 
+        controls.bookmark.goToBookmark()
         if (settings.geolocate) {
             controls.geolocate.toggle()
-        } else {
-            controls.bookmark.goToBookmark()
         }
         
         map.setProjection({type:settings.projection})
@@ -394,7 +400,9 @@ export class SettingsControl {
         })
             
         if (settings.locked) {
-            this.lock()
+            map.once('idle', (e) => {
+                this.lock()
+            })
         }
     }
 

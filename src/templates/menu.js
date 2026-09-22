@@ -1,9 +1,11 @@
 import button from './button.js';
 
-export default (menu) => {
-    const container = document.createElement('div')
-    container.classList.add('m-1', 'flex', 'flex-col', 'gap-2')
-    container.setAttribute('x-data', `accordionGroup({value:0})`)
+export default (menu, {container}={}) => {
+    if (!container) {
+        container = document.createElement('div')
+        container.classList.add('m-1', 'flex', 'flex-col', 'gap-2')
+        container.setAttribute('x-data', `accordionGroup({value:0})`)
+    }
 
     menu.forEach((group, groupIndex) => {
         const groupContainer = document.createElement('div')

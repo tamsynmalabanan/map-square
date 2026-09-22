@@ -517,7 +517,6 @@ export default class Map extends maplibregl.Map {
       'setBearing',
       'zoomIn',
       'zoomOut',
-      'setProjection',
     ).forEach(i => {
       const original = this[i].bind(this)
   

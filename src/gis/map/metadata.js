@@ -620,12 +620,10 @@ export default class MetadataControl {
     }))
 
     this._map.on('configUpdated', (e) => {
-      if (e.details.property[0] === 'activeTheme') {
-        Object.entries(navBtns).forEach(([name, params]) => {
-          params.btn.disabled = params.isDisabled?.()
-          console.log(name, params.btn.disabled)
-        })
-      }
+      if (e.details.property[0] !== 'activeTheme') return
+      Object.entries(navBtns).forEach(([name, params]) => {
+        params.btn.disabled = params.isDisabled?.()
+      })
     })
 
     const addTheme = utils.strToEl(button({
