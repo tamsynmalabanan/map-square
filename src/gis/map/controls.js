@@ -113,7 +113,7 @@ export default class HandleControls {
                 elements: {
                     '.maplibregl-ctrl-scale': {
                         addClass: ['border-gray-950/100!', 'dark:border-gray-200/100!'],
-                        removeClass: ['border-1!', 'dark:border-gray-200/25!', 'border-gray-600/50!'],
+                        removeClass: ['border-1!', 'dark:border-gray-200/25!', 'border-gray-600/50!', 'border-none!'],
                     }
                 },
             },
