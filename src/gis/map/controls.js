@@ -7,6 +7,7 @@ import MetadataControl from './metadata.js';
 import { LayersControl } from './layers.js';
 import { SettingsControl } from './settings.js';
 import { FileControl } from './file.js';
+import Alpine from 'alpinejs';
 
 export default class HandleControls {
     constructor(map) {
@@ -60,12 +61,7 @@ export default class HandleControls {
                     const button = control.getContainer().querySelector('button')
 
                     control.isEnabled = () => {
-                        const state = control._watchState
-                        return !Array('OFF', undefined).includes(state) ? state : false
-                    }
-
-                    control.isActive = () => {
-                        return button.classList.contains('maplibregl-ctrl-geolocate-active')
+                        return !Array('OFF', undefined).includes(control._watchState)
                     }
 
                     control.toggle = () => {
@@ -73,7 +69,7 @@ export default class HandleControls {
                         while (control.isEnabled() !== enable) {
                             control.trigger()
                         }
-                        return control.isEnabled()
+                        return enable
                     }
 
                     const originalTrigger = control.trigger.bind(control)
@@ -89,12 +85,11 @@ export default class HandleControls {
                         const settings = map.getControls('settings')
                         if (!settings) return
                         
-                        const state = control.isEnabled()
-                        if (state === 'BACKGROUND') return
+                        if (control._watchState === 'BACKGROUND') return
 
                         await settings.updateConfig(
                             ['settings', 'geolocate'], 
-                            state ? false : true, 
+                            !control.isEnabled(), 
                             {themeId: map.getTheme().id}
                         )
                     })
@@ -209,8 +204,11 @@ export default class HandleControls {
 
                 const container = control._controlContainer ?? control._container
                 container.classList.add('dark:text-white!')
+           
+                Alpine.$data(container)[`${name}Disabled`] = false
                 container.setAttribute(':class', `{
-                    ['bg-'+color+'-200/100! dark:bg-'+color+'-950/100!']: true,
+                    ['bg-'+color+'-200/100! dark:bg-'+color+'-950/100!']: !${name}Disabled,
+                    ['bg-gray-950/25!']: ${name}Disabled,
                 }`)
 
                 control.getContainer = () => {
@@ -237,7 +235,7 @@ export default class HandleControls {
                     el.classList.add(
                         'grid', 
                         'place-items-center', 
-                        'dark:border-gray-200/25!', 
+                        'border-none!',
                         'disabled:bg-gray-950/25!',
                         ...(params.addClass??[])
                     )

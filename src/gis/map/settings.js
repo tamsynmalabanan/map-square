@@ -282,22 +282,22 @@ export class SettingsControl {
         const basemap = settings.basemap        
         const paints = basemap.paints[settings.darkMode ? 'dark' : 'default']
         const currentBasemap = map.getLayer('basemap')
-        const paintChanged = !_.isEqual(currentBasemap?.paint?._values, paints.basemap)
+        const basemapChanged = !_.isEqual(currentBasemap?.paint?._values, paints.basemap)
 
-        if (currentBasemap && (!basemap.render || paintChanged)) {
+        if (currentBasemap && (!basemap.render || basemapChanged)) {
             map.removeLayer('basemap')
-            this.setSky()
         }
 
-        if (basemap.render && (!currentBasemap || paintChanged) && map.getSource('basemap')?.tiles?.length) {
+        if (basemap.render && (!currentBasemap || basemapChanged) && map.getSource('basemap')?.tiles?.length) {
             map.addLayer({
                 id: 'basemap',
                 type: 'raster',
                 source: 'basemap',
                 paint: paints.basemap
             }, map.getControls('legend').getBeforeId('basemap'))
-            this.setSky(paints.sky)
         }
+
+        this.setSky(basemap.render ? paints.sky : null)
     }
 
     setSky(values) {
@@ -372,7 +372,7 @@ export class SettingsControl {
         map.getStyle().layers.forEach(l => {
             map.removeLayer(l.id)
         })
-
+        
         if (controls.geolocate.isEnabled()) {
             controls.geolocate.toggle()
         }
@@ -381,10 +381,17 @@ export class SettingsControl {
 
         let geolocatePromise = Promise.resolve()
         if (settings.geolocate) {
-            geolocatePromise = new Promise(resolve => {
-                controls.geolocate.once('geolocate', () => resolve())
-            })
             controls.geolocate.toggle()
+            geolocatePromise = new Promise(resolve => {
+                const finish = () => {
+                    controls.geolocate.off('geolocate', finish)
+                    controls.geolocate.off('error', finish)
+                    resolve()
+                }
+                
+                controls.geolocate.on('geolocate', finish)
+                controls.geolocate.on('error', finish)
+            })
         }
         
         map.setProjection({type:settings.projection})
@@ -422,7 +429,12 @@ export class SettingsControl {
 
         map._locked = true
 
-        console.log(map.getControls('nav'))
+        const controls = map.getControls()
+        Array('nav', 'fitToWorld', 'bookmark').forEach(i => {
+            const container = controls[i].getContainer()
+            Alpine.$data(container)[`${i}Disabled`] = true
+            Array.from(container.children).forEach(j => j.disabled = true)
+        })
 
         this.getContainer()?.firstElementChild
         .appendChild(utils.strToEl(`<span class="absolute top-0 right-0">🔒</span>`))
@@ -439,6 +451,13 @@ export class SettingsControl {
         map.dragRotate.enable()
 
         map._locked = false
+
+        const controls = map.getControls()
+        Array('nav', 'fitToWorld', 'bookmark').forEach(i => {
+            const container = controls[i].getContainer()
+            Alpine.$data(container)[`${i}Disabled`] = false
+            Array.from(container.children).forEach(j => j.disabled = false)
+        })
 
         this.getContainer()?.firstElementChild
         .firstElementChild.nextElementSibling?.remove()
