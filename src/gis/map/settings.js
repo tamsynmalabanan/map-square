@@ -46,7 +46,7 @@ export class SettingsControl {
             await this.configMap()
         })
 
-        map.on('configUpdated', (e) => {
+        map.on('configupdated', (e) => {
             if (e.details.property[0] !== 'activeTheme') return
             const container = content.firstElementChild
             container.innerHTML = ''
@@ -538,7 +538,7 @@ export class SettingsControl {
             target[propertyName] = value
 
             if (!newMap) {
-                map.fire(theme ? 'themeUpdated' : 'configUpdated', {
+                map.fire(theme ? 'themeupdated' : 'configupdated', {
                     details: {property, value, themeId, date}
                 })
             }

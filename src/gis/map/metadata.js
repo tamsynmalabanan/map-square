@@ -237,6 +237,7 @@ export default class MetadataControl {
       collapseBtn = utils.strToEl(button({
         title: 'Toggle details',
         icon: svg.chevronUpMini,
+        attrs: `x-ref="collapseBtn"`
       }))
       collapseBtn.addEventListener('click', () => {
         const data = Alpine.$data(this.details)
@@ -619,7 +620,7 @@ export default class MetadataControl {
       return [name, params]
     }))
 
-    this._map.on('configUpdated', (e) => {
+    this._map.on('configupdated', (e) => {
       if (e.details.property[0] !== 'activeTheme') return
       Object.entries(navBtns).forEach(([name, params]) => {
         params.btn.disabled = params.isDisabled?.()

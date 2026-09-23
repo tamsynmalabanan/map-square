@@ -102,7 +102,7 @@ export class FileControl {
                         highlight: null,
                         init: (button) => {
                             button.disabled = !config.logs?.length
-                            Array('themeUpdated', 'configUpdated').forEach(i => {
+                            Array('themeupdated', 'configupdated').forEach(i => {
                                 map.once(i, (e) => {
                                     button.disabled = !config.logs.length
                                 })
@@ -278,7 +278,7 @@ export class FileControl {
         }
 
         let timer
-        Array('themeUpdated', 'configUpdated', 'configSaved').forEach(i => {
+        Array('themeupdated', 'configupdated', 'configSaved').forEach(i => {
             clearTimeout(timer)
             setTimeout(() => {
                 map.on(i, async (e) => {
