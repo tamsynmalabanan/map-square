@@ -165,6 +165,8 @@ export default class MetadataControl {
           }
   
         })
+
+        Alpine.$data(this.themesContainer).activeTheme = this.config.activeTheme
       })
       nav.appendChild(backBtn)
 
@@ -228,6 +230,13 @@ export default class MetadataControl {
     
           if (value === metadata[name]) continue
           this._map.getControls('settings').updateConfig(['metadata', name], value, {themeId})
+        }
+
+        const newActiveTheme = Alpine.$data(this.themesContainer).activeTheme
+        if (newActiveTheme !== this.config.activeTheme) {
+          const settings = this._map.getControls('settings')
+          await settings.updateConfig(['activeTheme'], newActiveTheme)
+          await settings.applyThemeConfig()
         }
       })
       nav.appendChild(saveBtn)
@@ -355,7 +364,7 @@ export default class MetadataControl {
     header.appendChild(label)
 
     const collapse = document.createElement('span')
-    collapse.classList.add('size-[15px]!', 'self-center')
+    collapse.classList.add('size-[15px]!', 'self-center', 'cursor-pointer', 'opacity-25', 'hover:opacity-100')
     collapse.setAttribute('x-html', 'show ? svg.chevronUpMini : svg.chevronDownMini')
     collapse.setAttribute('@click', 'show=!show')
     header.appendChild(collapse)
@@ -476,7 +485,7 @@ export default class MetadataControl {
     header.appendChild(label)
 
     const collapse = document.createElement('span')
-    collapse.classList.add('size-[15px]!', 'self-center')
+    collapse.classList.add('size-[15px]!', 'self-center', 'cursor-pointer', 'opacity-25', 'hover:opacity-100')
     collapse.setAttribute('x-html', 'show ? svg.chevronUpMini : svg.chevronDownMini')
     collapse.setAttribute('@click', 'show=!show')
     header.appendChild(collapse)
@@ -511,7 +520,7 @@ export default class MetadataControl {
     header.appendChild(label)
 
     const collapse = document.createElement('span')
-    collapse.classList.add('size-[15px]!', 'self-center')
+    collapse.classList.add('size-[15px]!', 'self-center', 'cursor-pointer', 'opacity-25', 'hover:opacity-100')
     collapse.setAttribute('x-html', 'show ? svg.chevronUpMini : svg.chevronDownMini')
     collapse.setAttribute('@click', 'show=!show')
     header.appendChild(collapse)
@@ -549,7 +558,7 @@ export default class MetadataControl {
   }
   
   addThemesSection(parent) {
-    const container = document.createElement('div')
+    const container = this.themesContainer = document.createElement('div')
     container.classList.add('flex', 'flex-col', 'gap-1')
     container.setAttribute('x-data', `{show:true, activeTheme:'${this.config.activeTheme}'}`)
     parent.appendChild(container)
@@ -591,9 +600,9 @@ export default class MetadataControl {
       const btn = params.btn = utils.strToEl(button({
         title: params.title,
         icon: params.icon,
-        classStr: 'size-[15px]! self-center border-none!',
+        classStr: 'size-[15px]! self-center border-none! opacity-25 hover:opacity-100',
         minimal: true,
-        attrs: `x-show=isRadioValue("current") ${params.isDisabled() ? 'disabled' : ''}`,
+        attrs: `x-data='{disabled:${params.isDisabled()}}' x-show='isRadioValue("current") && !disabled'}`,
       }))
       btn.addEventListener('click', async (e) => {
         const themes = this.config.themes
@@ -623,30 +632,44 @@ export default class MetadataControl {
     this._map.on('configupdated', (e) => {
       if (e.details.property[0] !== 'activeTheme') return
       Object.entries(navBtns).forEach(([name, params]) => {
-        params.btn.disabled = params.isDisabled?.()
+        Alpine.$data(params.btn).disabled = params.isDisabled()
       })
     })
 
-    const addTheme = utils.strToEl(button({
-      title: 'Add new theme',
-      icon: svg.plusMini,
-      classStr: 'size-[15px]! self-center border-none! bg-green-600/100!',
-    }))
-    addTheme.addEventListener('click', async (e) => {
-      const theme = Map.getDefaultConfig().themes[0]
-      
-      this.createThemeSection(theme)
-      Alpine.$data(container).activeTheme = theme.id
+    // duplicate
+    // insert before
+    // insert after
 
-      const settings = this._map.getControls('settings')
-      await settings.updateConfig(['themes'], [...this.config.themes, theme])
-      await settings.updateConfig(['activeTheme'], theme.id)
-      await settings.applyThemeConfig()
-    })
-    header.appendChild(addTheme)
+    if (!this._map.isStaticConfig()) {
+      const addTheme = utils.strToEl(button({
+        title: 'Add new theme',
+        icon: svg.plusMini,
+        classStr: 'size-[15px]! self-center border-none! opacity-25 hover:opacity-100',
+        attrs: `x-show=isRadioValue("current")`,
+      }))
+      addTheme.addEventListener('click', async (e) => {
+        const newTheme = Map.getDefaultConfig().themes[0]
+
+        const themes = this.config.themes
+        const index = themes.findIndex(i => i.id === this.config.activeTheme)
+
+        const settings = this._map.getControls('settings')
+        await settings.updateConfig(['themes'], [
+          ...themes.slice(0, index+1),
+          newTheme,
+          ...themes.slice(index+1)
+        ])
+        await settings.updateConfig(['activeTheme'], newTheme.id)
+        await settings.applyThemeConfig()
+        
+        this.createThemeSection(newTheme, {index})
+        Alpine.$data(container).activeTheme = newTheme.id
+      })
+      header.appendChild(addTheme)
+    }
 
     const collapse = document.createElement('span')
-    collapse.classList.add('size-[15px]!', 'self-center')
+    collapse.classList.add('size-[15px]!', 'self-center', 'cursor-pointer', 'opacity-25', 'hover:opacity-100')
     collapse.setAttribute('x-html', 'show ? svg.chevronUpMini : svg.chevronDownMini')
     collapse.setAttribute('@click', 'show=!show')
     header.appendChild(collapse)
@@ -662,15 +685,24 @@ export default class MetadataControl {
     })
   }
 
-  createThemeSection(theme) {
+  createThemeSection(theme, {index}={}) {
     const themeContainer = document.createElement('div')
+    themeContainer.setAttribute(`data-theme-id`, theme.id)
     themeContainer.setAttribute('x-show', `isRadioValue("edit") || activeTheme === "${theme.id}"`)
     themeContainer.classList.add('flex', 'flex-col', 'gap-1')
-    this.themesContainer.appendChild(themeContainer)
+    if (!isNaN(index) && this.themesContainer.children.length > index+1) {
+      this.themesContainer.insertBefore(themeContainer, this.themesContainer.children[index+1])
+    } else {
+      this.themesContainer.appendChild(themeContainer)
+    }
+
+    const headerContainer = document.createElement('div')
+    headerContainer.classList.add('flex', 'gap-1')
+    themeContainer.appendChild(headerContainer)
 
     const titleContainer = document.createElement('div')
-    titleContainer.classList.add('flex', 'flex-nowrap', 'gap-1')
-    themeContainer.appendChild(titleContainer)
+    titleContainer.classList.add('flex', 'flex-nowrap', 'gap-1', 'grow', 'me-1')
+    headerContainer.appendChild(titleContainer)
 
     const titleSpan = document.createElement('span')
     titleSpan.innerText = `Title`  
@@ -684,13 +716,45 @@ export default class MetadataControl {
     titleInput.setAttribute('x-init', `$el.setAttribute('contenteditable', isRadioValue("edit"))`)
     titleContainer.appendChild(titleInput)
     
-    // duplicate
-    // remove
+    const activateTheme = utils.strToEl(button({
+      title: 'Set as active theme',
+      icon: svg.checkCircleMini,
+      classStr: `size-[15px]! self-center border-none!`,
+      attrs: `name='activeThemeBtn' x-show=isRadioValue("edit")`,
+      themedBg: false,
+    }))
+    utils.appendBinding(activateTheme, ':class', `['text-green-500/100! dark:text-green-500/100!']: activeTheme === "${theme.id}"`)
+    activateTheme.addEventListener('click', async (e) => {
+      Alpine.$data(this.themesContainer).activeTheme = theme.id
+    })
+    headerContainer.appendChild(activateTheme)  
+
+    if (!this._map.isStaticConfig()) {
+      const removeTheme = utils.strToEl(button({
+        title: 'Remove theme',
+        icon: svg.minusCircleMini,
+        classStr: 'size-[15px]! self-center border-none! opacity-25 hover:opacity-100',
+        attrs: `x-show=isRadioValue("current")`,
+      }))
+      removeTheme.addEventListener('click', async (e) => {
+        const themes = this.config.themes
+        const index = themes.findIndex(i => i.id === theme.id)
+        const newActiveTheme = themes[index === themes.length-1 ? index-1 : index+1]
+  
+        themeContainer.remove()
+        Alpine.$data(this.themesContainer).activeTheme = newActiveTheme.id
+  
+        const settings = this._map.getControls('settings')
+        await settings.updateConfig(['themes'], themes.filter(i => i.id !== theme.id))
+        await settings.updateConfig(['activeTheme'], newActiveTheme.id)
+        await settings.applyThemeConfig()
+      })
+      headerContainer.appendChild(removeTheme)
+    }
+
+    // on edit
     // move
-    // set as active
-    // insert before
-    // insert after
-    
+
     const descContainer = document.createElement('div')
     descContainer.classList.add('flex', 'flex-nowrap', 'gap-1')
     themeContainer.appendChild(descContainer)
@@ -737,8 +801,8 @@ export default class MetadataControl {
     header.appendChild(referencesLabel)
 
     const collapse = document.createElement('span')
-    collapse.classList.add('size-[15px]!', 'self-center')
     collapse.setAttribute('@click', 'show=!show')
+    collapse.classList.add('size-[15px]!', 'self-center', 'cursor-pointer', 'opacity-25', 'hover:opacity-100')
     collapse.setAttribute('x-html', 'show ? svg.chevronUpMini : svg.chevronDownMini')
     header.appendChild(collapse)
 

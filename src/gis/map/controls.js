@@ -208,7 +208,7 @@ export default class HandleControls {
                 Alpine.$data(container)[`${name}Disabled`] = false
                 container.setAttribute(':class', `{
                     ['bg-'+color+'-200/100! dark:bg-'+color+'-950/100!']: !${name}Disabled,
-                    ['bg-gray-950/25!']: ${name}Disabled,
+                    ['bg-gray-950/25! pointer-event-none!']: ${name}Disabled,
                 }`)
 
                 control.getContainer = () => {

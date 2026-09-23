@@ -433,7 +433,7 @@ export class SettingsControl {
         Array('nav', 'fitToWorld', 'bookmark').forEach(i => {
             const container = controls[i].getContainer()
             Alpine.$data(container)[`${i}Disabled`] = true
-            Array.from(container.children).forEach(j => j.disabled = true)
+            container.querySelectorAll('button').forEach(j => j.disabled = true)
         })
 
         this.getContainer()?.firstElementChild
@@ -456,7 +456,7 @@ export class SettingsControl {
         Array('nav', 'fitToWorld', 'bookmark').forEach(i => {
             const container = controls[i].getContainer()
             Alpine.$data(container)[`${i}Disabled`] = false
-            Array.from(container.children).forEach(j => j.disabled = false)
+            container.querySelectorAll('button').forEach(j => j.disabled = false)
         })
 
         this.getContainer()?.firstElementChild

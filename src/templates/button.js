@@ -9,6 +9,8 @@ export default ({
   minimal=false,
   collapsible=false,
   highlightExp=false,
+  color=null,
+  themedBg=true,
 }={}) => {
   return `
     <button
@@ -17,10 +19,12 @@ export default ({
       x-data
       x-id="['button']" 
       :id="$id('button')"
-      :class="{
-        ['bg-'+color+'-600/50!']: ${highlightExp},
-        ['bg-'+color+'-200/100! dark:bg-'+color+'-950/100! enabled:hover:bg-'+color+'-600/50!']: !(${highlightExp})
-      }"
+      ${themedBg ? `
+        :class="{
+          ['bg-'+color+'-600/50!']: ${highlightExp},
+          ['bg-'+color+'-200/100! dark:bg-'+color+'-950/100! enabled:hover:bg-'+color+'-600/50!']: !(${highlightExp})
+        }"
+      ` : ''}
       class="
         flex 
         justify-center 
@@ -30,8 +34,8 @@ export default ({
         rounded 
         py-1
         px-2 
-        dark:text-white  
         cursor-pointer
+        ${themedBg ? `dark:text-white` : ''}  
         ${minimal ? 'disabled:text-gray-950/25!' : 'disabled:bg-gray-950/25!'}
         ${classStr}
       "
