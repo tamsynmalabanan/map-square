@@ -761,7 +761,7 @@ export default class MetadataControl {
         'justify-end', 
         'rounded', 'shadow-lg')
       optionsContent.setAttribute('@click.outside', 'showOptions = false')
-      optionsContent.setAttribute('x-show', 'showOptions')
+      optionsContent.setAttribute('x-show', 'showOptions && isRadioValue("current")')
       optionsContent.setAttribute('x-anchor.fixed', '$refs.optionsToggle')
       utils.appendBinding(optionsContent, `:class`, `['bg-'+color+'-200/100! dark:bg-'+color+'-950/100!']: true`)
       headerContainer.appendChild(optionsContent)
@@ -798,6 +798,7 @@ export default class MetadataControl {
 
       Array.from(optionsContent.children).forEach((el, index) => {
         utils.appendBinding(el, `:class`, `['hover:bg-'+color+'-600/50!']: true`)
+        el.setAttribute('@click', `showOptions = false`)
         el.classList.add(
           'px-2', 'py-1', 
           index === 0 ? 'rounded-t' 
