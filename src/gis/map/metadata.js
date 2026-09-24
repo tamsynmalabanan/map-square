@@ -19,13 +19,12 @@ export default class MetadataControl {
     container.classList.add(
       'maplibregl-ctrl', 'maplibregl-ctrl-group', 
       'sm:max-w-[80vw]', 'md:max-w-[60vw]', 'lg:max-w-[40vw]', 
-      'sm:max-h-[80vh]',
     )
     container.setAttribute('x-data', 'collapseGroup({value:false})')
     
     container.innerHTML = button({
       title: 'Metadata',
-      icon: svg.informationCircleMini,
+      icon: svg.buildingLibraryMini,
       classStr: 'maplibregl-ctrl-metadata',
       attrs: `@click='toggleCollapse' x-show='collapsed'`
     })
@@ -50,7 +49,7 @@ export default class MetadataControl {
 
     if (this.config.id) {
       const details = this.details = document.createElement('div')
-      details.classList.add('flex', 'flex-col', 'gap-5', 'overflow-auto', 'max-h-[75vh]', 'pe-2')
+      details.classList.add('flex', 'flex-col', 'gap-5', 'overflow-auto', 'max-h-[80vh]', 'pe-2')
       details.setAttribute('x-data', '{show:true}')
       details.setAttribute('x-show', 'show')
       form.appendChild(details)
@@ -318,7 +317,7 @@ export default class MetadataControl {
     parent.appendChild(logoForm)
 
     const logoImg = document.createElement('img')
-    logoImg.classList.add('size-[10vh]', 'rounded', 'me-2')
+    logoImg.classList.add('size-[10vh]', 'rounded')
     logoImg.src = this.metadata.logo
     logoImg.setAttribute('name', 'logo')
     logoImg.setAttribute('x-data', `{show: $el.src !== "${this.defaultMetadata.logo}"}`)
@@ -326,7 +325,7 @@ export default class MetadataControl {
     logoForm.appendChild(logoImg)
 
     const logoInputs = document.createElement('div')
-    logoInputs.classList.add('flex', 'flex-nowrap', 'gap-1', 'me-2')
+    logoInputs.classList.add('flex', 'flex-nowrap', 'gap-1')
     logoInputs.setAttribute('x-show', 'isRadioValue("edit")')
     logoForm.appendChild(logoInputs)
 
@@ -386,7 +385,7 @@ export default class MetadataControl {
     header.appendChild(collapse)
 
     const content = document.createElement('div')
-    content.classList.add('flex', 'flex-nowrap')
+    content.classList.add('flex', 'flex-nowrap', 'gap-2')
     content.setAttribute('x-show', 'show')
     container.appendChild(content)
 
