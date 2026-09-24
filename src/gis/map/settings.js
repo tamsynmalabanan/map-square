@@ -379,19 +379,19 @@ export class SettingsControl {
 
         controls.bookmark.goToBookmark()
 
-        let geolocatePromise = Promise.resolve()
+        // let geolocatePromise = Promise.resolve()
         if (settings.geolocate) {
             controls.geolocate.toggle()
-            geolocatePromise = new Promise(resolve => {
-                const finish = () => {
-                    controls.geolocate.off('geolocate', finish)
-                    controls.geolocate.off('error', finish)
-                    resolve()
-                }
+            // geolocatePromise = new Promise(resolve => {
+            //     const finish = () => {
+            //         controls.geolocate.off('geolocate', finish)
+            //         controls.geolocate.off('error', finish)
+            //         resolve()
+            //     }
                 
-                controls.geolocate.on('geolocate', finish)
-                controls.geolocate.on('error', finish)
-            })
+            //     controls.geolocate.on('geolocate', finish)
+            //     controls.geolocate.on('error', finish)
+            // })
         }
         
         map.setProjection({type:settings.projection})
@@ -411,7 +411,7 @@ export class SettingsControl {
             map.addLayer(layer)  
         })
 
-        await geolocatePromise
+        // await geolocatePromise
         if (settings.locked) {
             this.lock()
         }

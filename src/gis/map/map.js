@@ -1,5 +1,5 @@
 import Alpine from 'alpinejs';
-import maplibregl, { Padding } from 'maplibre-gl';
+import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import * as utils from '../../utils.js'; 
 import * as gisUtils from '../utils.js'; 

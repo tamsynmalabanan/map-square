@@ -28,6 +28,9 @@ Alpine.plugin(persist)
 import anchor from '@alpinejs/anchor'
 Alpine.plugin(anchor)
 
+import sort from '@alpinejs/sort'
+Alpine.plugin(sort)
+
 import registerStores from './stores.js'
 registerStores()
 
