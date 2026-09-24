@@ -11,7 +11,7 @@ export default class BookmarkControl {
 
     container.innerHTML = button({
         title: 'Zoom to bookmarked location',
-        icon: svg.mapPinMini,
+        icon: svg.bookmarkMini,
         classStr: 'maplibregl-ctrl-zoom-to-bookmark',
     })
 

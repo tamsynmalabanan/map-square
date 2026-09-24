@@ -14,9 +14,13 @@ export default class MetadataControl {
     this.defaultThemeMetadata = this.defaultConfig.themes[0].metadata
 
     this.inputSelector = 'input, textarea, label, [contenteditable], [type="editor"]'
-    
+
     const container = this._container = document.createElement('div')
-    container.classList.add('maplibregl-ctrl','maplibregl-ctrl-group', 'sm:max-w-[80vw]', 'md:max-w-[60vw]', 'lg:max-w-[40vw]')
+    container.classList.add(
+      'maplibregl-ctrl', 'maplibregl-ctrl-group', 
+      'sm:max-w-[80vw]', 'md:max-w-[60vw]', 'lg:max-w-[40vw]', 
+      'sm:max-h-[80vh]',
+    )
     container.setAttribute('x-data', 'collapseGroup({value:false})')
     
     container.innerHTML = button({

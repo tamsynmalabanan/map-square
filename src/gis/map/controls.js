@@ -139,6 +139,11 @@ export default class HandleControls {
             
             metadata: {
                 constructor: MetadataControl,
+                handler: (control) => {
+                    map.once('idle', () => {
+                        control.getContainer().parentElement.style.zIndex = 5
+                    })
+                },
                 elements: {
                     '.maplibregl-ctrl-metadata': {},
                 },
@@ -205,10 +210,10 @@ export default class HandleControls {
                 container.classList.add('dark:text-white!')
            
                 Alpine.$data(container)[`${name}Disabled`] = false
-                container.setAttribute(':class', `{
+                utils.appendBinding(container, ':class', `
                     ['bg-'+color+'-200/100! dark:bg-'+color+'-950/100!']: !${name}Disabled,
-                    ['invisible! size-0! m-0!']: ${name}Disabled,
-                }`)
+                    ['invisible! size-0! m-0!']: ${name}Disabled
+                `)
 
                 control.getContainer = () => {
                     return container

@@ -129,7 +129,7 @@ export const hexToHSLA = (hex) => {
 
 export const appendBinding = (el, attr, exp) => {
     const existingBinding = el.getAttribute(attr)
-    const cleanExp = removeWhitespace(existingBinding ? existingBinding.replace('}', `, ${exp}}`): `{${exp}}`)
+    const cleanExp = removeWhitespace(existingBinding ? existingBinding.replace('}', `, ${exp}}`): `{${exp}}`).replaceAll(' ,', ',')
     el.setAttribute(attr, cleanExp)
 }
 
