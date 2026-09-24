@@ -651,10 +651,13 @@ export default class MetadataControl {
     if (!this._map.isStaticConfig()) {
       const addTheme = utils.strToEl(button({
         title: 'Add new theme',
-        icon: svg.plusMini,
-        classStr: 'size-[15px]! self-center border-none! opacity-25 hover:opacity-100',
+        icon: svg.plusCircleMini,
+        classStr: 'size-[15px]! self-center border-none! opacity-50 hover:opacity-100',
         attrs: `x-show=isRadioValue("current")`,
+        minimal: true,
+        themedBg: false,
       }))
+      utils.appendBinding(addTheme, ':class', `['text-green-500/100! dark:text-green-500/100!']: true`)
       addTheme.addEventListener('click', async (e) => {
         const newTheme = Map.getDefaultConfig().themes[0]
         await this.addNewTheme(newTheme)
@@ -723,6 +726,7 @@ export default class MetadataControl {
       classStr: `size-[15px]! self-center border-none! opacity-25 hover:opacity-100`,
       attrs: `x-show=isRadioValue("edit") x-sort:handle`,
       themedBg: false,
+      minimal: true,
     }))
     btnsContainer.appendChild(moveTheme)  
     
@@ -732,6 +736,7 @@ export default class MetadataControl {
       classStr: `size-[15px]! self-center border-none!`,
       attrs: `name='activeThemeBtn' x-show=isRadioValue("edit")`,
       themedBg: false,
+      minimal: true,
     }))
     utils.appendBinding(activateTheme, ':class', `['text-green-500/100! dark:text-green-500/100!']: activeTheme === "${theme.id}"`)
     activateTheme.addEventListener('click', async (e) => {
@@ -744,6 +749,7 @@ export default class MetadataControl {
         title: 'Theme options',
         icon: svg.ellipsisHorizontalMini,
         classStr: 'size-[15px]! rounded! self-center border-none! opacity-25 hover:opacity-100',
+        minimal: true,
         attrs: `
           x-show=isRadioValue("current")
           x-ref="optionsToggle"
