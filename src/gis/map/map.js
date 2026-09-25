@@ -170,6 +170,19 @@ export default class Map extends maplibregl.Map {
             position: 'top-right',
             order: 5,
           },
+          geolocate: {
+            active: true,
+            position: 'top-right',
+            order: 6,
+            options: {
+                positionOptions: {
+                    enableHighAccuracy: true
+                },
+                trackUserLocation: true,
+                showUserHeading: true,
+                fitBoundsOptions: { maxZoom: 16 }
+            },
+          },
           fullscreen: {
             active: true,
             position: 'top-right',
@@ -193,19 +206,6 @@ export default class Map extends maplibregl.Map {
             options: {
                 source:'terrain',
                 exaggeration:1,
-            },
-          },
-          geolocate: {
-            active: true,
-            position: 'bottom-right',
-            order: 3,
-            options: {
-                positionOptions: {
-                    enableHighAccuracy: true
-                },
-                trackUserLocation: true,
-                showUserHeading: true,
-                fitBoundsOptions: { maxZoom: 16 }
             },
           },
           scalebar: {
