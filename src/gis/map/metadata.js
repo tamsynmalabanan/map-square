@@ -315,13 +315,13 @@ export default class MetadataControl {
     const logoForm = document.createElement('div')
     logoForm.classList.add('flex', 'flex-col', 'gap-2')
     parent.appendChild(logoForm)
-
+    
     const logoImg = document.createElement('img')
     logoImg.classList.add('size-[10vh]', 'rounded')
     logoImg.src = this.metadata.logo
     logoImg.setAttribute('name', 'logo')
-    logoImg.setAttribute('x-data', `{show: $el.src !== "${this.defaultMetadata.logo}"}`)
-    logoImg.setAttribute('x-show', `isRadioValue("edit") || show`)
+    logoImg.setAttribute('x-effect', `showImg = isRadioValue("edit") || $el.src !== "${this.defaultMetadata.logo}"`)
+    logoImg.setAttribute('x-show', `showImg`)
     logoForm.appendChild(logoImg)
 
     const logoInputs = document.createElement('div')
@@ -385,8 +385,10 @@ export default class MetadataControl {
     header.appendChild(collapse)
 
     const content = document.createElement('div')
-    content.classList.add('flex', 'flex-nowrap', 'gap-2')
+    content.classList.add('flex', 'flex-nowrap')
     content.setAttribute('x-show', 'show')
+    content.setAttribute('x-data', `{showImg: false}`)
+    utils.appendBinding(content, ':class', `['gap-2']: showImg`)
     container.appendChild(content)
 
     this.addLogoSection(content)
