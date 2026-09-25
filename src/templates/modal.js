@@ -10,27 +10,29 @@ Alpine.data('modalApp', ({open=false}={}) => ({
 
 export default ({
     open=false,
+    parent=`#app`,
     title='Modal',
     icon='',
     classStr='',
     origin='top',
     content='',
-    collapsible=false
+    collapsible=false,
+    label=true,
+    toggleclass='',
 }={}) => {
   return `
-    <div x-id="['modal']" x-data="modalApp({'open':${open}})" class="${classStr}">
+    <div x-id="['modal']" :id="$id('modal')" x-data="modalApp({'open':${open}})" class="${classStr}">
       ${button({
-        label: title, 
+        ...(label ? {label: title} : {title: title}), 
         icon, 
         collapsible,
         attrs: `@click="toggle"`,
         highlightExp: `open`,
-        classStr: 'border-2 shadow-xl'
+        classStr: `${toggleclass}`,
       })}
-      
-      <template x-teleport="#app">
+      <template x-teleport="${parent}">
         <div 
-          :id="$id('modal', 'container')" 
+          :id="$id('modal', 'container')"
           x-show="open" 
           x-transition.origin.${origin}
           :class="{
@@ -39,12 +41,13 @@ export default ({
           class="z-10 absolute top-0 left-0 size-full flex items-center justify-center"
         >
           <div 
-            :id="$id('modal')" 
+            :id="$id('modal', 'main')" 
             @click.outside="toggle" 
             :class="{
               ['bg-'+color+'-200/100! dark:bg-'+color+'-950/100!']: true,
             }"
             class="
+              relative
               dark:text-white
               shadow-2xl
               rounded-none 
@@ -52,23 +55,28 @@ export default ({
               size-full 
               sm:size-3/4 
               lg:w-1/2 p-4
-              flex
-              flex-col
-              gap-5
             "
           >
-            <div class="flex items-start justify-between">
-              <div class="flex justify-start gap-2 items-center text-xl">
-                ${icon || ''}
-                <h1>${title}</h1>
+            ${button({
+              icon: svg.xMini,
+              attrs: `@click="toggle"`,
+              classStr: `size-[15px]! p-0! absolute top-[8px] right-[8px]`
+            })}
+            <div
+              class="
+                flex
+                flex-col
+                gap-5
+              "
+            >
+              <div class="flex items-start justify-between">
+                <div class="flex justify-start gap-2 items-center text-md font-bold">
+                  ${icon || ''}
+                  <h1>${title}</h1>
+                </div>
               </div>
-              ${button({
-                icon: svg.xMini,
-                attrs: `@click="toggle"`,
-                classStr: `size-[30px]!`
-              })}
+              <div :id="$id('modal', 'content')" class="flex flex-col grow">${content}</div>
             </div>
-            <div class="flex flex-col grow">${content}</div>
           </div>
         </div>
       </template>

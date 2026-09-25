@@ -136,7 +136,24 @@ export class FileControl {
                     },
                     {
                         title: 'Open a local map',
-                        icon: '🗄️',
+                        // icon: '🗄️',
+                        init: (button) => {
+                            const modalEl = utils.strToEl(modal({
+                                open: true,
+                                parent: `#${map.getContainer().id}`,
+                                title: 'Local Maps',
+                                icon: '🗄️',
+                                origin: 'bottom.right',
+                                label: false,
+                                toggleClass: 'rounded!',
+                            }))
+                            button.appendChild(modalEl)
+
+                            map.once('idle', (e) => {
+                                const content = document.getElementById(modalEl.id)
+                                console.log(content)
+                            })
+                        }
                     },
                     {
                         title: 'Open a map file',
