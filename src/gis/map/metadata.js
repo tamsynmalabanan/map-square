@@ -577,7 +577,10 @@ export default class MetadataControl {
   addThemesSection(parent) {
     const container = this.themesContainer = document.createElement('div')
     container.classList.add('flex', 'flex-col', 'gap-1')
-    container.setAttribute('x-data', `{show:true, activeTheme:'${this.config.activeTheme}'}`)
+    container.setAttribute('x-data', `{
+      show:true, 
+      activeTheme:'${this.config.activeTheme}', 
+    }`)
     parent.appendChild(container)
   
     const header = document.createElement('span')
@@ -585,7 +588,7 @@ export default class MetadataControl {
     container.appendChild(header)
   
     const label = document.createElement('span')
-    label.classList.add('grow!')
+    label.classList.add('grow!', 'gap-2', 'flex', 'flex-nowrap')
     label.innerText = 'Themes'
     header.appendChild(label)
   
@@ -646,12 +649,23 @@ export default class MetadataControl {
       return [name, params]
     }))
 
-    this._map.on('configupdated', (e) => {
-      if (!Array('activeTheme', 'themes').includes(e.details.property[0])) return
-      Object.entries(navBtns).forEach(([name, params]) => {
-        Alpine.$data(params.btn).disabled = params.isDisabled()
+    Object.entries({'idle': 'on', 'configupdated': 'on'}).forEach(([type, fn]) => {
+      this._map[fn](type, (e) => {
+        if (type === 'configupdated' && !Array('activeTheme', 'themes').includes(e.details.property[0])) return
+        const themes = this.config.themes
+        Alpine.$data(container).themesTotal = themes.length
+        Alpine.$data(container).themeIndex = themes.findIndex(i => i.id === this.config.activeTheme)+1
+        
+        Object.entries(navBtns).forEach(([name, params]) => {
+          Alpine.$data(params.btn).disabled = params.isDisabled()
+        })
       })
     })
+
+    const count = document.createElement('span')
+    count.classList.add('opacity-25', 'cursor-pointer')
+    count.setAttribute('x-html', `themeIndex+' of '+themesTotal`)
+    header.insertBefore(count, navBtns.next.btn)
 
     if (!this._map.isStaticConfig()) {
       const addTheme = utils.strToEl(button({
