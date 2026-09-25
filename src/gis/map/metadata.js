@@ -111,7 +111,8 @@ export default class MetadataControl {
       editBtn = utils.strToEl(button({
         title: 'Edit metadata',
         icon: svg.pencilSquareMini,
-        attrs: `@click='toggleRadio("edit")' x-show='isRadioValue("current")'`
+        attrs: `@click='toggleRadio("edit")' x-show='isRadioValue("current")'`,
+        classStr: `border-t-0!`,
       }))
       editBtn.addEventListener('click', () => {
         this.form.querySelectorAll(this.inputSelector).forEach(i => {
@@ -129,7 +130,8 @@ export default class MetadataControl {
       backBtn = utils.strToEl(button({
           title: 'Go back',
           icon: svg.arrowUturnLeftMini,
-          attrs: `@click='toggleRadio("current")' x-show='isRadioValue("edit")'`
+          attrs: `@click='toggleRadio("current")' x-show='isRadioValue("edit")'`,
+          classStr: `border-t-0!`,
       }))
       backBtn.addEventListener('click', () => {
         this.form.querySelectorAll(this.inputSelector).forEach(i => {
@@ -181,7 +183,8 @@ export default class MetadataControl {
       saveBtn = utils.strToEl(button({
           title: 'Save changes',
           icon: svg.checkCircleMini,
-          attrs: `@click='toggleRadio("current")' x-show='isRadioValue("edit")'`
+          attrs: `@click='toggleRadio("current")' x-show='isRadioValue("edit")'`,
+          classStr: `border-t-0!`,
       }))
       saveBtn.addEventListener('click', async () => {
         const settings = this._map.getControls('settings')
@@ -261,7 +264,8 @@ export default class MetadataControl {
       collapseBtn = utils.strToEl(button({
         title: 'Toggle details',
         icon: svg.chevronUpMini,
-        attrs: `x-ref="collapseBtn"`
+        attrs: `x-ref="collapseBtn"`,
+        classStr: `border-t-0!`,
       }))
       collapseBtn.addEventListener('click', () => {
         const data = Alpine.$data(this.details)
@@ -274,8 +278,8 @@ export default class MetadataControl {
     nav.appendChild(utils.strToEl(button({
       title: 'Collapse metadata',
       icon: svg.xMini,
-      classStr: 'maplibregl-ctrl-close',
-      attrs: `@click='toggleCollapse'  x-show='isRadioValue("current")'`
+      classStr: 'maplibregl-ctrl-close border-t-0!',
+      attrs: `@click='toggleCollapse'  x-show='isRadioValue("current")'`,
     })))
 
     Array(editBtn, saveBtn, backBtn, collapseBtn).filter(Boolean).forEach(i => {
@@ -665,6 +669,7 @@ export default class MetadataControl {
     const count = document.createElement('span')
     count.classList.add('opacity-25', 'cursor-pointer')
     count.setAttribute('x-html', `themeIndex+' of '+themesTotal`)
+    count.setAttribute('x-show', `isRadioValue("current")`)
     header.insertBefore(count, navBtns.next.btn)
 
     if (!this._map.isStaticConfig()) {
