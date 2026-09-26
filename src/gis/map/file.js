@@ -163,14 +163,20 @@ export class FileControl {
                                 content.innerHTML = ''
 
                                 const container = document.createElement('div')
-                                container.classList.add('max-w-full','max-h-full', 'overflow-auto', 'grid', 'grid-cols-6', 'ps-3', 'pb-3', 'pe-3')
+                                container.classList.add(
+                                    'max-w-full','max-h-full', 
+                                    'overflow-auto', 
+                                    'grid', 'grid-cols-6',
+                                    'ps-3', 'pb-3', 'pe-3',
+                                    'min-w-[500px]',
+                                )
                                 utils.appendBinding(container , ':class', `['scrollbar-thumb-'+color+'-600/25!']: true`)
                                 content.appendChild(container)
 
                                 const keys = Object.entries({
                                     snapshot: '',
+                                    no: 'No.',
                                     title: 'Title',
-                                    creator: 'Creator',
                                     dateCreated: 'Created',
                                     dateUpdated: 'Updated',
                                     options: '',
@@ -180,7 +186,7 @@ export class FileControl {
                                         'flex', 'flex-nowrap', 'gap-2', 
                                         'cursor-pointer', 
                                         'sticky', 'top-0', 
-                                        'font-bold', 'p-1',
+                                        'font-bold', 'p-2',
                                     )
                                     utils.appendBinding(header, ':class', `['${utils.dynamicBgExp()}']: true`)
                                     container.appendChild(header)
@@ -197,6 +203,7 @@ export class FileControl {
                                         header.appendChild(icon)
                                     }
 
+                                    if (title !== '' && key !== 'no')
                                     header.addEventListener('click', (e) => {
                                         if (key === sortBy) {
                                             sortOrder = sortOrder === 'ascending' ? 'descending' : 'ascending'
@@ -217,7 +224,7 @@ export class FileControl {
                                     keys.forEach(j => {
                                         const tag = j === 'snapshot' ? 'img' : j === 'options' ? 'div' : 'span'
                                         const el = document.createElement(tag)
-                                        el.classList.add('p-1', index%2===0 ? 'bg-gray-950/25!' : null)
+                                        el.classList.add('flex', 'items-center', 'p-2', index%2===0 ? 'bg-gray-950/25!' : null)
                                         container.appendChild(el)
                                         
                                         if (j === 'options') {
@@ -247,9 +254,10 @@ export class FileControl {
                                                 })
                                                 el.appendChild(deleteBtn)
                                             }
+                                        } else if (j === 'no') {
+                                            el.innerText = index+1
                                         } else if (j === 'snapshot') {
-                                            el.classList.remove('p-1')
-                                            el.classList.add('p-3')
+                                            el.classList.add('p-3!')
                                             el.src = i.metadata[j]
                                         } else {
                                             el.innerText = i.metadata[j]
