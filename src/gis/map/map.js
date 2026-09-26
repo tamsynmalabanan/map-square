@@ -18,6 +18,7 @@ export default class Map extends maplibregl.Map {
       maxPitch: 75,
       hash: false,
       attributionControl: false,
+      preserveDrawingBuffer: true,
       style: {
         version: 8,
         sources: config.sources,
@@ -105,12 +106,13 @@ export default class Map extends maplibregl.Map {
         email: '',
         license: 'CC BY-SA 4.0',
         acknowledgements: '',
-
+        
         description: '',
         references: null,
         
         dateCreated: date,
         dateUpdated: null,
+        snapshot: '',
       },
       sources: {
         basemap: {

@@ -460,7 +460,16 @@ export class SettingsControl {
             this.saveTimer = setTimeout(async () => {
                 const map = this._map
                 const config = map.getConfig()
-                
+
+                const snapshotPromise = new Promise((resolve) => {
+                    map.once('idle', () => {
+                        config.metadata.snapshot = map.getCanvas().toDataURL('image/png')
+                        resolve()
+                    })
+                    map.triggerRepaint()
+                })
+
+                await snapshotPromise
                 await gisDB.saveToGISDB('maps', config)
                 map.fire('configSaved', {details: {config}})
 

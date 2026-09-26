@@ -168,7 +168,7 @@ export class FileControl {
                                 content.appendChild(container)
 
                                 const keys = Object.entries({
-                                    no: 'No.',
+                                    snapshot: '',
                                     title: 'Title',
                                     creator: 'Creator',
                                     dateCreated: 'Created',
@@ -215,9 +215,11 @@ export class FileControl {
                                     descending: sortOrder === 'descending'
                                 }).flatMap(i => maps.filter(j => j.metadata[sortBy] === i)).forEach((i, index) => {
                                     keys.forEach(j => {
-                                        const el = document.createElement('span')
+                                        const tag = j === 'snapshot' ? 'img' : j === 'options' ? 'div' : 'span'
+                                        const el = document.createElement(tag)
                                         el.classList.add('p-1', index%2===0 ? 'bg-gray-950/25!' : null)
                                         container.appendChild(el)
+                                        
                                         if (j === 'options') {
                                             el.classList.add('flex', 'flex-nowrap', 'gap-3')
 
@@ -245,8 +247,10 @@ export class FileControl {
                                                 })
                                                 el.appendChild(deleteBtn)
                                             }
-                                        } else if (j === 'no') {
-                                            el.innerText = index+1
+                                        } else if (j === 'snapshot') {
+                                            el.classList.remove('p-1')
+                                            el.classList.add('p-3')
+                                            el.src = i.metadata[j]
                                         } else {
                                             el.innerText = i.metadata[j]
                                         }
