@@ -84,6 +84,14 @@ export class FileControl {
                                     await map.getControls('settings').saveConfig({timeout:0})
                                 },
                             },
+                            {
+                                title: 'Refresh map',
+                                icon: `🔃`,
+                                highlight: null,
+                                handler: async (event) => {
+                                    this.loadMapFromConfig(config)
+                                },
+                            },
 
                         ] : map.isWebConfig() ? [
                             {
@@ -213,7 +221,7 @@ export class FileControl {
                                         if (j === 'options') {
                                             el.classList.add('flex', 'flex-nowrap', 'gap-3')
 
-                                            if (i.id !== map.getConfig().id) {
+                                            if (i.id !== config.id) {
                                                 const openBtn = utils.strToEl(button({
                                                     title: 'Open map',
                                                     icon: '📂',
