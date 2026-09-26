@@ -89,7 +89,7 @@ export class FileControl {
                                 icon: `🔃`,
                                 highlight: null,
                                 handler: async (event) => {
-                                    this.loadMapFromConfig(map.getConfig())
+                                    this.loadMapFromConfig(config)
                                 },
                             },
 
