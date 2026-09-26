@@ -793,7 +793,7 @@ export default class MetadataControl {
       optionsContent.setAttribute('@click.outside', 'showOptions = false')
       optionsContent.setAttribute('x-show', 'showOptions && isRadioValue("current")')
       optionsContent.setAttribute('x-anchor.fixed', '$refs.optionsToggle')
-      utils.appendBinding(optionsContent, `:class`, `['bg-'+color+'-200/100! dark:bg-'+color+'-950/100!']: true`)
+      utils.appendBinding(optionsContent, `:class`, `['${utils.dynamicBgExp()}']: true`)
       headerContainer.appendChild(optionsContent)
 
       const duplicateTheme = document.createElement('span')

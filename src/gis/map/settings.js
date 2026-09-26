@@ -460,9 +460,7 @@ export class SettingsControl {
             this.saveTimer = setTimeout(async () => {
                 const map = this._map
                 const config = map.getConfig()
-        
-                config.metadata.dateSaved = date
-        
+                
                 await gisDB.saveToGISDB('maps', config)
                 map.fire('configSaved', {details: {config}})
 

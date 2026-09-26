@@ -22,7 +22,7 @@ export default ({
       ${themedBg && !minimal ? `
         :class="{
           ['bg-'+color+'-600/50!']: ${highlightExp},
-          ['bg-'+color+'-200/100! dark:bg-'+color+'-950/100! enabled:hover:bg-'+color+'-600/50!']: !(${highlightExp})
+          ['${utils.dynamicBgExp()} enabled:hover:bg-'+color+'-600/50!']: !(${highlightExp})
         }"
       ` : ''}
       class="

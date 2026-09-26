@@ -15,7 +15,7 @@ export default function registerLayout() {
     // app.appendChild(utils.strToEl(modal({
     //     open: false,
     //     title: 'Dashboard',
-    //     classStr: "absolute bottom-0 left-0 m-[10px]",
+    //     modalClass: "absolute bottom-0 left-0 m-[10px]",
     //     icon: svg.walletSolid,
     //     origin: 'bottom.left',
     //     collapsible: true,

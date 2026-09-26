@@ -413,3 +413,28 @@ export const fileToDataURL = async (file) => {
 export const sleep = (ms) => {
   return new Promise(resolve => setTimeout(resolve, ms))
 }
+
+export const sortArray = (arr, {descending=false}={}) => {
+    let sortedArray =  [...arr].sort((a, b) => {
+        const aNum = Number(a), bNum = Number(b);
+        if (!isNaN(aNum) && !isNaN(bNum)) return aNum - bNum;
+
+        const aDate = new Date(a), bDate = new Date(b);
+        if (!isNaN(aDate.getTime()) && !isNaN(bDate.getTime())) return aDate - bDate;
+
+        return String(a).localeCompare(String(b));
+    });
+
+    if (descending) {
+        sortedArray = sortedArray.reverse()
+    }
+
+    return sortedArray
+}
+
+export const dynamicBgExp = ({prefix='', opacity=100}={}) => {
+    return `
+        ${prefix? `${prefix}:` : ''}bg-'+color+'-200/${opacity}! 
+        ${prefix? `${prefix}:` : ''}dark:bg-'+color+'-950/${opacity}!
+    `
+}

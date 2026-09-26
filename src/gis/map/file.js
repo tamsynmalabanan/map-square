@@ -100,11 +100,11 @@ export class FileControl {
                         title: 'View change logs',
                         icon: `◀️`,
                         highlight: null,
-                        init: (button) => {
-                            button.disabled = !config.logs?.length
+                        init: (btn) => {
+                            btn.disabled = !config.logs?.length
                             Array('themeupdated', 'configupdated').forEach(i => {
                                 map.once(i, (e) => {
-                                    button.disabled = !config.logs.length
+                                    btn.disabled = !config.logs.length
                                 })
                             })
                         },
@@ -135,11 +135,12 @@ export class FileControl {
                         href: utils.getBaseURL(window.location.href)
                     },
                     {
-                        title: 'Open a local map',
-                        // icon: '🗄️',
-                        init: (button) => {
+                        init: (btn) => {
+                            let sortBy = 'dateCreated'
+                            let sortOrder = 'descending'
+
                             const modalEl = utils.strToEl(modal({
-                                open: true,
+                                open: false,
                                 parent: `#${map.getContainer().id}`,
                                 title: 'Local Maps',
                                 icon: '🗄️',
@@ -147,11 +148,107 @@ export class FileControl {
                                 label: false,
                                 toggleClass: 'rounded!',
                             }))
-                            button.appendChild(modalEl)
+                            btn.appendChild(modalEl)
+                            
+                            const handler = async () => {
+                                const content = document.getElementById(`${modalEl.id}-content`)
+                                content.innerHTML = ''
 
-                            map.once('idle', (e) => {
-                                const content = document.getElementById(modalEl.id)
-                                console.log(content)
+                                const container = document.createElement('div')
+                                container.classList.add('max-w-full','max-h-full', 'overflow-auto', 'grid', 'grid-cols-6', 'ps-3', 'pb-3', 'pe-3')
+                                utils.appendBinding(container , ':class', `['scrollbar-thumb-'+color+'-600/25!']: true`)
+                                content.appendChild(container)
+
+                                const keys = Object.entries({
+                                    no: 'No.',
+                                    title: 'Title',
+                                    creator: 'Creator',
+                                    dateCreated: 'Created',
+                                    dateUpdated: 'Updated',
+                                    options: '',
+                                }).map(([key, title]) => {
+                                    const header = document.createElement('span')
+                                    header.classList.add(
+                                        'flex', 'flex-nowrap', 'gap-2', 
+                                        'cursor-pointer', 
+                                        'sticky', 'top-0', 
+                                        'font-bold', 'p-1',
+                                    )
+                                    utils.appendBinding(header, ':class', `['${utils.dynamicBgExp()}']: true`)
+                                    container.appendChild(header)
+                                    
+                                    const titleEl = document.createElement('span')
+                                    titleEl.classList.add('self-center')
+                                    titleEl.innerText = title
+                                    header.appendChild(titleEl)
+
+                                    if (key === sortBy) {
+                                        const icon = document.createElement('span')
+                                        icon.classList.add('w-[10px]!', 'self-center')
+                                        icon.innerHTML = sortOrder === 'ascending' ? svg.chevronUpMini : svg.chevronDownMini
+                                        header.appendChild(icon)
+                                    }
+
+                                    header.addEventListener('click', (e) => {
+                                        if (key === sortBy) {
+                                            sortOrder = sortOrder === 'ascending' ? 'descending' : 'ascending'
+                                        } else {
+                                            sortBy = key
+                                        }
+
+                                        handler()
+                                    })
+
+                                    return key
+                                })
+
+                                const maps = await gisDB.getAllItemsFromGISDB('maps')
+                                utils.sortArray([...new Set(maps.map(i => i.metadata[sortBy]))], {
+                                    descending: sortOrder === 'descending'
+                                }).flatMap(i => maps.filter(j => j.metadata[sortBy] === i)).forEach((i, index) => {
+                                    keys.forEach(j => {
+                                        const el = document.createElement('span')
+                                        el.classList.add('p-1', index%2===0 ? 'bg-gray-950/25!' : null)
+                                        container.appendChild(el)
+                                        if (j === 'options') {
+                                            el.classList.add('flex', 'flex-nowrap', 'gap-3')
+
+                                            if (i.id !== map.getConfig().id) {
+                                                const openBtn = utils.strToEl(button({
+                                                    title: 'Open map',
+                                                    icon: '📂',
+                                                    classStr: 'size-[20px] self-center',
+                                                    themedBg: false,
+                                                }))
+                                                openBtn.addEventListener('click', (e) => {
+                                                    this.loadMapFromConfig(i)
+                                                })
+                                                el.appendChild(openBtn)
+    
+                                                const deleteBtn = utils.strToEl(button({
+                                                    title: 'Delete map',
+                                                    icon: '🗑️',
+                                                    classStr: 'size-[20px] self-center',
+                                                    themedBg: false,
+                                                }))
+                                                deleteBtn.addEventListener('click', (e) => {
+                                                    gisDB.deleteFromGISDB('maps', i.id)
+                                                    handler()
+                                                })
+                                                el.appendChild(deleteBtn)
+                                            }
+                                        } else if (j === 'no') {
+                                            el.innerText = index+1
+                                        } else {
+                                            el.innerText = i.metadata[j]
+                                        }
+                                    })                                    
+                                })
+                            }
+
+                            modalEl.addEventListener('modalToggled', (e) => {
+                                if (!e.detail.value) return
+                                handler()
                             })
                         }
                     },
@@ -159,11 +256,11 @@ export class FileControl {
                         title: 'Open a map file',
                         icon: '',
                         highlight: null,
-                        init: (button) => {
+                        init: (btn) => {
                             const label = document.createElement('label')
                             label.classList.add('cursor-pointer')
                             label.innerText = '📁'
-                            button.appendChild(label)
+                            btn.appendChild(label)
                             
                             const input = document.createElement('input')
                             input.classList.add('w-0', 'invisible')
@@ -178,7 +275,7 @@ export class FileControl {
 
                                 this.loadMapFromConfig(config)
                             })
-                            button.appendChild(input)
+                            btn.appendChild(input)
                             
                             input.id = utils.randomId()
                             label.setAttribute('for', input.id)

@@ -111,7 +111,6 @@ export default class Map extends maplibregl.Map {
         
         dateCreated: date,
         dateUpdated: null,
-        dateSaved: null,
       },
       sources: {
         basemap: {

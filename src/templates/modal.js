@@ -2,10 +2,20 @@ import button from './button.js';
 import Alpine from 'alpinejs';
 
 Alpine.data('modalApp', ({open=false}={}) => ({
-    open,
+    open: false,
     toggle() {
-      this.open = ! this.open
-    }
+      this.open = !this.open
+    },
+    init() {
+      this.$watch('open', value => {
+        this.$dispatch('modalToggled', {key:'open', value})
+      })
+    
+      if (open) {
+        this.toggle()
+      }
+    },
+
 }))
 
 export default ({
@@ -13,17 +23,17 @@ export default ({
     parent=`#app`,
     title='Modal',
     icon='',
-    classStr='',
     origin='top',
     content='',
     collapsible=false,
     label=true,
+    modalClass='',
     toggleclass='',
 }={}) => {
   return `
-    <div x-id="['modal']" :id="$id('modal')" x-data="modalApp({'open':${open}})" class="${classStr}">
+    <div x-id="['modal']" :id="$id('modal')" x-data="modalApp({'open':${open}})" class="${modalClass}">
       ${button({
-        ...(label ? {label: title} : {title: title}), 
+        ...(label ? {label: title} : {title: `Toggle ${title.toLowerCase()}`}), 
         icon, 
         collapsible,
         attrs: `@click="toggle"`,
@@ -44,7 +54,7 @@ export default ({
             :id="$id('modal', 'main')" 
             @click.outside="toggle" 
             :class="{
-              ['bg-'+color+'-200/100! dark:bg-'+color+'-950/100!']: true,
+              ['${utils.dynamicBgExp()}']: true,
             }"
             class="
               relative
@@ -54,7 +64,7 @@ export default ({
               sm:rounded-xl 
               size-full 
               sm:size-3/4 
-              lg:w-1/2 p-4
+              lg:w-1/2
             "
           >
             ${button({
@@ -67,15 +77,20 @@ export default ({
                 flex
                 flex-col
                 gap-5
+                size-full!
               "
             >
-              <div class="flex items-start justify-between">
+              <div class="flex items-start justify-between px-3 pt-3">
                 <div class="flex justify-start gap-2 items-center text-md font-bold">
                   ${icon || ''}
                   <h1>${title}</h1>
                 </div>
               </div>
-              <div :id="$id('modal', 'content')" class="flex flex-col grow">${content}</div>
+              <div
+                :id="$id('modal', 'content')" 
+                :class="{['scrollbar-thumb-'+color+'-600/25!']: true}"
+                class="flex flex-col grow! overflow-auto p-1"
+              >${content}</div>
             </div>
           </div>
         </div>

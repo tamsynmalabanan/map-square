@@ -50,6 +50,30 @@ export const saveToGISDB = async (name, content) => {
     })
 }
 
+export const getAllItemsFromGISDB = async (name) => {
+    return new Promise((resolve, reject) => {
+        const request = requestGISDB()
+  
+        request.onsuccess = (e) => {
+            const objectStore = getGISDBObjectStore(e, name)
+            const dataRequest = objectStore.getAll()
+    
+            dataRequest.onsuccess = async (e) => {
+                const result = e.target.result
+                result ? resolve(structuredClone(result)) : resolve(null)
+            }
+    
+            dataRequest.onerror = (e) => {
+                reject(e.target.errorCode)
+            }
+        }
+  
+        request.onerror = (e) => {
+            reject(e.target.errorCode)
+        }
+    }).catch(error => console.log(error))    
+}
+
 export const getFromGISDB = async (name, id) => {
     return new Promise((resolve, reject) => {
         const request = requestGISDB()
