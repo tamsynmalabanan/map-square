@@ -361,7 +361,7 @@ export default class Map extends maplibregl.Map {
 
     const spinner = utils.strToEl(svg.spinner)
     utils.appendBinding(spinner, ':class', `['text-'+color+'-200/100! dark:text-'+color+'-950/100!']: true`)
-    spinner.classList.add('size-[10vw]!', 'self-center!')
+    spinner.classList.add('size-[5vw]!', 'self-center!')
     mask.appendChild(spinner)
 
     return mask
