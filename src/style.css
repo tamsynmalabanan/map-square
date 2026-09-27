@@ -2,7 +2,7 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-@source inline("{bg,dark:bg,enabled:hover:bg,enabled:bg,hover:bg,scrollbar-track,scrollbar-thumb}-{yellow,teal,blue,pink,gray}-{200,600,950}/{25,50,100}!");
+@source inline("{text,dark:text,bg,dark:bg,enabled:hover:bg,enabled:bg,hover:bg,scrollbar-track,scrollbar-thumb}-{yellow,teal,blue,pink,gray}-{200,600,950}/{25,50,100}!");
 
 .dark {
   .ql-stroke {
@@ -16,14 +16,4 @@
   .ql-picker-label {
     color: white !important; 
   }
-}
-
-.grow-shrink {
-  animation: pulse-scale 2s infinite ease-in-out;
-}
-
-@keyframes pulse-scale {
-  0%   { transform: scale(0.75); }
-  50%  { transform: scale(1); }
-  100% { transform: scale(0.75); }
 }

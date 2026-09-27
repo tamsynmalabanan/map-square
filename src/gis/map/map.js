@@ -10,6 +10,8 @@ import _, { before } from 'lodash';
 
 export default class Map extends maplibregl.Map { 
   constructor(container, config=null) {
+    const mask = Map.setMask(container)
+
     config = Map.normalizeConfig(config)
 
     const options = {
@@ -27,6 +29,10 @@ export default class Map extends maplibregl.Map {
     }
 
     super(options)
+
+    this.once('idle', (e) => {
+      mask.remove()
+    })
 
     this.on('load', () => {
       new HandleControls(this)
@@ -341,6 +347,24 @@ export default class Map extends maplibregl.Map {
     })
 
     return config
+  }
+
+  static setMask(container) {
+    const mask = document.createElement('div')
+    mask.classList.add(
+      'w-full!', 'h-full!', 
+      'bg-gray-950/25!', 
+      'absolute', 'top-0', 'left-0', 'overflow-hidden',
+      'flex', 'justify-center', 'align-middle', 'text-center'
+    )
+    container.parentElement.appendChild(mask)
+
+    const spinner = utils.strToEl(svg.spinner)
+    utils.appendBinding(spinner, ':class', `['text-'+color+'-200/100! dark:text-'+color+'-950/100!']: true`)
+    spinner.classList.add('size-[10vw]!', 'self-center!')
+    mask.appendChild(spinner)
+
+    return mask
   }
 
   configAddSource() {

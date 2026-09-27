@@ -172,7 +172,7 @@ export default class MetadataControl {
         const themeIds = this.config.themes.map(i => i.id)
         const sortItems = Object.fromEntries(
           Array.from(this.themesContainer.children)
-          .map(i => [i.getAttribute('x-sort:item'), i])
+          .map(i => [i.dataset.themeId, i])
         )
         if (themeIds.join('') !== Object.keys(sortItems).join('')) {
           themeIds.forEach(i => this.themesContainer.appendChild(sortItems[i]))
@@ -252,7 +252,7 @@ export default class MetadataControl {
         }
 
         const themes = Object.fromEntries(this.config.themes.map(i => [i.id, i]))
-        const sortedThemeIds = Array.from(this.themesContainer.children).map(i => i.getAttribute('x-sort:item'))
+        const sortedThemeIds = Array.from(this.themesContainer.children).map(i => i.dataset.themeId)
         if (sortedThemeIds.join('') !== Object.keys(themes).join('')) {
           await settings.updateConfig(['themes'], sortedThemeIds.map(i => themes[i]))
         }
@@ -583,7 +583,8 @@ export default class MetadataControl {
     container.classList.add('flex', 'flex-col', 'gap-1')
     container.setAttribute('x-data', `{
       show:true, 
-      activeTheme:'${this.config.activeTheme}', 
+      activeTheme:'${this.config.activeTheme}',
+      themeIndex: 0, themesTotal: 0 
     }`)
     parent.appendChild(container)
   
@@ -593,7 +594,7 @@ export default class MetadataControl {
   
     const label = document.createElement('span')
     label.classList.add('grow!', 'gap-2', 'flex', 'flex-nowrap')
-    label.innerText = 'Themes'
+    label.innerText = 'Theme'
     header.appendChild(label)
   
     const navBtns = Object.fromEntries(Object.entries({
@@ -668,7 +669,7 @@ export default class MetadataControl {
 
     const count = document.createElement('span')
     count.classList.add('opacity-25', 'cursor-pointer')
-    count.setAttribute('x-html', `themeIndex+' of '+themesTotal`)
+    count.setAttribute('x-html', `[themeIndex, themesTotal].join(" of ")`)
     count.setAttribute('x-show', `isRadioValue("current")`)
     header.insertBefore(count, navBtns.next.btn)
 
@@ -709,7 +710,8 @@ export default class MetadataControl {
 
   createThemeSection(theme, {index}={}) {
     const themeContainer = document.createElement('div')
-    themeContainer.setAttribute(`x-sort:item`, `${theme.id}`)
+    themeContainer.setAttribute(`data-theme-id`, `${theme.id}`)
+    themeContainer.setAttribute(`x-sort:item`, ``)
     themeContainer.setAttribute('x-show', `isRadioValue("edit") || activeTheme === "${theme.id}"`)
     themeContainer.classList.add('flex', 'flex-col', 'gap-1')
     if (!isNaN(index) && this.themesContainer.children.length > index+1) {

@@ -84,15 +84,6 @@ export class FileControl {
                                     await map.getControls('settings').saveConfig({timeout:0})
                                 },
                             },
-                            {
-                                title: 'Refresh map',
-                                icon: `🔃`,
-                                highlight: null,
-                                handler: async (event) => {
-                                    this.loadMapFromConfig(config)
-                                },
-                            },
-
                         ] : map.isWebConfig() ? [
                             {
                                 title: 'Copy map URL',
@@ -103,6 +94,14 @@ export class FileControl {
                                 },
                             }
                         ] : []),
+                        {
+                            title: 'Refresh map',
+                            icon: `🔃`,
+                            highlight: null,
+                            handler: async (event) => {
+                                this.loadMapFromConfig(config)
+                            },
+                        },
                     ] : []),
                     {
                         title: 'View change logs',
@@ -222,14 +221,13 @@ export class FileControl {
                                     descending: sortOrder === 'descending'
                                 }).flatMap(i => maps.filter(j => j.metadata[sortBy] === i)).forEach((i, index) => {
                                     keys.forEach(j => {
-                                        const tag = j === 'snapshot' ? 'img' : j === 'options' ? 'div' : 'span'
+                                        const tag = Array('options', 'snapshot').includes(j) ? 'div' : 'span'
                                         const el = document.createElement(tag)
                                         el.classList.add('flex', 'items-center', 'p-2', index%2===0 ? 'bg-gray-950/25!' : null)
                                         container.appendChild(el)
                                         
                                         if (j === 'options') {
-                                            el.classList.add('flex', 'flex-nowrap', 'gap-3')
-
+                                            el.classList.add('flex-nowrap', 'gap-3')
                                             if (i.id !== config.id) {
                                                 const openBtn = utils.strToEl(button({
                                                     title: 'Open map',
@@ -257,8 +255,16 @@ export class FileControl {
                                         } else if (j === 'no') {
                                             el.innerText = index+1
                                         } else if (j === 'snapshot') {
-                                            el.classList.add('p-3!')
-                                            el.src = i.metadata[j]
+                                            el.classList.add()
+                                            el.classList.add('justify-center')
+                                            const value = i.metadata[j]
+                                            if (value) {
+                                                const img = document.createElement('img')
+                                                img.classList.add('rounded')
+                                                // img.setAttribute('width', '100')
+                                                img.src = value
+                                                el.appendChild(img)
+                                            }
                                         } else {
                                             el.innerText = i.metadata[j]
                                         }
@@ -394,7 +400,7 @@ export class FileControl {
         const map = this._map
         const config = map.getConfig()
         
-        const icon = utils.strToEl(`<span class="absolute top-0 right-0 grow-shrink"></span>`)
+        const icon = utils.strToEl(`<span class="absolute top-0 right-0 animate-pulse"></span>`)
         this._container.firstElementChild.appendChild(icon)
 
         if (!config.id) {
