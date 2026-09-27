@@ -2,6 +2,7 @@ import Alpine from 'alpinejs';
 import * as svg from '../../svg.js'
 import button from '../../templates/button.js';
 import Map from './map.js'
+import Quill from 'quill';
 
 export default class MetadataControl {
   onAdd(map) {
@@ -75,8 +76,14 @@ export default class MetadataControl {
     parent.querySelectorAll(this.inputSelector).forEach(i => {
       i.classList.add('focus:outline-none', 'rounded!')
       
-      if (!i.getAttribute('contenteditable')) {
+      const editableContent = i.getAttribute('contenteditable')
+
+      if (!editableContent) {
         i.setAttribute('readonly', 'true')
+      }
+
+      if (editableContent && !i.dataset.charLimit) {
+        this.addCharacterLimit(i)
       }
 
       utils.appendBinding(i, ':class', `
@@ -90,8 +97,6 @@ export default class MetadataControl {
 
     parent.querySelectorAll('span[contenteditable]').forEach(element => {
       element.classList.add(
-        'max-h-[20vh]',
-        'overflow-auto',
         'break-normal', 
         'text-wrap', 
         'text-[12px]',
@@ -108,6 +113,8 @@ export default class MetadataControl {
     let editBtn, backBtn, saveBtn, collapseBtn
     
     if (!this._map.isStaticConfig()) {
+      const targetSelector = (rawName) => `[name="${rawName}"]:not(input):not([type="editor"])`
+
       editBtn = utils.strToEl(button({
         title: 'Edit metadata',
         icon: svg.pencilSquareMini,
@@ -146,7 +153,7 @@ export default class MetadataControl {
           if (!(name in metadata)) return
 
           const type = i.getAttribute('type')
-          const target = this.form.querySelector(`[name="${rawName}"]:not(input):not([type="editor"])`)
+          const target = this.form.querySelector(targetSelector(rawName))
           const value = metadata[name]
   
           if (type === 'editor') {
@@ -211,7 +218,7 @@ export default class MetadataControl {
           const defaultMetadata = theme ? this.defaultThemeMetadata : this.defaultMetadata
           
           const type = i.getAttribute('type')
-          const target = this.form.querySelector(`[name="${rawName}"]:not(input):not([type="editor"])`)
+          const target = this.form.querySelector(targetSelector(rawName))
           let value = editableContent ? i.innerHTML : i.value
           
           if (type === 'editor') {
@@ -308,9 +315,9 @@ export default class MetadataControl {
     titleInput.classList.add(
       'min-w-[20vw]',
       'max-w-[80vw]',
-      'overflow-auto', 
       'font-bold!',
       'text-xl!',
+      'break-all',
     )
     container.appendChild(titleInput)
   }
@@ -370,7 +377,7 @@ export default class MetadataControl {
 
   addAttrSection(parent) {
     const container = document.createElement('div')
-    container.classList.add('flex', 'flex-col', 'gap-1')
+    container.classList.add('flex', 'flex-col', 'gap-1', 'grow')
     container.setAttribute('x-data', '{show:true}')
     parent.appendChild(container)
 
@@ -389,7 +396,7 @@ export default class MetadataControl {
     header.appendChild(collapse)
 
     const content = document.createElement('div')
-    content.classList.add('flex', 'flex-nowrap')
+    content.classList.add('flex', 'flex-nowrap', 'grow')
     content.setAttribute('x-show', 'show')
     content.setAttribute('x-data', `{showImg: false}`)
     utils.appendBinding(content, ':class', `['gap-2']: showImg`)
@@ -398,7 +405,7 @@ export default class MetadataControl {
     this.addLogoSection(content)
 
     const attrContainer = document.createElement('div')
-    attrContainer.classList.add('flex', 'flex-col', 'gap-1', 'grow')
+    attrContainer.classList.add('flex', 'flex-col', 'gap-1', 'grow', 'overflow-auto')
     content.appendChild(attrContainer)
 
     const creatorContainer = document.createElement('div')
@@ -459,6 +466,7 @@ export default class MetadataControl {
     emailInput.setAttribute('type', 'email')
     emailInput.setAttribute('name', 'email')
     emailInput.setAttribute('readonly', 'true')
+    emailInput.setAttribute('maxlength', '128')
     emailInput.setAttribute('x-show', 'isRadioValue("edit")')
     emailInput.setAttribute('x-ref', 'emailInput')
     emailContainer.appendChild(emailInput)
@@ -486,7 +494,8 @@ export default class MetadataControl {
     licenseContainer.appendChild(licenseInput)
 
     content.querySelectorAll('span:not([contenteditable])').forEach(i => {
-      i.classList.add('w-[45px]', 'opacity-50', 'self-center')
+      i.classList.add('w-[50px]!', 'opacity-50')
+      utils.appendBinding(i, ':class', `['mt-2']: isRadioValue("edit")`)
     })
   }
 
@@ -521,8 +530,11 @@ export default class MetadataControl {
     acknowledgementsInput.classList.add('grow')
     acknowledgementsInput.setAttribute('name', 'acknowledgements')
     acknowledgementsInput.setAttribute('x-ref', 'acknowledgementsInput')
+    acknowledgementsInput.setAttribute('data-char-limit', 512)
     acknowledgementsInput.setAttribute('contenteditable', "false")
     acknowledgementsContainer.appendChild(acknowledgementsInput)
+
+    const charLimit = this.addCharacterLimit(acknowledgementsInput, {container})
   }
 
   addDescriptionSection(parent) {
@@ -558,14 +570,11 @@ export default class MetadataControl {
     const descQuill = document.createElement('div')
     descQuill.innerHTML = this.metadata.description
     descInput.appendChild(descQuill)
-    new Quill(descQuill, {theme: 'snow', readOnly: true})
-
-    Array.from(descInput.children).forEach(i => {
-      i.classList.add('border-none!')
-    })
-
-    const descEditor = descInput.querySelector('.ql-editor')
+    
+    const descQuillObj = new Quill(descQuill, {theme: 'snow', readOnly: true})
+    const descEditor = descQuillObj.root
     descEditor.classList.add('p-0!')
+    descEditor.setAttribute('data-char-limit', 2048)
     descEditor.setAttribute('x-ref', 'descriptionInput')
     utils.appendBinding(descEditor, ':class', `
       ['min-h-[20vh]']: isRadioValue("edit")
@@ -576,6 +585,13 @@ export default class MetadataControl {
     utils.appendBinding(descToolbar.querySelector('.ql-picker-options'), ':class', `
       ['bg-'+color+'-200/50! dark:bg-'+color+'-950/50!']: true
     `)
+
+    const charLimit = this.addCharacterLimit(descQuillObj, {container: descInput})
+
+    Array.from(descInput.children).forEach(i => {
+      i.classList.add('border-none!')
+    })
+
   }
   
   addThemesSection(parent) {
@@ -658,8 +674,8 @@ export default class MetadataControl {
       this._map[fn](type, (e) => {
         if (type === 'configupdated' && !Array('activeTheme', 'themes').includes(e.details.property[0])) return
         const themes = this.config.themes
-        Alpine.$data(container).themesTotal = themes.length
-        Alpine.$data(container).themeIndex = themes.findIndex(i => i.id === this.config.activeTheme)+1
+        Alpine.$data(container).themesTotal = Math.max(themes.length, 1)
+        Alpine.$data(container).themeIndex = Math.max(themes.findIndex(i => i.id === this.config.activeTheme)+1, 1)
         
         Object.entries(navBtns).forEach(([name, params]) => {
           Alpine.$data(params.btn).disabled = params.isDisabled()
@@ -708,6 +724,58 @@ export default class MetadataControl {
     })
   }
 
+  addCharacterLimit(target, {container, limit}={}) {
+    if (!target) return
+
+    const isQuill = target.constructor === Quill
+    const isEditable = !isQuill && target.getAttribute('contenteditable')
+
+    limit = Number(limit || (isQuill ? target.root : target).dataset.charLimit || 256)
+    if (isNaN(limit)) return
+
+    let charLimit
+    if (container) {
+      charLimit = document.createElement('span')
+      charLimit.setAttribute('x-show', 'isRadioValue("edit")')
+      charLimit.classList.add('invisible', 'font-thin', 'text-xs', 'text-gray-600/100!')
+      container.appendChild(charLimit)
+    }
+
+    [...(isQuill ? ['text-change'] : ['input', ...(isEditable ? ['paste', 'cut'] : [])])].forEach(i => {
+      target[isQuill ? 'on' : 'addEventListener'](i, () => {
+        const content = utils.removeWhitespace(
+          isQuill ? target.getText() 
+          : isEditable ? target.textContent
+          : target.value || ''
+        )
+        const length = content.length
+
+        if (length > limit) {
+          if (charLimit) {
+            charLimit.innerText = `Character limit (${limit}) exceeded: ${length.toLocaleString()}`
+            charLimit.classList.remove('invisible')
+          }
+
+          setTimeout(() => {
+            if (isQuill) {
+              target.deleteText(limit, content.length) 
+            } else {
+              target[isEditable ? 'innerText' : 'value'] = content.substring(0, limit)
+              target.dispatchEvent(new CustomEvent("input"))
+            }
+          }, 1000);
+        } else {
+          if (charLimit) {
+            charLimit.innerText = ``
+            charLimit.classList.add('invisible')
+          }
+        }
+      })
+    })
+
+    return charLimit
+  }
+
   createThemeSection(theme, {index}={}) {
     const themeContainer = document.createElement('div')
     themeContainer.setAttribute(`data-theme-id`, `${theme.id}`)
@@ -735,7 +803,7 @@ export default class MetadataControl {
 
     const titleInput = document.createElement('span')
     titleInput.innerHTML = theme.metadata.title
-    titleInput.classList.add('font-bold!')
+    titleInput.classList.add('font-bold!', 'text-sm!')
     titleInput.setAttribute('name', `title_${theme.id}`)
     titleInput.setAttribute('contenteditable', 'false')
     titleInput.setAttribute('x-init', `$el.setAttribute('contenteditable', isRadioValue("edit"))`)
@@ -813,6 +881,7 @@ export default class MetadataControl {
 
       const removeTheme = document.createElement('span')
       removeTheme.innerText = 'Remove'
+      utils.appendBinding(removeTheme, ':class', `['pointer-events-none -hover:bg-'+color+'-600/50! text-gray-600/100!']: themesTotal <= 1`)
       removeTheme.addEventListener('click', async (e) => {
         const themes = this.config.themes
         const index = themes.findIndex(i => i.id === theme.id)
@@ -851,19 +920,21 @@ export default class MetadataControl {
     const descInput = document.createElement('span')
     descInput.innerHTML = theme.metadata.description
     descInput.setAttribute('name', `description_${theme.id}`)
+    descInput.setAttribute('data-char-limit', 1024)
     descInput.setAttribute('contenteditable', 'false')
     descInput.setAttribute('x-init', `$el.setAttribute('contenteditable', isRadioValue("edit"))`)
     descContainer.appendChild(descInput)
 
+    const charLimit = this.addCharacterLimit(descInput, {container: themeContainer})
+    charLimit.classList.add('ms-[69px]')
+
     this.configInputElements(themeContainer)
     Array(titleSpan, descSpan).forEach(i => {
       i.setAttribute('x-show', `isRadioValue("edit")`)
+      utils.appendBinding(i, ':class', `['mt-2']: isRadioValue("edit")`)
       i.classList.add(
         'opacity-50', 
         'min-w-[65px]', 
-        i.parentElement.classList.contains('flex-col') 
-        ? 'self.start' 
-        : 'self-center'
       )
     })
   }
