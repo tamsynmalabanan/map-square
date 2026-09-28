@@ -359,7 +359,7 @@ export class SettingsControl {
             controls.terrain.toggle()
         }
 
-        controls.bookmark.goToBookmark()
+        this.goToBookmark()
 
         if (settings.geolocate) {
             controls.geolocate.toggle()
@@ -399,7 +399,7 @@ export class SettingsControl {
         map._locked = true
 
         const controls = map.getControls()
-        Array('nav', 'fitToWorld', 'bookmark').forEach(i => {
+        Array('nav', 'fitToWorld').forEach(i => {
             Alpine.$data(controls[i].getContainer())[`${i}Disabled`] = true
         })
 
@@ -420,12 +420,49 @@ export class SettingsControl {
         map._locked = false
 
         const controls = map.getControls()
-        Array('nav', 'fitToWorld', 'bookmark').forEach(i => {
+        Array('nav', 'fitToWorld').forEach(i => {
             Alpine.$data(controls[i].getContainer())[`${i}Disabled`] = false
         })
 
         this.getContainer()?.firstElementChild
         .firstElementChild.nextElementSibling?.remove()
+    }
+
+    goToBookmark() {
+        const map = this._map
+        if (map._locked) return
+
+        const {active, view, maxZoom, padding, duration} = map.getTheme().settings.bookmark
+
+        const currentView = map.getView()
+        if (_.isEqual(currentView, view)) return
+
+        if (active === 'centroid') {
+            if (currentView.zoom !== view.zoom) {
+            map.setZoom(view.zoom)
+            }
+
+            if (Array('lng', 'lat').some(i => currentView[i] !== view[i])) {
+            map.setCenter([view.lng, view.lat])
+            }
+        } 
+
+        if (active === 'bbox') {
+            const keys = Array('west','south','east','north')
+            if (keys.some(i => currentView[i] !== view[i])) {
+            map.fitBounds(keys.map(i => view[i]), {
+                padding, maxZoom, duration,
+            })
+            }
+        }
+
+        if (currentView.pitch !== view.pitch) {
+            map.setPitch(view.pitch)
+        }
+
+        if (currentView.bearing !== view.bearing) {
+            map.setBearing(view.bearing)
+        }
     }
 
     async saveConfig({date=(new Date()).toLocaleString("en-US"), timeout=1000}) {
@@ -438,15 +475,18 @@ export class SettingsControl {
                 const map = this._map
                 const config = map.getConfig()
 
-                const snapshotPromise = new Promise((resolve) => {
-                    map.once('idle', () => {
-                        config.snapshot = map.getCanvas().toDataURL('image/png')
-                        map.setPixelRatio(window.devicePixelRatio)
-                        resolve()
-                    })
-                    map.setPixelRatio(0.1)
-                    map.triggerRepaint()
-                })
+                const snapshotPromise = Promise.race([
+                    new Promise((resolve) => {
+                        map.once('idle', () => {
+                            config.snapshot = map.getCanvas().toDataURL('image/png')
+                            map.setPixelRatio(window.devicePixelRatio)
+                            resolve()
+                        })
+                        map.setPixelRatio(0.1)
+                        map.triggerRepaint()
+                    }),
+                    new Promise((resolve) => setTimeout(() => resolve(), 3000))
+                ]);
 
                 await snapshotPromise
                 await gisDB.saveToGISDB('maps', config)

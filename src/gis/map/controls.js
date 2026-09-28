@@ -1,7 +1,6 @@
 import maplibregl from 'maplibre-gl';
 import * as svg from '../../svg.js';
 import FitToWorldControl from './fitToWorld.js';
-import BookmarkControl from './bookmark.js';
 import PlaceSearchControl from './placeSearch.js';
 import MetadataControl from './metadata.js';
 import { LayersControl } from './layers.js';
@@ -141,7 +140,7 @@ export default class HandleControls {
                 constructor: MetadataControl,
                 handler: (control) => {
                     map.once('idle', () => {
-                        control.getContainer().parentElement.style.zIndex = 5
+                        control.getContainer().parentElement.style.zIndex = 3
                     })
                 },
                 elements: {
@@ -156,6 +155,11 @@ export default class HandleControls {
             },
             placeSearch: {
                 constructor: PlaceSearchControl,
+                handler: (control) => {
+                    map.once('idle', () => {
+                        control.getContainer().parentElement.style.zIndex = 5
+                    })
+                },
                 elements: {
                   '.maplibregl-ctrl-place-search': {
                   }
@@ -165,12 +169,6 @@ export default class HandleControls {
                 constructor: FitToWorldControl,
                 elements: {
                     '.maplibregl-ctrl-fit-to-world': {}
-                },
-            },
-            bookmark: {
-                constructor: BookmarkControl,
-                elements: {
-                    '.maplibregl-ctrl-zoom-to-bookmark': {}
                 },
             },
             file: {
@@ -226,11 +224,6 @@ export default class HandleControls {
                     active: true,
                     position: 'top-right',
                     order: 4,
-                },
-                bookmark: {
-                    active: true,
-                    position: 'top-right',
-                    order: 5,
                 },
                 geolocate: {
                     active: true,

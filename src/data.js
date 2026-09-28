@@ -58,6 +58,7 @@ export default function registerData() {
 
         toggleAccordion(value, {targetKey=key}={}) {
             if (targetKey !== key) return
+            if (this.isActiveSection(value)) return
             this[key] = this.isActiveSection(value) ? null : value
         },
         

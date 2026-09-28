@@ -3,6 +3,7 @@ import * as svg from '../../svg.js'
 import button from '../../templates/button.js';
 import Map from './map.js'
 import Quill from 'quill';
+import { map } from 'lodash';
 
 export default class MetadataControl {
   onAdd(map) {
@@ -595,7 +596,7 @@ export default class MetadataControl {
     container.setAttribute('x-data', `{
       show:true, 
       activeTheme:'${this.config.activeTheme}',
-      themeIndex: 0, themesTotal: 0 
+      themeIndex: 0, themesTotal: 0, locked: false,
     }`)
     parent.appendChild(container)
   
@@ -669,8 +670,10 @@ export default class MetadataControl {
       this._map[fn](type, (e) => {
         if (type === 'configupdated' && !Array('activeTheme', 'themes').includes(e.details.property[0])) return
         const themes = this.config.themes
-        Alpine.$data(container).themesTotal = Math.max(themes.length, 1)
-        Alpine.$data(container).themeIndex = Math.max(themes.findIndex(i => i.id === this.config.activeTheme)+1, 1)
+        const data = Alpine.$data(container)
+        data.themesTotal = Math.max(themes.length, 1)
+        data.themeIndex = Math.max(themes.findIndex(i => i.id === this.config.activeTheme)+1, 1)
+        data.locked = this._map.getTheme().settings.locked
         
         Object.entries(navBtns).forEach(([name, params]) => {
           Alpine.$data(params.btn).disabled = params.isDisabled()
@@ -849,7 +852,7 @@ export default class MetadataControl {
 
       const optionsContent = document.createElement('div')
       optionsContent.classList.add(
-        'absolute', 'top-5', 'right-0', 'w-20', 
+        'absolute', 'top-5', 'right-0', 'w-30', 
         'flex', 'flex-col', 'gap-1', 
         'text-xs', 'z-5', 
         'cursor-pointer', 
@@ -873,6 +876,14 @@ export default class MetadataControl {
         await this.addNewTheme(newTheme)
       })
       optionsContent.appendChild(duplicateTheme)
+
+      const zoomToBookmark = document.createElement('span')
+      zoomToBookmark.innerText = 'Zoom to bookmark'
+      utils.appendBinding(zoomToBookmark, ':class', `['pointer-events-none -hover:bg-'+color+'-600/50! text-gray-600/100!']: locked`)
+      zoomToBookmark.addEventListener('click', async (e) => {
+        this._map.getControls('settings').goToBookmark()
+      })
+      optionsContent.appendChild(zoomToBookmark)
 
       const removeTheme = document.createElement('span')
       removeTheme.innerText = 'Remove'
