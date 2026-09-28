@@ -31,7 +31,7 @@ export default class MetadataControl {
     })
     
     const inner = document.createElement('div')
-    inner.classList.add('max-w-[80vw]', 'min-w-[300px]', 'relative')
+    inner.classList.add('max-w-[80vw]', 'min-w-[200px]', 'relative')
     inner.setAttribute('x-show', '!collapsed')
     inner.setAttribute('x-data', 'radioGroup({value:"current"})')
     container.appendChild(inner)
@@ -67,9 +67,11 @@ export default class MetadataControl {
 
       this.addDescriptionSection(details)
       this.addThemesSection(details)
-      this.addAttrSection(details)
-      this.addAcknowledgementsSection(details)
+      this.addAttributionSection(details)
       this.addReferenceSection(details)
+      Array('acknowledgements', 'license').forEach(property => {
+        this.addPropertySection(details, property)
+      })
     }
 
     this.configInputElements(form)
@@ -319,10 +321,11 @@ export default class MetadataControl {
 
   addTitleSection(parent) {
     const container = document.createElement('div')
-    container.classList.add('flex', 'flex-col', 'gap-2', 'grow', 'max-w-full!')
+    container.classList.add('flex', 'flex-nowrap', 'gap-2', 'grow', 'max-w-full!')
     parent.appendChild(container)
 
     const titleInput = document.createElement('span')
+    titleInput.classList.add('self-center')
     titleInput.innerHTML = this.metadata.title
     titleInput.setAttribute('name', 'title')
     titleInput.setAttribute('contenteditable', "false")
@@ -338,11 +341,11 @@ export default class MetadataControl {
 
   addLogoSection(parent) {
     const logoForm = document.createElement('div')
-    logoForm.classList.add('flex', 'flex-col', 'gap-2')
+    logoForm.classList.add('flex', 'flex-nowrap', 'gap-2')
     parent.appendChild(logoForm)
     
     const logoImg = document.createElement('img')
-    logoImg.classList.add('size-[10vh]', 'rounded')
+    logoImg.classList.add('size-[68px]', 'min-w-[68px]', 'rounded-full')
     logoImg.src = this.metadata.logo
     logoImg.setAttribute('name', 'logo')
     logoImg.setAttribute('x-effect', `showImg = isRadioValue("edit") || $el.src !== "${this.defaultMetadata.logo}"`)
@@ -350,24 +353,12 @@ export default class MetadataControl {
     logoForm.appendChild(logoImg)
 
     const logoInputs = document.createElement('div')
-    logoInputs.classList.add('flex', 'flex-nowrap', 'gap-1')
+    logoInputs.classList.add('flex', 'flex-col', 'gap-1', 'w-[150px]')
     logoInputs.setAttribute('x-show', 'isRadioValue("edit")')
     logoForm.appendChild(logoInputs)
-
-    const logoInputContainer = document.createElement('div')
-    logoInputContainer.classList.add('grow')
-    logoInputs.appendChild(logoInputContainer)
-
-    const logoLabel = document.createElement('label')
-    logoLabel.innerText = '📁'
-    logoLabel.setAttribute('title', 'Select an image')
-    logoLabel.className = `w-7vh flex justify-center items-center gap-2 rounded py-1 px-2 dark:text-white cursor-pointer grow`
-    logoInputContainer.appendChild(logoLabel)
     
     const logoInput = document.createElement('input')
     logoInput.id = utils.randomId()
-    logoLabel.setAttribute('for', logoInput.id)
-    logoInput.classList.add('w-0', 'invisible')
     logoInput.setAttribute('type', 'file')
     logoInput.setAttribute('name', 'logo')
     logoInput.setAttribute('accept', 'image/*')
@@ -375,21 +366,24 @@ export default class MetadataControl {
       const file = logoInput.files[0]
       logoImg.src = file ? await utils.fileToDataURL(file) : this.defaultMetadata.logo
     })
-    logoInputContainer.appendChild(logoInput)
+    logoInputs.appendChild(logoInput)
 
     const removeLogoBtn = utils.strToEl(button({
       icon: '🗑️',
-      title: 'Remove current image',
+      label: 'Remove current image',
       highlightExp: true,
+      classStr: 'w-full!',
     }))
     removeLogoBtn.addEventListener('click', () => {
       logoInput.value = ''
       logoInput.dispatchEvent(new CustomEvent("change"))
     })
     logoInputs.appendChild(removeLogoBtn)
+
+    return logoForm
   }
 
-  addAttrSection(parent) {
+  addAttributionSection(parent) {
     const container = document.createElement('div')
     container.classList.add('flex', 'flex-col', 'gap-1', 'grow')
     container.setAttribute('x-data', '{show:true}')
@@ -414,16 +408,17 @@ export default class MetadataControl {
     content.setAttribute('x-show', 'show')
     content.setAttribute('x-data', `{showImg: false}`)
     utils.appendBinding(content, ':class', `['gap-2']: showImg`)
+    utils.appendBinding(content, ':class', `['-flex-nowrap flex-col']: isRadioValue("edit")`)
     container.appendChild(content)
 
-    this.addLogoSection(content)
+    const logoForm = this.addLogoSection(content)
 
     const attrContainer = document.createElement('div')
     attrContainer.classList.add('flex', 'flex-col', 'gap-1', 'grow')
     content.appendChild(attrContainer)
 
     const creatorContainer = document.createElement('div')
-    creatorContainer.classList.add('flex', 'flex-nowrap', 'gap-1')
+    creatorContainer.classList.add('flex', 'flex-col', 'gap-1')
     attrContainer.appendChild(creatorContainer)
 
     const creatorSpan = document.createElement('span')
@@ -437,7 +432,7 @@ export default class MetadataControl {
     creatorContainer.appendChild(creatorInput)
 
     const websiteContainer = document.createElement('div')
-    websiteContainer.classList.add('flex', 'flex-nowrap', 'gap-1')
+    websiteContainer.classList.add('flex', 'flex-col', 'gap-1')
     websiteContainer.setAttribute('x-show', 'isRadioValue("edit") || $refs.websiteInput.value !== ""')
     attrContainer.appendChild(websiteContainer)
 
@@ -465,7 +460,7 @@ export default class MetadataControl {
     websiteContainer.appendChild(websiteCurrent)
 
     const emailContainer = document.createElement('div')
-    emailContainer.classList.add('flex', 'flex-nowrap', 'gap-1')
+    emailContainer.classList.add('flex', 'flex-col', 'gap-1')
     emailContainer.setAttribute('x-show', 'isRadioValue("edit") || $refs.emailInput.value !== ""')
     attrContainer.appendChild(emailContainer)
 
@@ -493,30 +488,16 @@ export default class MetadataControl {
     emailCurrent.setAttribute('x-show', 'isRadioValue("current")')
     emailContainer.appendChild(emailCurrent)
 
-    const licenseContainer = document.createElement('div')
-    licenseContainer.classList.add('flex', 'flex-nowrap', 'gap-1')
-    attrContainer.appendChild(licenseContainer)
-    
-    const licenseIcon = document.createElement('span')
-    licenseIcon.innerText = `License`  
-    licenseContainer.appendChild(licenseIcon)
-    
-    const licenseInput = document.createElement('span')
-    licenseInput.innerHTML = this.metadata.license
-    licenseInput.setAttribute('name', 'license')
-    licenseInput.setAttribute('contenteditable', "false")
-    licenseContainer.appendChild(licenseInput)
-
     content.querySelectorAll('span:not([contenteditable])').forEach(i => {
       i.classList.add('w-[50px]!', 'opacity-50')
-      utils.appendBinding(i, ':class', `['mt-2']: isRadioValue("edit")`)
+      i.setAttribute('x-show', 'isRadioValue("edit")')
     })
   }
 
-  addAcknowledgementsSection(parent) {
+  addPropertySection(parent, property) {
     const container = document.createElement('div')
     container.classList.add('flex', 'flex-col', 'gap-1')
-    container.setAttribute('x-show', 'isRadioValue("edit") || $refs.acknowledgementsInput.innerText !== ""')
+    container.setAttribute('x-show', `isRadioValue("edit") || $refs.input.innerText !== ""`)
     container.setAttribute('x-data', '{show:true}')
     parent.appendChild(container)
 
@@ -525,7 +506,7 @@ export default class MetadataControl {
     container.appendChild(header)
 
     const label = document.createElement('span')
-    label.innerText = 'Acknowledgements'
+    label.innerText = utils.toTitleCase(property)
     header.appendChild(label)
 
     const collapse = document.createElement('span')
@@ -534,21 +515,21 @@ export default class MetadataControl {
     collapse.setAttribute('@click', 'show=!show')
     header.appendChild(collapse)
 
-    const acknowledgementsContainer = document.createElement('div')
-    acknowledgementsContainer.classList.add('flex', 'flex-nowrap', 'gap-1')
-    acknowledgementsContainer.setAttribute('x-show', 'show')
-    container.appendChild(acknowledgementsContainer)
+    const content = document.createElement('div')
+    content.classList.add('flex', 'flex-nowrap', 'gap-1')
+    content.setAttribute('x-show', 'show')
+    container.appendChild(content)
 
-    const acknowledgementsInput = document.createElement('span')
-    acknowledgementsInput.innerHTML = this.metadata.acknowledgements
-    acknowledgementsInput.classList.add('grow')
-    acknowledgementsInput.setAttribute('name', 'acknowledgements')
-    acknowledgementsInput.setAttribute('x-ref', 'acknowledgementsInput')
-    acknowledgementsInput.setAttribute('data-char-limit', 512)
-    acknowledgementsInput.setAttribute('contenteditable', "false")
-    acknowledgementsContainer.appendChild(acknowledgementsInput)
+    const input = document.createElement('span')
+    input.innerHTML = this.metadata[property]
+    input.classList.add('grow')
+    input.setAttribute('name', property)
+    input.setAttribute('x-ref', 'input')
+    input.setAttribute('data-char-limit', 512)
+    input.setAttribute('contenteditable', "false")
+    content.appendChild(input)
 
-    const charLimit = this.addCharacterLimit(acknowledgementsInput, {container})
+    const charLimit = this.addCharacterLimit(input, {container})
   }
 
   addDescriptionSection(parent) {
@@ -808,7 +789,7 @@ export default class MetadataControl {
     themeContainer.appendChild(headerContainer)
 
     const titleContainer = document.createElement('div')
-    titleContainer.classList.add('flex', 'flex-nowrap', 'gap-1', 'grow')
+    titleContainer.classList.add('flex', 'flex-col', 'gap-1', 'grow')
     headerContainer.appendChild(titleContainer)
 
     const titleSpan = document.createElement('span')
@@ -924,7 +905,7 @@ export default class MetadataControl {
     }
 
     const descContainer = document.createElement('div')
-    descContainer.classList.add('flex', 'flex-nowrap', 'gap-1')
+    descContainer.classList.add('flex', 'flex-col', 'gap-1')
     themeContainer.appendChild(descContainer)
 
     const descSpan = document.createElement('span')
@@ -945,7 +926,6 @@ export default class MetadataControl {
     this.configInputElements(themeContainer)
     Array(titleSpan, descSpan).forEach(i => {
       i.setAttribute('x-show', `isRadioValue("edit")`)
-      utils.appendBinding(i, ':class', `['mt-2']: isRadioValue("edit")`)
       i.classList.add(
         'opacity-50', 
         'min-w-[65px]', 
