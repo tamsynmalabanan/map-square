@@ -346,7 +346,10 @@ export default class MetadataControl {
     parent.appendChild(logoForm)
     
     const logoImg = document.createElement('img')
-    logoImg.classList.add('size-[68px]', 'min-w-[68px]', 'rounded-full')
+    logoImg.classList.add(
+      'size-[68px]', 'min-w-[68px]', 
+      'rounded-full'
+    )
     logoImg.src = this.metadata.logo
     logoImg.setAttribute('name', 'logo')
     logoImg.setAttribute('x-effect', `showImg = isRadioValue("edit") || $el.src !== "${this.defaultMetadata.logo}"`)
