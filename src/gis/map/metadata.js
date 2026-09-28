@@ -342,7 +342,7 @@ export default class MetadataControl {
 
   addLogoSection(parent) {
     const logoForm = document.createElement('div')
-    logoForm.classList.add('flex', 'flex-nowrap', 'gap-2')
+    logoForm.classList.add('flex', 'flex-nowrap', 'gap-3')
     parent.appendChild(logoForm)
     
     const logoImg = document.createElement('img')
@@ -408,7 +408,7 @@ export default class MetadataControl {
     content.classList.add('flex', 'flex-nowrap', 'grow')
     content.setAttribute('x-show', 'show')
     content.setAttribute('x-data', `{showImg: false}`)
-    utils.appendBinding(content, ':class', `['gap-2']: showImg`)
+    utils.appendBinding(content, ':class', `['gap-3']: showImg`)
     utils.appendBinding(content, ':class', `['-flex-nowrap flex-col']: isRadioValue("edit")`)
     container.appendChild(content)
 
