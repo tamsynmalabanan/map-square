@@ -27,11 +27,11 @@ export default class MetadataControl {
       title: 'Metadata',
       icon: svg.buildingLibraryMini,
       classStr: 'maplibregl-ctrl-metadata',
-      attrs: `@click='toggleCollapse' x-show='collapsed'`
+      attrs: `@click='toggleCollapse' x-show='collapsed'`,
     })
     
     const inner = document.createElement('div')
-    inner.classList.add('p-2', 'max-w-[80vw]', 'relative')
+    inner.classList.add('max-w-[80vw]', 'min-w-[300px]', 'relative')
     inner.setAttribute('x-show', '!collapsed')
     inner.setAttribute('x-data', 'radioGroup({value:"current"})')
     container.appendChild(inner)
@@ -39,7 +39,11 @@ export default class MetadataControl {
     this.addNavSection(inner)
 
     const form = this.form = document.createElement('form')
-    form.classList.add('flex', 'flex-col', 'gap-2', 'grow', 'max-w-full!')
+    form.classList.add(
+      'flex', 'flex-col', 'gap-2', 'grow', 
+      'max-w-full!', 'p-2', 
+      'max-h-[calc(100vh-20px)]'
+    )
     form.addEventListener('submit', (e) => {
       e.preventDefault()
       e.stopPropagation()
@@ -50,7 +54,8 @@ export default class MetadataControl {
 
     if (this.config.id) {
       const details = this.details = document.createElement('div')
-      details.classList.add('flex', 'flex-col', 'gap-5', 'overflow-auto', 'max-h-[80vh]', 'pe-2')
+      utils.appendBinding(details , ':class', `['scrollbar-thumb-'+color+'-600/25!']: true`)
+      details.classList.add('flex', 'flex-col', 'gap-5', 'pe-2', 'overflow-auto', 'grow')
       details.setAttribute('x-data', '{show:true}')
       details.setAttribute('x-show', 'show')
       form.appendChild(details)
@@ -77,22 +82,19 @@ export default class MetadataControl {
       i.classList.add('focus:outline-none', 'rounded!')
       
       const editableContent = i.getAttribute('contenteditable')
-
-      if (!editableContent) {
+      
+      if (editableContent) {
+        i.classList.add('text-justify!')
+        if (!i.dataset.charLimit) {
+          this.addCharacterLimit(i)
+        }
+      } else {
         i.setAttribute('readonly', 'true')
-      }
-
-      if (editableContent && !i.dataset.charLimit) {
-        this.addCharacterLimit(i)
       }
 
       utils.appendBinding(i, ':class', `
         ['bg-'+color+'-600/25! ${i.tagName === 'LABEL' ? '' : 'p-2!'}']: isRadioValue("edit")
       `)
-    })
-
-    parent.querySelectorAll('.overflow-auto').forEach(i => {
-      utils.appendBinding(i , ':class', `['scrollbar-thumb-'+color+'-600/25!']: true`)
     })
 
     parent.querySelectorAll('span[contenteditable]').forEach(element => {
@@ -282,12 +284,14 @@ export default class MetadataControl {
       nav.appendChild(collapseBtn)
     }
 
-    nav.appendChild(utils.strToEl(button({
+    const closeBtn = utils.strToEl(button({
       title: 'Collapse metadata',
       icon: svg.xMini,
-      classStr: 'maplibregl-ctrl-close border-t-0!',
+      classStr: 'maplibregl-ctrl-close border-t-0! bg-transparent!',
       attrs: `@click='toggleCollapse'  x-show='isRadioValue("current")'`,
-    })))
+    }))
+    nav.appendChild(closeBtn)
+
 
     Array(editBtn, saveBtn, backBtn, collapseBtn).filter(Boolean).forEach(i => {
       i.classList.add(
@@ -405,7 +409,7 @@ export default class MetadataControl {
     this.addLogoSection(content)
 
     const attrContainer = document.createElement('div')
-    attrContainer.classList.add('flex', 'flex-col', 'gap-1', 'grow', 'overflow-auto')
+    attrContainer.classList.add('flex', 'flex-col', 'gap-1', 'grow')
     content.appendChild(attrContainer)
 
     const creatorContainer = document.createElement('div')

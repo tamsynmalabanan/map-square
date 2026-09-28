@@ -341,7 +341,12 @@ export default class HandleControls {
                 })
 
                 Array.from(container.querySelectorAll('.maplibregl-ctrl-close')).forEach(el => {
-                    el.classList.add('grid', 'place-items-center', 'size-[15px]!', 'border-none!', 'rounded!', 'hover:rounded!', 'active:rounded!')
+                    el.classList.add(
+                        'grid', 'place-items-center', 
+                        'size-[15px]!', 
+                        'border-none!', 
+                        'rounded!', 'hover:rounded!', 'active:rounded!'
+                    )
                 })
 
                 params.handler?.(control)
