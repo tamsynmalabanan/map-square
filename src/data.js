@@ -1,16 +1,18 @@
-import { invert, parseInt } from "lodash"
-
 export default function registerData() {
     Alpine.data('app', () => ({
         get color() {
             return Alpine.store('displaySettings').colorTheme
         },
 
+        get dark() {
+            return Alpine.store('displaySettings').darkMode
+        },
+
         init() {
             Alpine.bind(this.$el, {
                 ':class': `{
-                    'dark': $store.displaySettings.darkMode,
-                    ['h-screen w-screen']: true,
+                    'dark': dark,
+                    ['h-screen w-screen relative']: true,
                 }`
             })
         }

@@ -107,25 +107,6 @@ export class SettingsControl {
                         },
                     },
                     {
-                        title: 'Toggle dark mode',
-                        icon: '🌙',
-                        highlight: settings.darkMode,
-                        handler: async (event) => {
-                            const isDark = event.detail.value
-                            
-                            if (isDark !== displaySettings.darkMode) {
-                                displaySettings.toggleDarkMode()
-                            }
-                            
-                            await this.updateConfig([
-                                'settings', 
-                                'darkMode', 
-                            ], isDark, {themeId: map.getTheme().id})
-
-                            this.configBasemap()
-                        },
-                    },
-                    {
                         title: 'Toggle interactivity',
                         icon: '🔒',
                         highlight: settings.locked,
@@ -280,7 +261,7 @@ export class SettingsControl {
         const map = this._map
         const settings = map.getTheme().settings
         const basemap = settings.basemap        
-        const paints = basemap.paints[settings.darkMode ? 'dark' : 'default']
+        const paints = basemap.paints[Alpine.store('displaySettings').darkMode ? 'dark' : 'default']
         const currentBasemap = map.getLayer('basemap')
         const basemapChanged = !_.isEqual(currentBasemap?.paint?._values, paints.basemap)
 
@@ -305,13 +286,6 @@ export class SettingsControl {
         const style = structuredClone(map.getStyle())
         values ? style.sky = values : style.sky ? delete style.sky : null
         map.setStyle(style)
-    }
-
-    configDarkMode() {
-        const displaySettings = Alpine.store('displaySettings')
-        if (this._map.getTheme().settings.darkMode === displaySettings.darkMode) return
-        
-        displaySettings.toggleDarkMode()
     }
 
     configColorTheme() {
@@ -358,6 +332,10 @@ export class SettingsControl {
             })
         })
 
+        document.addEventListener('darkModeToggled', (e) => {
+            this.configBasemap()
+        })
+
         await this.applyThemeConfig()
     }
 
@@ -394,7 +372,6 @@ export class SettingsControl {
         }
 
         this.configColorTheme()
-        this.configDarkMode()
         this.configScaleBarUnit(settings.unit)
         this.configBasemap()
         
@@ -463,9 +440,11 @@ export class SettingsControl {
 
                 const snapshotPromise = new Promise((resolve) => {
                     map.once('idle', () => {
-                        config.metadata.snapshot = map.getCanvas().toDataURL('image/png')
+                        config.snapshot = map.getCanvas().toDataURL('image/png')
+                        map.setPixelRatio(window.devicePixelRatio)
                         resolve()
                     })
+                    map.setPixelRatio(0.1)
                     map.triggerRepaint()
                 })
 

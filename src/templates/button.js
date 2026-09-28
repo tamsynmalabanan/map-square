@@ -24,7 +24,7 @@ export default ({
           ['bg-'+color+'-600/50!']: ${highlightExp},
           ['${utils.dynamicBgExp()} enabled:hover:bg-'+color+'-600/50!']: !(${highlightExp})
         }"
-      ` : ''}
+      ` : ``}
       class="
         flex 
         justify-center 

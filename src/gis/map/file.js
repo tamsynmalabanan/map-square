@@ -223,7 +223,7 @@ export class FileControl {
                                     keys.forEach(j => {
                                         const tag = Array('options', 'snapshot').includes(j) ? 'div' : 'span'
                                         const el = document.createElement(tag)
-                                        el.classList.add('flex', 'items-center', 'p-2', index%2===0 ? 'bg-gray-950/25!' : null)
+                                        el.classList.add('flex', 'items-center', 'break-all', 'p-2', index%2===0 ? 'bg-gray-950/25!' : null)
                                         container.appendChild(el)
                                         
                                         if (j === 'options') {
@@ -257,11 +257,10 @@ export class FileControl {
                                         } else if (j === 'snapshot') {
                                             el.classList.add()
                                             el.classList.add('justify-center')
-                                            const value = i.metadata[j]
+                                            const value = i[j]
                                             if (value) {
                                                 const img = document.createElement('img')
                                                 img.classList.add('rounded')
-                                                // img.setAttribute('width', '100')
                                                 img.src = value
                                                 el.appendChild(img)
                                             }

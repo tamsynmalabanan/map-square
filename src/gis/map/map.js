@@ -103,6 +103,7 @@ export default class Map extends maplibregl.Map {
       src: null,
       autosave: false,
       activeTheme: themeId,
+      snapshot: '',
       metadata: {
         title: 'Untitled Map',
         
@@ -118,7 +119,6 @@ export default class Map extends maplibregl.Map {
         
         dateCreated: date,
         dateUpdated: null,
-        snapshot: '',
       },
       sources: {
         basemap: {
@@ -155,7 +155,6 @@ export default class Map extends maplibregl.Map {
           projection: 'mercator', // mercator or globe,
           terrain: false,
           geolocate: false,
-          darkMode: displaySettings.darkMode,
           colorTheme: displaySettings.colorTheme,
           bookmark: {
             active: 'centroid',
@@ -308,7 +307,6 @@ export default class Map extends maplibregl.Map {
         'projection',
         'terrain',
         'geolocate',
-        'darkMode',
         'colorTheme'
       ).forEach(i => {
         settings[i] ??= cloneSettings[i]
@@ -336,7 +334,7 @@ export default class Map extends maplibregl.Map {
       basemap.render ??= cloneSettings.basemap.render
       basemap.color ??= cloneSettings.basemap.color
       
-      const basemapTheme = settings.darkMode ? 'dark' : 'default'
+      const basemapTheme = Alpine.store('displaySettings').darkTheme ? 'dark' : 'default'
       const paints = basemap.paints[basemapTheme]
       if (paints && Object.keys(basemap.paints).includes(basemapTheme)) {
         paints.basemap ??= cloneSettings.basemap.paints[basemapTheme].basemap

@@ -345,7 +345,8 @@ export default class HandleControls {
                         'grid', 'place-items-center', 
                         'size-[15px]!', 
                         'border-none!', 
-                        'rounded!', 'hover:rounded!', 'active:rounded!'
+                        'rounded!', 'hover:rounded!', 'active:rounded!',
+                        'opacity-25!', 'hover:opacity-100!'
                     )
                 })
 

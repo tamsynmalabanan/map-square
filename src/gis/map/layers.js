@@ -158,7 +158,7 @@ export class LayersControl {
                     visibility,
                 },
                 paint: {
-                    'background-color': Alpine.store('displaySettings').darkMode ? 'black' : 'white',
+                    'background-color': 'black',
                     'background-pattern': pattern,
                     'background-opacity': opacity/4,
                 }

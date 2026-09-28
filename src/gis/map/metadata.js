@@ -268,18 +268,29 @@ export default class MetadataControl {
       })
       nav.appendChild(saveBtn)
     }
-    
+
+    const darkModeBtn = utils.strToEl(button({
+      title: 'Toggle dark mode',
+      icon: svg.moonMini,
+      classStr: 'border-t-0!',
+      minimal: true,
+      attrs: `@click='$store.displaySettings.toggleDarkMode()'`,
+    }))
+    darkModeBtn.setAttribute('x-html', `dark ? svg.sunMini : svg.moonMini`)
+    nav.appendChild(darkModeBtn)
+
+
     if (this.config.id) {
       collapseBtn = utils.strToEl(button({
         title: 'Toggle details',
-        icon: svg.chevronUpMini,
+        icon: svg.arrowUpCircleMini,
         attrs: `x-ref="collapseBtn"`,
         classStr: `border-t-0!`,
       }))
       collapseBtn.addEventListener('click', () => {
         const data = Alpine.$data(this.details)
         data.show = !data.show
-        collapseBtn.innerHTML = data.show ? svg.chevronUpMini : svg.chevronDownMini
+        collapseBtn.innerHTML = data.show ? svg.arrowUpCircleMini : svg.arrowDownCircleMini
       })
       nav.appendChild(collapseBtn)
     }
@@ -292,8 +303,7 @@ export default class MetadataControl {
     }))
     nav.appendChild(closeBtn)
 
-
-    Array(editBtn, saveBtn, backBtn, collapseBtn).filter(Boolean).forEach(i => {
+    Array(editBtn, saveBtn, backBtn, collapseBtn, darkModeBtn).filter(Boolean).forEach(i => {
       i.classList.add(
         'grid', 
         'place-items-center', 
@@ -690,7 +700,7 @@ export default class MetadataControl {
     const count = document.createElement('span')
     count.classList.add('opacity-25', 'cursor-pointer')
     count.setAttribute('x-html', `[themeIndex, themesTotal].join(" of ")`)
-    count.setAttribute('x-show', `isRadioValue("current")`)
+    count.setAttribute('x-show', `isRadioValue("current") && [themeIndex, themesTotal].every(i => i>0)`)
     header.insertBefore(count, navBtns.next.btn)
 
     if (!this._map.isStaticConfig()) {
