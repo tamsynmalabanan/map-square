@@ -270,7 +270,6 @@ export default class Map extends maplibregl.Map {
         },
         layers: [] 
       }],
-      logs: []
     }
   }
 
@@ -399,8 +398,18 @@ export default class Map extends maplibregl.Map {
     const originalRemoveLayer = this.removeLayer.bind(this)
 
     this.removeLayer = (layerId) => {
+      const layer = this.getLayer(layerId)
       const result = originalRemoveLayer(layerId)
-      this.fire('layerremoved', { layerId })
+      this.fire('layerremoved', { layerId, layer })
+      
+      if (!this.getControls('layers').getAllSystemLayerNames().find(i => layerId.startswith(i))) {
+        const sourceId = layer.source
+        const sourceLayer = this.getConfig().themes.flatMap(i => i.layers).find(i => i.source === sourceId)
+        if (!sourceLayer) {
+          this.removeSource(sourceId)
+        }
+      }
+
       return result
     }
   }

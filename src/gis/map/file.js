@@ -105,95 +105,6 @@ export class FileControl {
                         },
                     ] : []),
                     {
-                        init: async (btn) => {
-                            const modalEl = utils.strToEl(modal({
-                                open: false,
-                                parent: `#${map.getContainer().id}`,
-                                title: 'Change Logs',
-                                icon: '◀️',
-                                origin: 'bottom.right',
-                                label: false,
-                                toggleClass: 'rounded!',
-                            }))
-                            btn.appendChild(modalEl)
-
-                            const toggle = btn.querySelector('button')
-                            const toggleHandler = () => {
-                                const disabled = !config.logs.length
-                                toggle.disabled = disabled
-                                if (!disabled) {
-                                    Array('configupdated', 'themeupdated').forEach(i => {
-                                        map.off(i, toggleHandler)
-                                    })
-                                }
-                            }
-                            toggleHandler()
-                            if (toggle.disabled) {
-                                Array('configupdated', 'themeupdated').forEach(i => {
-                                    map.on(i, toggleHandler)
-                                })
-                            }
-                            
-                            const getParent = () => document.getElementById(`${modalEl.id}-content`)
-                            const headers = {
-                                __no__: 'No.',
-                                date: 'Date',
-                                propertyStr: 'Property', 
-                                themeName: 'Theme',
-                                value: 'Previous Value',
-                                __btns__: '',
-                            }
-                            const sort = {
-                                sortBy: 'date',
-                                sortOrder: 'descending'
-                            }
-                            const getItems = () => map.getConfig().logs.map(log => {
-                                return {
-                                    log,
-                                    propertyStr: log.property.join('\n'),
-                                    ...(log.themeId ? {
-                                        themeName: Array(
-                                            map.getConfig().themes.find(i => i.id === log.themeId)?.metadata.title ?? 'Map not found',
-                                            `(${log.themeId})`
-                                        ).join('\n'),
-                                    } : {}),
-                                    ...log
-                                }
-                            })
-                            const btns = ({item, el}={}) => {
-                                // const deleteBtn = utils.strToEl(button({
-                                //     title: 'Delete map',
-                                //     icon: '🗑️',
-                                //     classStr: 'size-[20px] self-center',
-                                //     themedBg: false,
-                                // }))
-                                // deleteBtn.addEventListener('click', async (e) => {
-                                //     gisDB.deleteFromGISDB('maps', item.id)
-                                //     table({
-                                //         parent: getParent(),
-                                //         headers,
-                                //         sort,
-                                //         items: getItems(),
-                                //         btns,
-                                //     })
-                                // })
-                                // el.appendChild(deleteBtn)
-                            }
-
-                            modalEl.addEventListener('modalToggled', async (e) => {
-                                if (!e.detail.value) return
-
-                                table({
-                                    parent: getParent(),
-                                    headers,
-                                    sort,
-                                    items: getItems(),
-                                    btns,
-                                })
-                            })
-                        }
-                    },
-                    {
                         title: 'Save as new map',
                         icon: '💾',
                         highlight: null,
@@ -350,7 +261,6 @@ export class FileControl {
         
         config.src = src
         config.autosave = false
-        config.logs = []
         config.id = await utils.hashJSON(config)
 
         const zip = new JSZip()
@@ -438,7 +348,7 @@ export class FileControl {
             clearTimeout(timer)
             setTimeout(() => {
                 map.on(i, async (e) => {
-                    console.log(e.type)
+                    console.log(e.type, e)
                     if (e.type === "configSaved") {
                         if (config.autosave) {
                             icon.innerText = `🟢`

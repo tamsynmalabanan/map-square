@@ -91,7 +91,7 @@ export default function table({
 
             const tag = (
                 isImg || Array('__btns__').includes(key) || headers[key] === '' || typeof value === 'object'
-                ? 'div' : 'span'
+                ? 'div' : 'span' 
             )
             
             const el = document.createElement(tag)

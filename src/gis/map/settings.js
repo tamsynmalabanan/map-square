@@ -317,17 +317,19 @@ export class SettingsControl {
                 }, 1000);
             })
         })
-    
+
         let layerTimer
-        Array('layeradded', 'layerremoved', 'layersreordered').forEach(i => {
+        Array('layeradded', 'layerremoved', 'layersmoved').forEach(i => {
             map.on(i, (e) => {
-                const layerId = e.layer?.id || e.layerId
-                if (systemLayers.find(i => layerId.startsWith(i))) return
+                const layer = e.layer
+                if (systemLayers.find(i => layer.id.startsWith(i))) return
                 
                 clearTimeout(layerTimer)
                 layerTimer = setTimeout(async () => {
                     const layers = map.getStyle().layers
-                    await this.updateConfig(['layers'], layers, {themeId: map.getTheme().id})
+                    await this.updateConfig(['layers'], layers, {
+                        themeId: map.getTheme().id,
+                    })
                 }, 1000);
             })
         })
@@ -497,7 +499,10 @@ export class SettingsControl {
         })
     }
 
-    async updateConfig(property, value, {themeId}={}) {
+    async updateConfig(property, value, {
+        themeId,
+        event,
+    }={}) {
         const map = this._map
         const config = map.getConfig()
         const theme = config.themes.find(i => i.id === themeId)
@@ -538,21 +543,6 @@ export class SettingsControl {
 
                 config.src = 'db'
                 config.autosave = false
-                config.logs = []
-            } else if (
-                typeof value !== 'boolean' 
-                && !Array('', null, undefined).includes(currentValue) 
-                && !Array(
-                    'activeTheme',
-                ).includes(propertyName)
-            ) {
-                (config.logs ??= []).push({
-                    property, 
-                    themeId,
-                    date,
-                    value: currentValue, 
-                })
-                config.logs = config.logs.slice(-100)
             }
 
             target[propertyName] = value
