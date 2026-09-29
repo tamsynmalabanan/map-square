@@ -129,7 +129,7 @@ export class FileControl {
                     {
                         init: async (btn) => {
                             const modalEl = utils.strToEl(modal({
-                                open: false,
+                                open: true,
                                 parent: `#${map.getContainer().id}`,
                                 title: 'Local Maps',
                                 icon: '🗄️',
@@ -141,11 +141,11 @@ export class FileControl {
                             
                             const getParent = () => document.getElementById(`${modalEl.id}-content`)
                             const headers = {
-                                snapshot: '',
                                 __no__: 'No.',
                                 title: 'Title',
                                 dateCreated: 'Created',
                                 dateUpdated: 'Updated',
+                                snapshot: '',
                                 __btns__: '',
                             }
                             const sort = {
