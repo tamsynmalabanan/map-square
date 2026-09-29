@@ -402,7 +402,7 @@ export default class Map extends maplibregl.Map {
       const result = originalRemoveLayer(layerId)
       this.fire('layerremoved', { layerId, layer })
       
-      if (!this.getControls('layers').getAllSystemLayerNames().find(i => layerId.startswith(i))) {
+      if (!this.getControls('layers').getAllSystemLayerNames().find(i => layerId.startsWith(i))) {
         const sourceId = layer.source
         const sourceLayer = this.getConfig().themes.flatMap(i => i.layers).find(i => i.source === sourceId)
         if (!sourceLayer) {
@@ -418,7 +418,7 @@ export default class Map extends maplibregl.Map {
     const original = this.moveLayer.bind(this)
 
     this.moveLayer = (layerName, beforeId) => {
-      beforeId = this.getControls('legend').getBeforeId(layerName, beforeId)
+      beforeId = this.getControls('layers').getBeforeId(layerName, beforeId)
 
       const results = (
         this.getStyle().layers.map(l => l.id)

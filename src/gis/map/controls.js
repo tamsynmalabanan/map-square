@@ -147,10 +147,10 @@ export default class HandleControls {
                     '.maplibregl-ctrl-metadata': {},
                 },
             },
-            legend: {
+            layers: {
                 constructor: LayersControl,
                 elements: {
-                //   '.maplibregl-ctrl-legend': {},
+                //   '.maplibregl-ctrl-layers': {},
                 },
             },
             placeSearch: {
@@ -199,7 +199,7 @@ export default class HandleControls {
                     position: 'top-left',
                     order: 0,
                 },
-                legend: {
+                layers: {
                     active: true,
                     position: 'top-left',
                     order: 1,

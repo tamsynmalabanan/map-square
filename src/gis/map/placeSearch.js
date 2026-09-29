@@ -41,7 +41,7 @@ export default class PlaceSearchControl {
                 
                 map.stop()
                 map.getSource('placeSearch')?.setData(turf.featureCollection([]))
-                map.getControls('legend').removeSourceLayers('placeSearch')
+                map.getControls('layers').removeSourceLayers('placeSearch')
                 
                 const value = input.value.trim()
                 if (value.length < 3) return
@@ -89,7 +89,7 @@ export default class PlaceSearchControl {
         if (!source) return
 
         source.setData(data)
-        const legendControl = map.getControls('legend')
+        const legendControl = map.getControls('layers')
         const layers = legendControl.addGeoJSONLayers(source.id, {
             properties: {
                 metadata: {

@@ -253,7 +253,7 @@ export class SettingsControl {
                     'hillshade-accent-color': hillshade.accent,
                     ...method.params
                 }
-            }, map.getControls('legend').getBeforeId('hillshade'))
+            }, map.getControls('layers').getBeforeId('hillshade'))
         }
     }
 
@@ -275,7 +275,7 @@ export class SettingsControl {
                 type: 'raster',
                 source: 'basemap',
                 paint: paints.basemap
-            }, map.getControls('legend').getBeforeId('basemap'))
+            }, map.getControls('layers').getBeforeId('basemap'))
         }
 
         this.setSky(basemap.render ? paints.sky : null)
@@ -298,7 +298,7 @@ export class SettingsControl {
 
     async configMap() {
         const map = this._map
-        const systemLayers = map.getControls('legend').getAllSystemLayerNames()
+        const systemLayers = map.getControls('layers').getAllSystemLayerNames()
     
         let sourceTimer
         Array('sourceadded', 'sourceremoved', 'geojsonupdated').forEach(i => {
@@ -377,7 +377,7 @@ export class SettingsControl {
         this.configScaleBarUnit(settings.unit)
         this.configBasemap()
         
-        const systemLayers = controls.legend.getAllSystemLayerNames()
+        const systemLayers = controls.layers.getAllSystemLayerNames()
         theme.layers.forEach(layer => {
             if (systemLayers.find(i => layer.id.startsWith(i))) return
             map.addLayer(layer)  
