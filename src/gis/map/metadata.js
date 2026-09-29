@@ -411,7 +411,10 @@ export default class MetadataControl {
     content.classList.add('flex', 'flex-nowrap', 'grow')
     content.setAttribute('x-show', 'show')
     content.setAttribute('x-data', `{showImg: false}`)
-    utils.appendBinding(content, ':class', `['gap-3']: showImg`)
+    utils.appendBinding(content, ':class', `
+      ['gap-3']: showImg,  
+      ['-gap-3']: !showImg
+    `)
     utils.appendBinding(content, ':class', `['-flex-nowrap flex-col']: isRadioValue("edit")`)
     container.appendChild(content)
 

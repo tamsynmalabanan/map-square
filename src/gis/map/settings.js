@@ -478,11 +478,11 @@ export class SettingsControl {
                 const snapshotPromise = Promise.race([
                     new Promise((resolve) => {
                         map.once('idle', () => {
-                            config.snapshot = map.getCanvas().toDataURL('image/png')
+                            config.metadata.snapshot = map.getCanvas().toDataURL('image/png')
                             map.setPixelRatio(window.devicePixelRatio)
                             resolve()
                         })
-                        map.setPixelRatio(0.1)
+                        map.setPixelRatio(0.25)
                         map.triggerRepaint()
                     }),
                     new Promise((resolve) => setTimeout(() => resolve(), 3000))
@@ -539,7 +539,13 @@ export class SettingsControl {
                 config.src = 'db'
                 config.autosave = false
                 config.logs = []
-            } else {
+            } else if (
+                typeof value !== 'boolean' 
+                && !Array('', null, undefined).includes(currentValue) 
+                && !Array(
+                    'activeTheme',
+                ).includes(propertyName)
+            ) {
                 (config.logs ??= []).push({
                     property, 
                     themeId,

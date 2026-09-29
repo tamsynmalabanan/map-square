@@ -33,7 +33,7 @@ export default ({
   return `
     <div x-id="['modal']" :id="$id('modal')" x-data="modalApp({'open':${open}})" class="${modalClass}">
       ${button({
-        ...(label ? {label: title} : {title: `Toggle ${title.toLowerCase()}`}), 
+        ...(label ? {label: title} : {title}), 
         icon, 
         collapsible,
         attrs: `@click="toggle"`,

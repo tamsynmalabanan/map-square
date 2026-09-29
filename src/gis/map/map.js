@@ -103,8 +103,8 @@ export default class Map extends maplibregl.Map {
       src: null,
       autosave: false,
       activeTheme: themeId,
-      snapshot: '',
       metadata: {
+        snapshot: '',
         title: 'Untitled Map',
         
         logo: 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==',

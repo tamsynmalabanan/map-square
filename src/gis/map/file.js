@@ -1,5 +1,6 @@
 import Alpine from "alpinejs";
 import button from "../../templates/button.js"
+import table from "../../templates/table.js"
 import modal from '../../templates/modal.js'; 
 import { values } from "lodash";
 import menu from '../../templates/menu.js';
@@ -104,20 +105,93 @@ export class FileControl {
                         },
                     ] : []),
                     {
-                        title: 'View change logs',
-                        icon: `◀️`,
-                        highlight: null,
-                        init: (btn) => {
-                            btn.disabled = !config.logs?.length
-                            Array('themeupdated', 'configupdated').forEach(i => {
-                                map.once(i, (e) => {
-                                    btn.disabled = !config.logs.length
+                        init: async (btn) => {
+                            const modalEl = utils.strToEl(modal({
+                                open: false,
+                                parent: `#${map.getContainer().id}`,
+                                title: 'Change Logs',
+                                icon: '◀️',
+                                origin: 'bottom.right',
+                                label: false,
+                                toggleClass: 'rounded!',
+                            }))
+                            btn.appendChild(modalEl)
+
+                            const toggle = btn.querySelector('button')
+                            const toggleHandler = () => {
+                                const disabled = !config.logs.length
+                                toggle.disabled = disabled
+                                if (!disabled) {
+                                    Array('configupdated', 'themeupdated').forEach(i => {
+                                        map.off(i, toggleHandler)
+                                    })
+                                }
+                            }
+                            toggleHandler()
+                            if (toggle.disabled) {
+                                Array('configupdated', 'themeupdated').forEach(i => {
+                                    map.on(i, toggleHandler)
+                                })
+                            }
+                            
+                            const getParent = () => document.getElementById(`${modalEl.id}-content`)
+                            const headers = {
+                                __no__: 'No.',
+                                date: 'Date',
+                                propertyStr: 'Property', 
+                                themeName: 'Theme',
+                                value: 'Previous Value',
+                                __btns__: '',
+                            }
+                            const sort = {
+                                sortBy: 'date',
+                                sortOrder: 'descending'
+                            }
+                            const getItems = () => map.getConfig().logs.map(log => {
+                                return {
+                                    log,
+                                    propertyStr: log.property.join('\n'),
+                                    ...(log.themeId ? {
+                                        themeName: Array(
+                                            map.getConfig().themes.find(i => i.id === log.themeId)?.metadata.title ?? 'Map not found',
+                                            `(${log.themeId})`
+                                        ).join('\n'),
+                                    } : {}),
+                                    ...log
+                                }
+                            })
+                            const btns = ({item, el}={}) => {
+                                // const deleteBtn = utils.strToEl(button({
+                                //     title: 'Delete map',
+                                //     icon: '🗑️',
+                                //     classStr: 'size-[20px] self-center',
+                                //     themedBg: false,
+                                // }))
+                                // deleteBtn.addEventListener('click', async (e) => {
+                                //     gisDB.deleteFromGISDB('maps', item.id)
+                                //     table({
+                                //         parent: getParent(),
+                                //         headers,
+                                //         sort,
+                                //         items: getItems(),
+                                //         btns,
+                                //     })
+                                // })
+                                // el.appendChild(deleteBtn)
+                            }
+
+                            modalEl.addEventListener('modalToggled', async (e) => {
+                                if (!e.detail.value) return
+
+                                table({
+                                    parent: getParent(),
+                                    headers,
+                                    sort,
+                                    items: getItems(),
+                                    btns,
                                 })
                             })
-                        },
-                        // handler: async (event) => {
-                        //     console.log()
-                        // },
+                        }
                     },
                     {
                         title: 'Save as new map',
@@ -142,10 +216,7 @@ export class FileControl {
                         href: utils.getBaseURL(window.location.href)
                     },
                     {
-                        init: (btn) => {
-                            let sortBy = 'dateCreated'
-                            let sortOrder = 'descending'
-
+                        init: async (btn) => {
                             const modalEl = utils.strToEl(modal({
                                 open: false,
                                 parent: `#${map.getContainer().id}`,
@@ -157,123 +228,69 @@ export class FileControl {
                             }))
                             btn.appendChild(modalEl)
                             
-                            const handler = async () => {
-                                const content = document.getElementById(`${modalEl.id}-content`)
-                                content.innerHTML = ''
-
-                                const container = document.createElement('div')
-                                container.classList.add(
-                                    'max-w-full','max-h-full', 
-                                    'overflow-auto', 
-                                    'grid', 'grid-cols-6',
-                                    'ps-3', 'pb-3', 'pe-3',
-                                    'min-w-[500px]',
-                                )
-                                utils.appendBinding(container , ':class', `['scrollbar-thumb-'+color+'-600/25!']: true`)
-                                content.appendChild(container)
-
-                                const keys = Object.entries({
-                                    snapshot: '',
-                                    no: 'No.',
-                                    title: 'Title',
-                                    dateCreated: 'Created',
-                                    dateUpdated: 'Updated',
-                                    options: '',
-                                }).map(([key, title]) => {
-                                    const header = document.createElement('span')
-                                    header.classList.add(
-                                        'flex', 'flex-nowrap', 'gap-2', 
-                                        'cursor-pointer', 
-                                        'sticky', 'top-0', 
-                                        'font-bold', 'p-2',
-                                    )
-                                    utils.appendBinding(header, ':class', `['${utils.dynamicBgExp()}']: true`)
-                                    container.appendChild(header)
-                                    
-                                    const titleEl = document.createElement('span')
-                                    titleEl.classList.add('self-center')
-                                    titleEl.innerText = title
-                                    header.appendChild(titleEl)
-
-                                    if (key === sortBy) {
-                                        const icon = document.createElement('span')
-                                        icon.classList.add('w-[10px]!', 'self-center')
-                                        icon.innerHTML = sortOrder === 'ascending' ? svg.chevronUpMini : svg.chevronDownMini
-                                        header.appendChild(icon)
-                                    }
-
-                                    if (title !== '' && key !== 'no')
-                                    header.addEventListener('click', (e) => {
-                                        if (key === sortBy) {
-                                            sortOrder = sortOrder === 'ascending' ? 'descending' : 'ascending'
-                                        } else {
-                                            sortBy = key
-                                        }
-
-                                        handler()
+                            const getParent = () => document.getElementById(`${modalEl.id}-content`)
+                            const headers = {
+                                snapshot: '',
+                                __no__: 'No.',
+                                title: 'Title',
+                                dateCreated: 'Created',
+                                dateUpdated: 'Updated',
+                                __btns__: '',
+                            }
+                            const sort = {
+                                sortBy: 'dateCreated',
+                                sortOrder: 'descending'
+                            }
+                            const getItems = async () => (await gisDB.getAllItemsFromGISDB('maps')).map(i => {
+                                return {
+                                    id: i.id,
+                                    config: i,
+                                    ...i.metadata,
+                                }
+                            })
+                            const btns = ({item, el}={}) => {
+                                if (item.id !== map.getConfig().id) {
+                                    const openBtn = utils.strToEl(button({
+                                        title: 'Open map',
+                                        icon: '📂',
+                                        classStr: 'size-[20px] self-center',
+                                        themedBg: false,
+                                    }))
+                                    openBtn.addEventListener('click', (e) => {
+                                        this.loadMapFromConfig(item.config)
                                     })
+                                    el.appendChild(openBtn)
 
-                                    return key
-                                })
-
-                                const maps = await gisDB.getAllItemsFromGISDB('maps')
-                                utils.sortArray([...new Set(maps.map(i => i.metadata[sortBy]))], {
-                                    descending: sortOrder === 'descending'
-                                }).flatMap(i => maps.filter(j => j.metadata[sortBy] === i)).forEach((i, index) => {
-                                    keys.forEach(j => {
-                                        const tag = Array('options', 'snapshot').includes(j) ? 'div' : 'span'
-                                        const el = document.createElement(tag)
-                                        el.classList.add('flex', 'items-center', 'break-all', 'p-2', index%2===0 ? 'bg-gray-950/25!' : null)
-                                        container.appendChild(el)
-                                        
-                                        if (j === 'options') {
-                                            el.classList.add('flex-nowrap', 'gap-3')
-                                            if (i.id !== config.id) {
-                                                const openBtn = utils.strToEl(button({
-                                                    title: 'Open map',
-                                                    icon: '📂',
-                                                    classStr: 'size-[20px] self-center',
-                                                    themedBg: false,
-                                                }))
-                                                openBtn.addEventListener('click', (e) => {
-                                                    this.loadMapFromConfig(i)
-                                                })
-                                                el.appendChild(openBtn)
-    
-                                                const deleteBtn = utils.strToEl(button({
-                                                    title: 'Delete map',
-                                                    icon: '🗑️',
-                                                    classStr: 'size-[20px] self-center',
-                                                    themedBg: false,
-                                                }))
-                                                deleteBtn.addEventListener('click', (e) => {
-                                                    gisDB.deleteFromGISDB('maps', i.id)
-                                                    handler()
-                                                })
-                                                el.appendChild(deleteBtn)
-                                            }
-                                        } else if (j === 'no') {
-                                            el.innerText = index+1
-                                        } else if (j === 'snapshot') {
-                                            el.classList.add()
-                                            el.classList.add('justify-center')
-                                            const value = i[j]
-                                            if (value) {
-                                                const img = document.createElement('img')
-                                                img.classList.add('rounded')
-                                                img.src = value
-                                                el.appendChild(img)
-                                            }
-                                        } else {
-                                            el.innerText = i.metadata[j]
-                                        }
-                                    })                                    
-                                })
+                                    const deleteBtn = utils.strToEl(button({
+                                        title: 'Delete map',
+                                        icon: '🗑️',
+                                        classStr: 'size-[20px] self-center',
+                                        themedBg: false,
+                                    }))
+                                    deleteBtn.addEventListener('click', async (e) => {
+                                        gisDB.deleteFromGISDB('maps', item.id)
+                                        table({
+                                            parent: getParent(),
+                                            headers,
+                                            sort,
+                                            items: await getItems(),
+                                            btns,
+                                        })
+                                    })
+                                    el.appendChild(deleteBtn)
+                                }
                             }
 
-                            modalEl.addEventListener('modalToggled', (e) => {
+                            modalEl.addEventListener('modalToggled', async (e) => {
                                 if (!e.detail.value) return
-                                handler()
+
+                                table({
+                                    parent: getParent(),
+                                    headers,
+                                    sort,
+                                    items: await getItems(),
+                                    btns,
+                                })
                             })
                         }
                     },
