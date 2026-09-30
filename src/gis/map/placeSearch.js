@@ -89,8 +89,8 @@ export default class PlaceSearchControl {
         if (!source) return
 
         source.setData(data)
-        const legendControl = map.getControls('layers')
-        const layers = legendControl.addGeoJSONLayers(source.id, {
+        const layersControl = map.getControls('layers')
+        const layers = layersControl.addGeoJSONLayers(source.id, {
             properties: {
                 metadata: {
                     name: 'default',
@@ -98,7 +98,7 @@ export default class PlaceSearchControl {
                         style: 'default',
                         styles: {
                             default: [
-                                legendControl.getVectorGroupParams({
+                                layersControl.getVectorGroupParams({
                                     color: `hsl(0, 100%, 50%)`
                                 }),
                             ]

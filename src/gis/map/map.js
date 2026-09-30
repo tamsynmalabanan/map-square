@@ -138,7 +138,15 @@ export default class Map extends maplibregl.Map {
         placeSearch: {
           type: 'geojson',
           data: turf.featureCollection([])
-        }
+        },
+        tooltip: {
+          type: 'geojson',
+          data: turf.featureCollection([])
+        },
+        popup: {
+          type: 'geojson',
+          data: turf.featureCollection([])
+        },
       },
       themes: [{
         id: themeId,
@@ -260,10 +268,13 @@ export default class Map extends maplibregl.Map {
             },
             popup: {
               active: true,
-              targets: {
+              info: {
                 layers: true,
                 osm: true,
-                elevation: true,
+                elev: true,
+                //https://api.opentopodata.org/v1/srtm30m?locations=39.7471,-104.9963
+                // https://openzenith.cyopsys.com/api/elevation?lat=28.0&lon=86.9
+                // https://api.open-elevation.com/api/v1/lookup?locations=27.9881,86.9250
               }
             }
           },
@@ -500,5 +511,28 @@ export default class Map extends maplibregl.Map {
   isWebConfig() {
     const config = this.getConfig()
     return config.id && !Array('db', 'file').includes(config.src)
+  }
+
+  getScaleInMeters() {
+    const control = this.getControls('scalebar')
+    const innerText = control.getContainer().innerText
+    const numValue = parseFloat(innerText)
+    const unit = innerText.split(numValue).pop().trim()
+    
+    if (control.options.unit === 'metric') {
+        if (unit === 'm') return numValue
+        if (unit === 'km') return numValue * 1000
+    }
+    
+    if (control.options.unit === 'imperial') {
+        if (unit === 'mi') return numValue * 1609.344
+        if (unit === 'ft') return numValue * 0.3048
+    }
+    
+    if (control.options.unit === 'nautical') {
+        if (unit === 'nm') return numValue * 1852
+    }
+    
+    throw new Error(`Unsupported scale: ${unit}`)
   }
 }

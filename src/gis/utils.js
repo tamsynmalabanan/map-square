@@ -60,6 +60,10 @@ export const featuresAreSimilar = (f1, f2) => {
     return true
 }
 
+export const getFeatureId = (f) => {
+    return f.properties?.__ms__?.id ?? JSON.parse(f.properties?.__ms__ ?? '{}').id
+}
+
 export const normalizeGeoJSON = async (geojson) => {
     if (!geojson?.features?.length) return
     
@@ -150,4 +154,19 @@ export const fetchProj4Def = async (srid) => {
     }).catch(error => {
         console.error(error)
     })
+}
+
+export const getFeatureLabel = (f) => {
+    const properties = Object.keys(f.properties)
+    return f.properties[
+        f.layer?.metadata?.label
+        || properties.find(i => Array(
+            'display_name',
+            'name:en', 
+            'name', 
+            'title', 
+            'label', 
+        ).find(j => i.includes(j))) 
+        || properties.find(i => i !== '__ms__')
+    ]
 }

@@ -133,18 +133,36 @@ export const appendBinding = (el, attr, exp) => {
     el.setAttribute(attr, cleanExp)
 }
 
-export const observeElement = (el, callback = () => {}, timeout = 100) => {
+export const observeElement = ({
+    el, callback, 
+    attributes = true,
+    characterData = true,
+    attributeFilter,
+    childList = false,
+    subtree = false,
+    once = false,
+    timeout = 100
+}={}) => {
     let timer
 
     const observer = new MutationObserver(mutations => {
-        clearTimeout(timer)
-        timer = setTimeout(() => {
-            callback(mutations, el)
-        }, timeout)
+        for (const mutation of mutations) {
+            clearTimeout(timer)
+            timer = setTimeout(() => {
+                if (once) observer.disconnect()
+                callback?.(mutation, el)
+            }, timeout)
+        }
     })
 
-    observer.observe(el, { childList: true, subtree: true, characterData: true, attributes: true })
-    
+    observer.observe(el, {
+        attributes,
+        attributeFilter,
+        characterData,
+        childList, 
+        subtree,
+    })
+
     return observer
 }
 

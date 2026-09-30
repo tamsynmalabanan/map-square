@@ -21,8 +21,8 @@ export class LayersControl {
     getSystemOverlayNames() {
         return [
             'placeSearch',
-            'infoFeature', 
-            'tooltipFeature', 
+            'popup', 
+            'tooltip', 
         ]
     }
 
@@ -910,5 +910,109 @@ export class LayersControl {
         }
         
         return params
+    }
+
+    async getCanvasData({
+        bbox, point,
+        layers, filter,
+        rasters=false,
+    }={}) {
+        const map = this._map
+        const canvas = map.getCanvas()
+
+        if (!point && !bbox) {
+            bbox = [[0,0], [canvas.width, canvas.height]]
+        }
+
+        let features = map.queryRenderedFeatures(bbox ?? point, {layers, filter})
+
+        if (rasters && point) {
+            const sources = new Set(map.getStyle().layers.map(l => {
+                if (layers?.length && !layers.includes(l.id)) return
+
+                const source = map.getSource(l.source)
+                if (Array('vector', 'geojson').includes(source?.type)) return
+                if (Array('xyz').includes(source?.metadata?.params.type)) return
+                
+                return source
+            }).filter(Boolean))
+
+            const lngLat = map.unproject(point)
+            const feature = turf.point(Object.values(lngLat))
+
+            for (const source of sources) {
+                const metadata = source.metadata
+                const params = metadata?.params
+
+                if (params?.bbox && !turf.booleanPointInPolygon(
+                    feature, turf.bboxPolygon(params.bbox)
+                )) continue
+
+                let data
+
+                if (Array('wms').includes(params?.type)) {
+                    try {
+                        data = await fetchWMSData(params, {map, point})
+                    } catch (error) {
+                        console.log(error)
+                    }
+                }
+                                
+                if (data?.features?.length) {
+                    features = [
+                        ...features,
+                        ...data.features.map(f => {
+                            f.layer = {source: source.id}
+                            return f
+                        })
+                    ]
+                }
+            }
+        }
+
+        const uniqueFeatures = []
+
+        features.forEach(f1 => {
+            if (uniqueFeatures.find(f2 => {
+                return (
+                    f1.source === f2.source 
+                    && gisUtils.featuresAreSimilar(f1, f2)
+                )
+            })) return
+            uniqueFeatures.push(f1)
+        })
+
+        return uniqueFeatures
+    }
+
+    getRawFeature(f) {
+        const id = gisUtils.getFeatureId(f)
+        const source = this._map.getStyle().sources[f.source]
+        if (id && source) {
+            return source.data.features.find(i => i.properties.__ms__.id === id)
+        } else {
+            return f
+        }
+    }
+
+    highlightedLayerProperties() {
+        const groupParams = this.getVectorGroupParams({
+            color: `hsl(180, 100%, 50%)`
+        })
+
+        groupParams.layers.find(l => l.name === "polygon fill").params.paint['fill-opacity'] = 0
+        groupParams.layers.find(l => l.name === "polygon outline").params.paint['line-width'] = 3
+
+        return {
+            metadata: {
+                name: 'default',
+                params: {
+                    style: 'default',
+                    styles: {
+                        default: [groupParams]
+                    }
+                }
+            }
+        }
     }
 }

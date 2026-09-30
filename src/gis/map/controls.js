@@ -118,11 +118,11 @@ export default class HandleControls {
             attribution: {
                 constructor: maplibregl.AttributionControl,
                 handler: (control) => {
-                    utils.observeElement(control._innerContainer, (mutations, el) => {
+                    utils.observeElement({el: control._innerContainer, callback: (mutations, el) => {
                         Array(el.querySelectorAll('a').forEach(a => {
                             a.classList.add('dark:text-white!')
                         }))
-                    })
+                    }})
 
                     control.getContainer().style.maxWidth = `70vw`
                 },

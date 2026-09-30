@@ -1,8 +1,10 @@
+import maplibregl from 'maplibre-gl';
 import Alpine from "alpinejs";
 import button from "../../templates/button.js";
 import menu from '../../templates/menu.js';
 import modal from '../../templates/modal.js'; 
 import _ from 'lodash';
+import * as turf from '@turf/turf'
 
 export class SettingsControl {
     constructor(options) {
@@ -107,6 +109,20 @@ export class SettingsControl {
                         },
                     },
                     {
+                        title: 'Toggle feature tooltip',
+                        icon: '💬',
+                        highlight: settings.interactions.tooltip.active,
+                        handler: async (event) => {
+                            await this.updateConfig([
+                                'settings', 
+                                'interactions', 
+                                'tooltip',
+                                'active',
+                            ], event.detail.value, {themeId: map.getTheme().id})
+                            this.configCursor()
+                        },
+                    },
+                    {
                         title: 'Toggle interactivity',
                         icon: '🔒',
                         highlight: settings.locked,
@@ -125,6 +141,67 @@ export class SettingsControl {
                         highlight: null,
                         handler: (event) => {
                             console.log('open settings')
+                        },
+                    },
+                ]
+            },
+            {
+                label: 'Feature Popup',
+                buttons: [
+                    {
+                        title: 'Toggle feature popup',
+                        icon: 'ℹ️',
+                        highlight: settings.interactions.popup.active,
+                        handler: async (event) => {
+                            await this.updateConfig([
+                                'settings', 
+                                'interactions', 
+                                'popup',
+                                'active',
+                            ], event.detail.value, {themeId: map.getTheme().id})
+                            this.configCursor()
+                        },
+                    },
+                    {
+                        title: 'Toggle layers info',
+                        icon: '📚',
+                        highlight: settings.interactions.popup.info.layers,
+                        handler: async (event) => {
+                            await this.updateConfig([
+                                'settings', 
+                                'interactions', 
+                                'popup',
+                                'info',
+                                'layers',
+                            ], event.detail.value, {themeId: map.getTheme().id})
+                        },
+                    },
+                    {
+                        title: 'Toggle OSM info',
+                        icon: '📍',
+                        highlight: settings.interactions.popup.info.osm,
+                        handler: async (event) => {
+                            await this.updateConfig([
+                                'settings', 
+                                'interactions', 
+                                'popup',
+                                'info',
+                                'osm',
+                            ], event.detail.value, {themeId: map.getTheme().id})
+                        },
+                    },
+                    {
+                        title: 'Toggle elevation info',
+                        icon: '⛰️ ',
+                        highlight: settings.interactions.popup.info.elev,
+                        handler: async (event) => {
+                            await this.updateConfig([
+                                'settings', 
+                                'interactions', 
+                                'popup',
+                                'info',
+                                'elev',
+                            ], event.detail.value, {themeId: map.getTheme().id})
                         },
                     },
                 ]
@@ -298,8 +375,9 @@ export class SettingsControl {
 
     async configMap() {
         const map = this._map
+
         const systemLayers = map.getControls('layers').getAllSystemLayerNames()
-    
+
         let sourceTimer
         Array('sourceadded', 'sourceremoved', 'geojsonupdated').forEach(i => {
             map.on(i, (e) => {
@@ -338,7 +416,151 @@ export class SettingsControl {
             this.configBasemap()
         })
 
+        let tooltip
+        let tooltipTimer
+        map.on('mousemove', (e) => {
+            if (tooltip) {
+                tooltip.remove()
+                tooltip = null
+            
+                map.getSource('tooltip')?.setData(turf.featureCollection([]))
+                map.getControls('layers').removeSourceLayers('tooltip')
+            }
+            
+            clearTimeout(tooltipTimer)
+            tooltipTimer = setTimeout(async () => {
+                tooltip = await this.createTooltip(e)
+            }, 100)
+        })
+        
+        let popup
+        let popupTimer
+        map.on('click', (e) => {
+            if (popup) {
+                popup.remove()
+                popup = null
+                
+                map.getSource('popup')?.setData(turf.featureCollection([]))
+                map.getControls('layers').removeSourceLayers('popup')
+            }
+
+            clearTimeout(popupTimer)
+            popupTimer = setTimeout(async () => {
+                popup = await this.createPopup(e)
+            }, 100)
+        })
+
         await this.applyThemeConfig()
+    }
+
+    async createTooltip(e) {
+        const map = this._map
+        const theme = map.getTheme()
+        if (!theme.settings.interactions.tooltip.active) return
+
+        if (
+            document.elementsFromPoint(CURSOR.x, CURSOR.y)
+            .find(el => el.matches('.maplibregl-ctrl, .maplibregl-popup-content'))
+        ) return
+
+        const style = map.getStyle()
+        const layers = style.layers.filter(l => {
+            const sourceId = l.source
+            const source = style.sources[sourceId]
+            return (
+                Array('geojson', 'vector').includes(source?.type)
+                && l.metadata?.params?.tooltip?.active
+                && source?.data?.features?.length
+                && !Array('tooltip', 'popup').includes(l.source)
+            )
+        })
+        if (!layers.length) return
+
+        const layersControl = map.getControls('layers')
+
+        const features = await layersControl.getCanvasData({
+            point: e.point, 
+            layers: layers.map(l => l.id)
+        })
+        if (!features?.length) return
+
+        let feature
+        let label
+
+        for (const f of features) {
+            label = gisUtils.getFeatureLabel(f)
+            if (label) {
+                feature = layersControl.getRawFeature(f)
+                break
+            }
+        }
+
+         if (!label) return
+
+        const data = turf.featureCollection([turf.feature(feature.geometry)])
+        map.getSource('tooltip')?.setData(data)
+        layersControl.addGeoJSONLayers('tooltip', {
+            properties: layersControl.highlightedLayerProperties()
+        })
+
+        const tooltip = new maplibregl.Popup({closeButton: false})
+        .setLngLat(e.lngLat)
+        .setHTML(`<span class="break-all text-center rounded">${label}</span>`)
+        .addTo(map)
+
+        this.configPopup(tooltip)
+
+        return tooltip
+    }
+    
+    async createPopup(e) {
+        const popup = document.createElement('div')
+        popup.classList.add('maplibregl-ctrl')
+
+        return popup
+    }
+
+    configPopup(popup) {
+        const map = this._map
+
+        const container = popup._container
+        const content = container.querySelector('.maplibregl-popup-content')
+        const tip = container.querySelector('.maplibregl-popup-tip')
+
+        content.classList.add('p-2!', 'dark:text-white!')
+        utils.appendBinding(content, ':class', `['${utils.dynamicBgExp()}']: true`)
+        
+        const displaySettings = Alpine.store('displaySettings')
+
+        const callback = (e) => {
+            tip.removeAttribute('style')
+            
+            const color = displaySettings.colorOptions[displaySettings.colorTheme][displaySettings.darkMode ? 950 : 200]
+            const style = window.getComputedStyle(tip)
+ 
+            Array('Top', 'Bottom', 'Left', 'Right').forEach(pos => {
+                const hasBorder = style.getPropertyValue(`border-${pos.toLowerCase()}-color`) === `rgb(255, 255, 255)`
+                if (hasBorder) {
+                    tip.style[`border${pos}Color`] = color
+                }
+            })
+        }
+
+        callback()
+
+        map.on('move', callback)
+        const containerObserver = utils.observeElement({el:container, callback, attributeFilter: ['class']})
+        const contentObserver = utils.observeElement({el:content, callback, attributeFilter: ['class']})
+        document.addEventListener('darkModeToggled', callback)
+        document.addEventListener('colorSchemeChanged', callback)
+
+        popup.on('close', (e) => {
+            map.off('move', callback)
+            containerObserver.disconnect()
+            contentObserver.disconnect()
+            document.removeEventListener('darkModeToggled', callback)
+            document.removeEventListener('colorSchemeChanged', callback)
+        })
     }
 
     async applyThemeConfig() {
@@ -386,6 +608,8 @@ export class SettingsControl {
         if (settings.locked) {
             this.lock()
         }
+
+        this.configCursor()
     }
 
     lock() {
@@ -465,6 +689,14 @@ export class SettingsControl {
         if (currentView.bearing !== view.bearing) {
             map.setBearing(view.bearing)
         }
+    }
+
+    configCursor() {
+        const map = this._map
+        map.getCanvas().style.cursor = (
+            Object.values(map.getTheme().settings.interactions).find(i => i.active)
+            ? 'pointer' : ''
+        )
     }
 
     async saveConfig({date=(new Date()).toLocaleString("en-US"), timeout=1000}) {
@@ -563,3 +795,14 @@ export class SettingsControl {
         return theme || config
     }
 }
+
+const CURSOR = { x: null, y: null, }
+
+let mousemoveTimer
+document.addEventListener("mousemove", (e) => {
+    clearTimeout(mousemoveTimer)
+    mousemoveTimer = setTimeout(() => {
+        CURSOR.x = e.clientX
+        CURSOR.y = e.clientY
+    }, 100)
+})
