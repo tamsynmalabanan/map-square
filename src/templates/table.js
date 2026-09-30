@@ -28,13 +28,11 @@ export default function table({
     }
 
     const container = document.createElement('div')
-    container.classList.add('flex', 'flex-col', 'gap-5', 'p-3')
+    container.classList.add('size-full!', 'flex', 'flex-col', 'gap-5', 'p-3')
     parent.appendChild(container)
 
     const filterContainer = document.createElement('div')
-    filterContainer.classList.add(
-        'grow', 'flex', 'flex-nowrap', 'justify-end', 
-    )
+    filterContainer.classList.add('flex', 'flex-nowrap', 'justify-end')
     container.appendChild(filterContainer)
 
     const filterInput = document.createElement('input')
@@ -44,11 +42,10 @@ export default function table({
         'rounded',
         'w-1/1', 'sm:w-1/2', 'md:w-1/3', 
         'focus:outline-none', 'p-2'
-
     )
     filterInput.setAttribute('type', 'search')
     filterInput.setAttribute('value', filter.value)
-    filterInput.setAttribute('placeholder', 'Filter table')
+    filterInput.setAttribute('placeholder', 'Filter table items')
     filterContainer.appendChild(filterInput)
     
     let timer
@@ -66,18 +63,21 @@ export default function table({
                 btns,
                 filter,
             })
-        }, 1000)
+        }, 2000)
     })
-    filterInput.focus()
+
+    const tableContainer = document.createElement('div')
+    tableContainer.classList.add('grow', 'overflow-auto', 'min-w-[500px]', 'pe-1')
+    utils.appendBinding(tableContainer , ':class', `['scrollbar-thumb-'+color+'-600/25!']: true`)
+    container.appendChild(tableContainer)
 
     const tableEl = document.createElement('table')
     tableEl.classList.add(
         'table-auto',
         'px-3', 'pb-3',
-        'max-w-full', 'max-h-full', 'min-w-[500px]', 'overflow-auto'
+        'w-full', 
     )
-    utils.appendBinding(tableEl , ':class', `['scrollbar-thumb-'+color+'-600/25!']: true`)
-    container.appendChild(tableEl)
+    tableContainer.appendChild(tableEl)
 
     const thead = document.createElement('thead')
     thead.classList.add('sticky', 'top-0')
@@ -137,12 +137,18 @@ export default function table({
         descending: sort.sortOrder === 'descending'
     }).flatMap(i => items.filter(j => j[sort.sortBy] === i))
     
-    if (filter.value.length > 2) {
-        const words = filter.value.toLowerCase().split(' ').filter(Boolean)
-        filteredItems = filteredItems.filter(i => {
-            const str = JSON.stringify(i).toLowerCase()
-            return words.every(j => str.includes(j))
-        })
+    const length = filterInput.value.length
+    if (length) {
+        filterInput.focus()
+        filterInput.setSelectionRange(length, length)
+
+        if (length > 2) {
+            const words = filter.value.toLowerCase().split(' ').filter(Boolean)
+            filteredItems = filteredItems.filter(i => {
+                const str = JSON.stringify(i).toLowerCase()
+                return words.every(j => str.includes(j))
+            })
+        }
     }
 
     filteredItems.forEach((item, index) => {
