@@ -129,7 +129,7 @@ export class FileControl {
                     {
                         init: async (btn) => {
                             const modalEl = utils.strToEl(modal({
-                                open: true,
+                                open: false,
                                 parent: `#${map.getContainer().id}`,
                                 title: 'Local Maps',
                                 icon: '🗄️',
