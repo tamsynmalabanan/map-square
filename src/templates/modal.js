@@ -81,7 +81,7 @@ export default ({
               "
             >
               <div class="flex items-start justify-between px-3 pt-3">
-                <div class="flex justify-start gap-2 items-center text-md font-bold">
+                <div class="flex justify-start gap-2 items-center text-sm font-bold">
                   ${icon || ''}
                   <h1>${title}</h1>
                 </div>

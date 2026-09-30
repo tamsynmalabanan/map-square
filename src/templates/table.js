@@ -8,6 +8,9 @@ export default function table({
     },
     items = [],
     btns,
+    filter={
+        value: ''
+    },
 } = {}) {
     if (!parent) return
     parent.innerHTML = ''
@@ -27,6 +30,45 @@ export default function table({
     const container = document.createElement('div')
     container.classList.add('flex', 'flex-col', 'gap-5', 'p-3')
     parent.appendChild(container)
+
+    const filterContainer = document.createElement('div')
+    filterContainer.classList.add(
+        'grow', 'flex', 'flex-nowrap', 'justify-end', 
+    )
+    container.appendChild(filterContainer)
+
+    const filterInput = document.createElement('input')
+    filterInput.classList.add(
+        'bg-gray-200/50!', 
+        'dark:bg-gray-950/50!', 
+        'rounded',
+        'w-1/1', 'sm:w-1/2', 'md:w-1/3', 
+        'focus:outline-none', 'p-2'
+
+    )
+    filterInput.setAttribute('type', 'search')
+    filterInput.setAttribute('value', filter.value)
+    filterInput.setAttribute('placeholder', 'Filter table')
+    filterContainer.appendChild(filterInput)
+    
+    let timer
+    filterInput.addEventListener('input', (e) => {
+        clearTimeout(timer)
+        timer = setTimeout(() => {
+            const value = utils.removeWhitespace(filterInput.value)
+            filter.value = value
+
+            table({
+                parent,
+                headers,
+                sort,
+                items,
+                btns,
+                filter,
+            })
+        }, 1000)
+    })
+    filterInput.focus()
 
     const tableEl = document.createElement('table')
     tableEl.classList.add(
@@ -49,24 +91,28 @@ export default function table({
     thead.appendChild(tHeadRow)
 
     Object.entries(headers).map(([key, title]) => {
-        const headerTd = document.createElement('td')
-        headerTd.classList.add('cursor-pointer', 'p-2')
-        tHeadRow.appendChild(headerTd)
+        const td = document.createElement('td')
+        td.classList.add('cursor-pointer', 'p-2')
+        tHeadRow.appendChild(td)
+
+        const tdContent = document.createElement('div')
+        tdContent.classList.add('flex', 'flex-nowrap', 'gap-1', 'font-bold')
+        td.appendChild(tdContent)
         
         const titleEl = document.createElement('span')
         titleEl.classList.add('self-center')
         titleEl.innerText = title
-        headerTd.appendChild(titleEl)
+        tdContent.appendChild(titleEl)
 
         if (key === sort.sortBy) {
             const icon = document.createElement('span')
-            icon.classList.add('self-center', 'ms-2')
-            icon.innerText = sort.sortOrder === 'ascending' ? '🔼' : '🔽'
-            headerTd.appendChild(icon)
+            icon.classList.add('self-center', 'w-[10px]')
+            icon.innerHTML = sort.sortOrder === 'ascending' ? svg.chevronUpMini : svg.chevronDownMini
+            tdContent.appendChild(icon)
         }
 
         if (sortableKeys.includes(key)) {
-            headerTd.addEventListener('click', (e) => {
+            td.addEventListener('click', (e) => {
                 if (key === sort.sortBy) {
                     sort.sortOrder = sort.sortOrder === 'ascending' ? 'descending' : 'ascending'
                 } else {
@@ -79,6 +125,7 @@ export default function table({
                     sort,
                     items,
                     btns,
+                    filter,
                 })
             })
         }
@@ -86,11 +133,23 @@ export default function table({
         return key
     })
 
-    utils.sortArray([...new Set(items.map(i => i[sort.sortBy]))], {
+    let filteredItems = utils.sortArray([...new Set(items.map(i => i[sort.sortBy]))], {
         descending: sort.sortOrder === 'descending'
-    }).flatMap(i => items.filter(j => j[sort.sortBy] === i)).forEach((item, index) => {
+    }).flatMap(i => items.filter(j => j[sort.sortBy] === i))
+    
+    if (filter.value.length > 2) {
+        const words = filter.value.toLowerCase().split(' ').filter(Boolean)
+        filteredItems = filteredItems.filter(i => {
+            const str = JSON.stringify(i).toLowerCase()
+            return words.every(j => str.includes(j))
+        })
+    }
+
+    filteredItems.forEach((item, index) => {
         const tRow = document.createElement('tr')
+        tRow.classList.add('rounded', ...(index%2===0 ? ['bg-gray-200/50!','dark:bg-gray-950/50!'] : []))
         tbody.appendChild(tRow)
+
         keys.forEach(key => {
             const valueRaw = item[key]
             const value = valueRaw ?? typeof valueRaw === 'boolean' ? valueRaw : ''
@@ -100,7 +159,7 @@ export default function table({
             const isHTML = isStr && value.startsWith('<') && value.endsWith('>')
 
             const el = document.createElement('td')
-            el.classList.add('p-2', index%2===0 ? 'bg-gray-950/25!' : null)
+            el.classList.add('p-2')
             tRow.appendChild(el)
             
             if (key === '__no__') {

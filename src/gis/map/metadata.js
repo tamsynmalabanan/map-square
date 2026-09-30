@@ -104,7 +104,6 @@ export default class MetadataControl {
       element.classList.add(
         'break-normal', 
         'text-wrap', 
-        'text-[12px]',
         'grow',
       )
     })

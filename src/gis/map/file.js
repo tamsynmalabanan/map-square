@@ -146,11 +146,15 @@ export class FileControl {
                                 dateCreated: 'Created',
                                 dateUpdated: 'Updated',
                                 snapshot: '',
+                                config: '',
                                 __btns__: '',
                             }
                             const sort = {
                                 sortBy: 'dateCreated',
                                 sortOrder: 'descending'
+                            }
+                            const filter = {
+                                value: '',
                             }
                             const getItems = async () => (await gisDB.getAllItemsFromGISDB('maps')).map(i => {
                                 return {
@@ -160,6 +164,10 @@ export class FileControl {
                                 }
                             })
                             const btns = ({item, el}={}) => {
+                                const container = document.createElement('div')
+                                container.classList.add('flex', 'flex-nowrap', 'gap-3')
+                                el.appendChild(container)
+
                                 if (item.id !== map.getConfig().id) {
                                     const openBtn = utils.strToEl(button({
                                         title: 'Open map',
@@ -170,7 +178,7 @@ export class FileControl {
                                     openBtn.addEventListener('click', (e) => {
                                         this.loadMapFromConfig(item.config)
                                     })
-                                    el.appendChild(openBtn)
+                                    container.appendChild(openBtn)
 
                                     const deleteBtn = utils.strToEl(button({
                                         title: 'Delete map',
@@ -186,9 +194,10 @@ export class FileControl {
                                             sort,
                                             items: await getItems(),
                                             btns,
+                                            filter,
                                         })
                                     })
-                                    el.appendChild(deleteBtn)
+                                    container.appendChild(deleteBtn)
                                 }
                             }
 
@@ -201,6 +210,7 @@ export class FileControl {
                                     sort,
                                     items: await getItems(),
                                     btns,
+                                    filter,
                                 })
                             })
                         }

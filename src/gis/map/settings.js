@@ -484,7 +484,7 @@ export class SettingsControl {
                             map.setPixelRatio(window.devicePixelRatio)
                             resolve()
                         })
-                        map.setPixelRatio(0.25)
+                        map.setPixelRatio(0.1)
                         map.triggerRepaint()
                     }),
                     new Promise((resolve) => setTimeout(() => resolve(), 3000))
