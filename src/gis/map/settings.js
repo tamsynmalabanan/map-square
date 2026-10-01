@@ -8,7 +8,10 @@ import * as turf from '@turf/turf'
 
 export class SettingsControl {
     constructor(options) {
-    
+        this.popups = {
+            tooltip: null,
+            info: null,
+        }
     }
 
     onAdd(map) {
@@ -111,11 +114,11 @@ export class SettingsControl {
                     {
                         title: 'Toggle feature tooltip',
                         icon: '💬',
-                        highlight: settings.interactions.tooltip.active,
+                        highlight: settings.popups.tooltip.active,
                         handler: async (event) => {
                             await this.updateConfig([
                                 'settings', 
-                                'interactions', 
+                                'popups', 
                                 'tooltip',
                                 'active',
                             ], event.detail.value, {themeId: map.getTheme().id})
@@ -146,17 +149,17 @@ export class SettingsControl {
                 ]
             },
             {
-                label: 'Feature Popup',
+                label: 'Feature Info',
                 buttons: [
                     {
-                        title: 'Toggle feature popup',
+                        title: 'Toggle feature info',
                         icon: 'ℹ️',
-                        highlight: settings.interactions.popup.active,
+                        highlight: settings.popups.info.active,
                         handler: async (event) => {
                             await this.updateConfig([
                                 'settings', 
-                                'interactions', 
-                                'popup',
+                                'popups', 
+                                'info',
                                 'active',
                             ], event.detail.value, {themeId: map.getTheme().id})
                             this.configCursor()
@@ -165,13 +168,13 @@ export class SettingsControl {
                     {
                         title: 'Toggle layers info',
                         icon: '📚',
-                        highlight: settings.interactions.popup.info.layers,
+                        highlight: settings.popups.info.data.layers,
                         handler: async (event) => {
                             await this.updateConfig([
                                 'settings', 
-                                'interactions', 
-                                'popup',
+                                'popups', 
                                 'info',
+                                'data',
                                 'layers',
                             ], event.detail.value, {themeId: map.getTheme().id})
                         },
@@ -179,13 +182,13 @@ export class SettingsControl {
                     {
                         title: 'Toggle OSM info',
                         icon: '📍',
-                        highlight: settings.interactions.popup.info.osm,
+                        highlight: settings.popups.info.data.osm,
                         handler: async (event) => {
                             await this.updateConfig([
                                 'settings', 
-                                'interactions', 
-                                'popup',
+                                'popups', 
                                 'info',
+                                'data',
                                 'osm',
                             ], event.detail.value, {themeId: map.getTheme().id})
                         },
@@ -193,13 +196,13 @@ export class SettingsControl {
                     {
                         title: 'Toggle elevation info',
                         icon: '⛰️ ',
-                        highlight: settings.interactions.popup.info.elev,
+                        highlight: settings.popups.info.data.elev,
                         handler: async (event) => {
                             await this.updateConfig([
                                 'settings', 
-                                'interactions', 
-                                'popup',
+                                'popups', 
                                 'info',
+                                'data',
                                 'elev',
                             ], event.detail.value, {themeId: map.getTheme().id})
                         },
@@ -412,51 +415,47 @@ export class SettingsControl {
             })
         })
 
-        document.addEventListener('darkModeToggled', (e) => {
-            this.configBasemap()
-        })
-
-        let tooltip
         let tooltipTimer
         map.on('mousemove', (e) => {
-            if (tooltip) {
-                tooltip.remove()
-                tooltip = null
-            
-                map.getSource('tooltip')?.setData(turf.featureCollection([]))
-                map.getControls('layers').removeSourceLayers('tooltip')
-            }
-            
+            this.clearPopup('tooltip')
             clearTimeout(tooltipTimer)
             tooltipTimer = setTimeout(async () => {
-                tooltip = await this.createTooltip(e)
+                this.popups.tooltip = await this.createTooltipPopup(e)
             }, 100)
         })
         
-        let popup
         let popupTimer
         map.on('click', (e) => {
-            if (popup) {
-                popup.remove()
-                popup = null
-                
-                map.getSource('popup')?.setData(turf.featureCollection([]))
-                map.getControls('layers').removeSourceLayers('popup')
-            }
-
+            this.clearPopup('info')
             clearTimeout(popupTimer)
             popupTimer = setTimeout(async () => {
-                popup = await this.createPopup(e)
+                this.popups.info = await this.createInfoPopup(e)
             }, 100)
+        })
+
+        document.addEventListener('darkModeToggled', (e) => {
+            this.configBasemap()
         })
 
         await this.applyThemeConfig()
     }
 
-    async createTooltip(e) {
+    clearPopup(name) {
+        const popup = this.popups[name]
+        if (!popup) return
+
+        popup.remove()
+        this.popups[name] = null
+
+        const map = this._map
+        map.getSource(name)?.setData(turf.featureCollection([]))
+        map.getControls('layers').removeSourceLayers(name)
+    }
+
+    async createTooltipPopup(e) {
         const map = this._map
         const theme = map.getTheme()
-        if (!theme.settings.interactions.tooltip.active) return
+        if (!theme.settings.popups.tooltip.active) return
 
         if (
             document.elementsFromPoint(CURSOR.x, CURSOR.y)
@@ -471,7 +470,7 @@ export class SettingsControl {
                 Array('geojson', 'vector').includes(source?.type)
                 && l.metadata?.params?.tooltip?.active
                 && source?.data?.features?.length
-                && !Array('tooltip', 'popup').includes(l.source)
+                && !Array('tooltip', 'info').includes(l.source)
             )
         })
         if (!layers.length) return
@@ -489,10 +488,9 @@ export class SettingsControl {
 
         for (const f of features) {
             label = gisUtils.getFeatureLabel(f)
-            if (label) {
-                feature = layersControl.getRawFeature(f)
-                break
-            }
+            if (!label) continue
+            feature = layersControl.getRawFeature(f)
+            break
         }
 
          if (!label) return
@@ -503,21 +501,19 @@ export class SettingsControl {
             properties: layersControl.highlightedLayerProperties()
         })
 
-        const tooltip = new maplibregl.Popup({closeButton: false})
+        const popup = new maplibregl.Popup({closeButton: false})
         .setLngLat(e.lngLat)
         .setHTML(`<span class="break-all text-center rounded">${label}</span>`)
         .addTo(map)
 
-        this.configPopup(tooltip)
-
-        return tooltip
-    }
-    
-    async createPopup(e) {
-        const popup = document.createElement('div')
-        popup.classList.add('maplibregl-ctrl')
+        this.configPopup(popup)
 
         return popup
+    }
+    
+    async createInfoPopup(e) {
+
+        return
     }
 
     configPopup(popup) {
@@ -531,35 +527,35 @@ export class SettingsControl {
         utils.appendBinding(content, ':class', `['${utils.dynamicBgExp()}']: true`)
         
         const displaySettings = Alpine.store('displaySettings')
+        const colorOptions = displaySettings.colorOptions
 
         const callback = (e) => {
             tip.removeAttribute('style')
             
-            const color = displaySettings.colorOptions[displaySettings.colorTheme][displaySettings.darkMode ? 950 : 200]
+            const {colorTheme, darkMode} = displaySettings
+            const color = colorOptions[colorTheme][darkMode ? 950 : 200]
             const style = window.getComputedStyle(tip)
  
             Array('Top', 'Bottom', 'Left', 'Right').forEach(pos => {
-                const hasBorder = style.getPropertyValue(`border-${pos.toLowerCase()}-color`) === `rgb(255, 255, 255)`
-                if (hasBorder) {
-                    tip.style[`border${pos}Color`] = color
-                }
+                if (style.getPropertyValue(`border-${pos.toLowerCase()}-color`) !== `rgb(255, 255, 255)`) return
+                tip.style[`border${pos}Color`] = color
             })
         }
 
         callback()
 
         map.on('move', callback)
-        const containerObserver = utils.observeElement({el:container, callback, attributeFilter: ['class']})
-        const contentObserver = utils.observeElement({el:content, callback, attributeFilter: ['class']})
         document.addEventListener('darkModeToggled', callback)
         document.addEventListener('colorSchemeChanged', callback)
+        const containerObserver = utils.observeElement({el:container, callback, attributeFilter: ['class']})
+        const contentObserver = utils.observeElement({el:content, callback, attributeFilter: ['class']})
 
         popup.on('close', (e) => {
             map.off('move', callback)
-            containerObserver.disconnect()
-            contentObserver.disconnect()
             document.removeEventListener('darkModeToggled', callback)
             document.removeEventListener('colorSchemeChanged', callback)
+            containerObserver.disconnect()
+            contentObserver.disconnect()
         })
     }
 
@@ -694,7 +690,7 @@ export class SettingsControl {
     configCursor() {
         const map = this._map
         map.getCanvas().style.cursor = (
-            Object.values(map.getTheme().settings.interactions).find(i => i.active)
+            Object.values(map.getTheme().settings.popups).find(i => i.active)
             ? 'pointer' : ''
         )
     }

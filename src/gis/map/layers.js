@@ -21,7 +21,7 @@ export class LayersControl {
     getSystemOverlayNames() {
         return [
             'placeSearch',
-            'popup', 
+            'info', 
             'tooltip', 
         ]
     }
@@ -718,7 +718,7 @@ export class LayersControl {
                             tooltip: {
                                 active: true,
                             },
-                            popup: {
+                            info: {
                                 active: true,
                             },
                             ...source.metadata?.params,
@@ -765,7 +765,7 @@ export class LayersControl {
                 params: {
                     ...source.metadata.params,
                     ...params,
-                    popup: {
+                    info: {
                         active: Array('wms').includes(params.type) ? true : false,
                     },
                 },

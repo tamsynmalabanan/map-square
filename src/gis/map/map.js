@@ -143,7 +143,7 @@ export default class Map extends maplibregl.Map {
           type: 'geojson',
           data: turf.featureCollection([])
         },
-        popup: {
+        info: {
           type: 'geojson',
           data: turf.featureCollection([])
         },
@@ -262,13 +262,13 @@ export default class Map extends maplibregl.Map {
             exaggeration: 0.1,
             accent: '#000000',
           },
-          interactions: {
+          popups: {
             tooltip: {
               active: true,
             },
-            popup: {
+            info: {
               active: true,
-              info: {
+              data: {
                 layers: true,
                 osm: true,
                 elev: true,
