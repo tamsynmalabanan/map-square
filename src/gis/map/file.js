@@ -129,7 +129,7 @@ export class FileControl {
                     {
                         init: async (btn) => {
                             const modalEl = utils.strToEl(modal({
-                                open: true,
+                                open: false,
                                 parent: `#${map.getContainer().id}`,
                                 title: 'Local Maps',
                                 icon: '🗄️',
@@ -139,99 +139,108 @@ export class FileControl {
                             }))
                             btn.appendChild(modalEl)
                             
-                            const getParent = () => document.getElementById(`${modalEl.id}-content`)
-                            const headers = {
-                                __no__: 'No.',
-                                title: 'Title',
-                                dateCreated: 'Created',
-                                dateUpdated: 'Updated',
-                                snapshot: '',
-                                config: '',
-                                __btns__: '',
-                                __check__: '',
-                            }
-                            const sort = {
+                            const state = {
+                                selected: [],
+                                filter: '',
                                 sortBy: 'dateCreated',
                                 sortOrder: 'descending'
                             }
-                            const filter = {
-                                value: '',
-                            }
-                            const getItems = async () => (await gisDB.getAllItemsFromGISDB('maps')).map(i => {
-                                return {
-                                    id: i.id,
-                                    config: i,
-                                    ...i.metadata,
-                                }
-                            })
-                            const btns = ({item, el}={}) => {
-                                const container = document.createElement('div')
-                                container.classList.add('flex', 'flex-nowrap', 'gap-3')
-                                el.appendChild(container)
 
-                                if (item.id !== map.getConfig().id) {
-                                    const openBtn = utils.strToEl(button({
-                                        title: 'Open map',
-                                        icon: '📂',
-                                        classStr: 'size-[20px] self-center',
-                                        themedBg: false,
-                                    }))
-                                    openBtn.addEventListener('click', (e) => {
-                                        this.loadMapFromConfig(item.config)
-                                    })
-                                    container.appendChild(openBtn)
+                            const createTable = async () => {
+                                return table({
+                                    parent: document.getElementById(`${modalEl.id}-content`),
+                                    headers: {
+                                        __no__: 'No.',
+                                        title: 'Title',
+                                        dateCreated: 'Created',
+                                        dateUpdated: 'Updated',
+                                        snapshot: '',
+                                        config: '',
+                                        __btns__: '',
+                                        __check__: '',
+                                    },
+                                    items: (await gisDB.getAllItemsFromGISDB('maps')).map(i => {
+                                        return {
+                                            id: i.id,
+                                            config: i,
+                                            ...i.metadata,
+                                        }
+                                    }),
+                                    btns: ({item, el}={}) => {
+                                        const container = document.createElement('div')
+                                        container.classList.add('flex', 'flex-nowrap', 'gap-3')
+                                        el.appendChild(container)
 
-                                    const deleteBtn = utils.strToEl(button({
-                                        title: 'Delete map',
-                                        icon: '🗑️',
-                                        classStr: 'size-[20px] self-center',
-                                        themedBg: false,
-                                    }))
-                                    deleteBtn.addEventListener('click', async (e) => {
-                                        gisDB.deleteFromGISDB('maps', item.id)
-                                        table({
-                                            parent: getParent(),
-                                            headers,
-                                            sort,
-                                            items: await getItems(),
-                                            btns,
-                                            filter,
-                                            menu,
-                                            state,
+                                        if (item.id !== map.getConfig().id) {
+                                            const openBtn = utils.strToEl(button({
+                                                title: 'Open map',
+                                                icon: '📂',
+                                                classStr: 'size-[20px] self-center',
+                                                themedBg: false,
+                                            }))
+                                            openBtn.addEventListener('click', (e) => {
+                                                this.loadMapFromConfig(item.config)
+                                            })
+                                            container.appendChild(openBtn)
+
+                                            const deleteBtn = utils.strToEl(button({
+                                                title: 'Delete map',
+                                                icon: '🗑️',
+                                                classStr: 'size-[20px] self-center',
+                                                themedBg: false,
+                                            }))
+                                            deleteBtn.addEventListener('click', async (e) => {
+                                                await gisDB.deleteFromGISDB('maps', item.id)
+                                                await createTable()
+                                            })
+                                            container.appendChild(deleteBtn)
+                                        }
+                                    },
+                                    menu: (parent) => {
+                                        const container = document.createElement('div')
+                                        container.classList.add('flex', 'flex-nowrap', 'gap-1')
+                                        parent.appendChild(container)
+                                
+                                        const label = document.createElement('span')
+                                        label.classList.add('font-bold', 'self-center', 'cursor-pointer')
+                                        label.innerText = 'Database'
+                                        container.appendChild(label)
+                                
+                                        const addNewBtn = utils.strToEl(button({
+                                            title: 'Select all',
+                                            icon: '🆕',
+                                            classStr: 'self-center size-[20px]',
+                                        }))
+                                        addNewBtn.addEventListener('click', async (e) => {
+                                            const config = Map.getDefaultConfig()
+                                            config.id = utils.randomId()
+                                            config.src = 'db'
+                                            
+                                            await gisDB.saveToGISDB('maps', config)
+                                            await createTable()
                                         })
-                                    })
-                                    container.appendChild(deleteBtn)
-                                }
-                            }
-                            const menu = (container) => {
-                                // const openBtn = utils.strToEl(button({
-                                //     title: 'Open map',
-                                //     icon: '📂',
-                                //     classStr: 'size-[20px] self-center',
-                                //     themedBg: false,
-                                // }))
-                                // openBtn.addEventListener('click', (e) => {
-                                //     this.loadMapFromConfig(item.config)
-                                // })
-                                // container.appendChild(openBtn)
-                            }
-                            const state = {
-                                selected: []
+                                        container.appendChild(addNewBtn)
+                                
+                                        const deleteSelectedBtn = utils.strToEl(button({
+                                            title: 'Delete selected',
+                                            icon: '🗑️',
+                                            classStr: 'self-center size-[20px]',
+                                        }))
+                                        deleteSelectedBtn.addEventListener('click', async (e) => {
+                                            state.selected.forEach(async id => {
+                                                await gisDB.deleteFromGISDB('maps', id)
+                                                await createTable()
+                                            })
+                                        })
+                                        container.appendChild(deleteSelectedBtn)
+                                    },
+                                    state,
+                                })
                             }
 
                             modalEl.addEventListener('modalToggled', async (e) => {
                                 if (!e.detail.value) return
-
-                                table({
-                                    parent: getParent(),
-                                    headers,
-                                    sort,
-                                    items: await getItems(),
-                                    btns,
-                                    filter,
-                                    menu,
-                                    state,
-                                })
+                                await createTable()
                             })
                         }
                     },

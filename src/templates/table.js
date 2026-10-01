@@ -4,16 +4,14 @@ export default function table(options = {}) {
     const {
         parent,
         headers = {},
-        sort = {
-            sortOrder: 'descending'
-        },
         items = [],
         btns,
-        filter = {
-            value: ''
-        },
         menu,
-        state,
+        state = {
+            selected: [],
+            filter: '',
+            sortOrder: 'descending',
+        },
     } = options
     
     if (!parent) return
@@ -24,11 +22,11 @@ export default function table(options = {}) {
     if (!cols) return
 
     const sortableKeys = keys.filter(key => {
-        return headers[key] !== '' && !key.startsWith('__') && typeof items[0][key] !== 'object'
+        return headers[key] !== '' && !key.startsWith('__') && typeof items[0]?.[key] !== 'object'
     })
 
-    if (!sort.sortBy || !sortableKeys.includes(sort.sortBy)) {
-        sort.sortBy = sortableKeys[0]
+    if (!state.sortBy || !sortableKeys.includes(state.sortBy)) {
+        state.sortBy = sortableKeys[0]
     }
 
     const container = document.createElement('div')
@@ -36,14 +34,14 @@ export default function table(options = {}) {
     parent.appendChild(container)
 
     const navBar = document.createElement('div')
-    navBar.classList.add('flex', 'justify-between', 'gap-5')
+    navBar.classList.add('flex', 'justify-between', 'gap-5', 'pb-3')
+    utils.appendBinding(navBar, `:class`, `['border-b border-'+color+'-600/25!']: true`)
     container.appendChild(navBar)
 
     const menuContainer = document.createElement('div')
     menuContainer.classList.add(
-        'flex', 'gap-2', 'grow', 
-        'border-b', 'px-2',
-        'border-gray-950/25!',
+        'flex', 'gap-5', 'grow', 
+        'px-2',
     )
     navBar.appendChild(menuContainer)
 
@@ -99,6 +97,8 @@ export default function table(options = {}) {
         selectContainer.appendChild(deselectAllBtn)
     }
 
+    menu?.(menuContainer)
+
     const filterInput = document.createElement('input')
     filterInput.classList.add(
         'bg-gray-200/50!', 
@@ -107,8 +107,9 @@ export default function table(options = {}) {
         'w-1/1', 'sm:w-1/2', 'md:w-1/3', 
         'focus:outline-none', 'p-2'
     )
+    utils.appendBinding(filterInput, `:class`, `['border border-'+color+'-600/25!']: true`)
     filterInput.setAttribute('type', 'search')
-    filterInput.setAttribute('value', filter.value)
+    filterInput.setAttribute('value', state.filter)
     filterInput.setAttribute('placeholder', 'Filter table items')
     navBar.appendChild(filterInput)
     
@@ -117,7 +118,7 @@ export default function table(options = {}) {
         clearTimeout(timer)
         timer = setTimeout(() => {
             const value = utils.removeWhitespace(filterInput.value)
-            filter.value = value
+            state.filter = value
 
             table(options)
         }, 1000)
@@ -145,6 +146,7 @@ export default function table(options = {}) {
     tableEl.appendChild(tbody)
 
     const tHeadRow = document.createElement('tr')
+    utils.appendBinding(tHeadRow, `:class`, `['border-b border-'+color+'-600/25!']: true`)
     thead.appendChild(tHeadRow)
 
     Object.entries(headers).map(([key, title]) => {
@@ -161,19 +163,19 @@ export default function table(options = {}) {
         titleEl.innerText = title
         tdContent.appendChild(titleEl)
 
-        if (key === sort.sortBy) {
+        if (key === state.sortBy) {
             const icon = document.createElement('span')
             icon.classList.add('self-center', 'w-[10px]')
-            icon.innerHTML = sort.sortOrder === 'ascending' ? svg.chevronUpMini : svg.chevronDownMini
+            icon.innerHTML = state.sortOrder === 'ascending' ? svg.chevronUpMini : svg.chevronDownMini
             tdContent.appendChild(icon)
         }
 
         if (sortableKeys.includes(key)) {
             td.addEventListener('click', (e) => {
-                if (key === sort.sortBy) {
-                    sort.sortOrder = sort.sortOrder === 'ascending' ? 'descending' : 'ascending'
+                if (key === state.sortBy) {
+                    state.sortOrder = state.sortOrder === 'ascending' ? 'descending' : 'ascending'
                 } else {
-                    sort.sortBy = key
+                    state.sortBy = key
                 }
     
                 table(options)
@@ -183,9 +185,9 @@ export default function table(options = {}) {
         return key
     })
 
-    let filteredItems = utils.sortArray([...new Set(items.map(i => i[sort.sortBy]))], {
-        descending: sort.sortOrder === 'descending'
-    }).flatMap(i => items.filter(j => j[sort.sortBy] === i))
+    let filteredItems = utils.sortArray([...new Set(items.map(i => i[state.sortBy]))], {
+        descending: state.sortOrder === 'descending'
+    }).flatMap(i => items.filter(j => j[state.sortBy] === i))
     
     const length = filterInput.value.length
     if (length) {
@@ -193,7 +195,7 @@ export default function table(options = {}) {
         filterInput.setSelectionRange(length, length)
 
         if (length > 2) {
-            const words = filter.value.toLowerCase().split(' ').filter(Boolean)
+            const words = state.filter.toLowerCase().split(' ').filter(Boolean)
             filteredItems = filteredItems.filter(i => {
                 const str = JSON.stringify(i).toLowerCase()
                 return words.every(j => str.includes(j))
@@ -204,6 +206,7 @@ export default function table(options = {}) {
     filteredItems.forEach((item, index) => {
         const tRow = document.createElement('tr')
         tRow.classList.add('rounded', ...(index%2===0 ? ['bg-gray-200/50!','dark:bg-gray-950/50!'] : []))
+        utils.appendBinding(tRow, `:class`, `['border-b border-'+color+'-600/25!']: true`)
         tbody.appendChild(tRow)
 
         keys.forEach(key => {

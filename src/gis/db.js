@@ -98,18 +98,26 @@ export const getFromGISDB = async (name, id) => {
     }).catch(error => console.log(error))
 }
 
-export const deleteFromGISDB = (name, id) => {
-    const request = requestGISDB()
-    
-    request.onsuccess = (e) => {
-        const objectStore = getGISDBObjectStore(e, name, true)
-        const deleteRequest = objectStore.delete(id)
-    
-        deleteRequest.onsuccess = () => {}
-        deleteRequest.onerror = (e) => {}
-    }
-  
-    request.onerror = (e) => {}
+export const deleteFromGISDB = async (name, id) => {
+    return new Promise((resolve, reject) => {
+        const request = requestGISDB()
+        
+        request.onsuccess = (e) => {
+            const objectStore = getGISDBObjectStore(e, name, true)
+            const deleteRequest = objectStore.delete(id)
+        
+            deleteRequest.onsuccess = (e) => {
+                resolve(e.target.result)
+            }
+            deleteRequest.onerror = (e) => {
+                reject(e.target.errorCode)
+            }
+        }
+      
+        request.onerror = (e) => {
+            reject(e.target.errorCode)
+        }
+    }).catch(error => console.log(error))
 }
 
 
