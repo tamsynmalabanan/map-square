@@ -207,7 +207,7 @@ export class FileControl {
                                         container.appendChild(label)
                                 
                                         const addNewBtn = utils.strToEl(button({
-                                            title: 'Select all',
+                                            title: 'Add new map',
                                             icon: '🆕',
                                             classStr: 'self-center size-[20px]',
                                         }))
