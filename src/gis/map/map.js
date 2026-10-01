@@ -271,10 +271,6 @@ export default class Map extends maplibregl.Map {
               data: {
                 layers: true,
                 osm: true,
-                elev: true,
-                //https://api.opentopodata.org/v1/srtm30m?locations=39.7471,-104.9963
-                // https://openzenith.cyopsys.com/api/elevation?lat=28.0&lon=86.9
-                // https://api.open-elevation.com/api/v1/lookup?locations=27.9881,86.9250
               }
             }
           },

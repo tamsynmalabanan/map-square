@@ -1,3 +1,4 @@
+import { LngLat } from "maplibre-gl"
 import { saveToGISDB } from "./db"
 
 export const searchNominatimOSM = async (place, {signal}={}) => {
@@ -25,4 +26,48 @@ export const searchNominatimOSM = async (place, {signal}={}) => {
         }
         return data
     }}).catch(error => {})
+}
+
+export const getElevation = async (lngLat, {signal}={}) => {
+    const {lng, lat} = lngLat
+    const sources = [
+        {
+            name: 'Open Topo Data',
+            url: `https://api.opentopodata.org/v1/srtm30m?locations=${lat},${lng}`,
+            handler: (data) => {
+                return data?.results?.elevation
+            },
+        },
+        {
+            name: 'OpenZenith',
+            url: `https://openzenith.cyopsys.com/api/elevation?lat=${lat}&lon=${lng}`,
+            handler: (data) => {
+                return data?.elevation
+            },
+        },
+        {
+            name: 'Open-Elevation',
+            url: `https://api.open-elevation.com/api/v1/lookup?locations=${lat},${lng}`,
+            handler: (data) => {
+                return data?.results?.elevation
+            },
+        },
+    ]
+
+    let sourceName
+    let elevation
+
+    for (const source of sources) {
+        elevation = await utils.customFetch(source.url, {signal, callback: async (response) => {
+            const data = await utils.parseJSONResponse(response)
+            return source.handler(data)
+        }}).catch(error => {})
+        
+        if (isNaN(elevation)) continue
+
+        sourceName = source.name
+        break
+    }
+
+    return {elevation, sourceName}
 }

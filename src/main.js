@@ -9,6 +9,9 @@ window.gisDB = gisDB;
 import * as gisUtils from './gis/utils.js'; 
 window.gisUtils = gisUtils;
 
+import * as gisData from './gis/data.js'; 
+window.gisData = gisData;
+
 import * as svg from './svg.js'; 
 window.svg = svg;
 

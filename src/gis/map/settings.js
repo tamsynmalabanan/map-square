@@ -193,20 +193,6 @@ export class SettingsControl {
                             ], event.detail.value, {themeId: map.getTheme().id})
                         },
                     },
-                    {
-                        title: 'Toggle elevation info',
-                        icon: '⛰️ ',
-                        highlight: settings.popups.info.data.elev,
-                        handler: async (event) => {
-                            await this.updateConfig([
-                                'settings', 
-                                'popups', 
-                                'info',
-                                'data',
-                                'elev',
-                            ], event.detail.value, {themeId: map.getTheme().id})
-                        },
-                    },
                 ]
             },
             {
@@ -454,8 +440,7 @@ export class SettingsControl {
 
     async createTooltipPopup(e) {
         const map = this._map
-        const theme = map.getTheme()
-        if (!theme.settings.popups.tooltip.active) return
+        if (!map.getTheme().settings.popups.tooltip.active) return
 
         if (
             document.elementsFromPoint(CURSOR.x, CURSOR.y)
@@ -512,8 +497,48 @@ export class SettingsControl {
     }
     
     async createInfoPopup(e) {
+        const map = this._map
+        const info = map.getTheme().settings.popups.info
+        if (!info.active) return
 
-        return
+        
+        let lngLat = e.lngLat
+        
+        const popup = new maplibregl.Popup({closeButton: false})
+        .setLngLat(lngLat)
+        .setHTML(``)
+        .addTo(map)
+
+        const controller = utils.createAbortController({
+            name: 'Info popup',
+            events: [[popup, ['close']]]
+        })
+        const {signal} = controller
+
+        this.configPopup(popup)
+    
+        const content = document.createElement('div')
+        content.classList.add('flex', 'flex-col', 'gap-2', 'p-2')
+        popup._content.appendChild(content)
+
+        const footer = document.createElement('div')
+        footer.classList.add('flex', 'flex-nowrap', 'justify-between', 'gap-5')
+        content.appendChild(footer)
+
+        const xyz = document.createElement('span')
+        xyz.classList.add('flex', 'flex-nowrap', 'gap-2')
+        xyz.innerHTML = `<span>📍</span>${['lng', 'lat'].map(i => `<span>${lngLat[i].toFixed(6)}</span>`).join('')}`
+        footer.appendChild(xyz)
+
+        const closeBtn = utils.strToEl(button({
+            title: 'Close',
+            icon: svg.xMini,
+            classStr: 'size-[15px] p-0! self-center',
+        }))
+        closeBtn.addEventListener('click', (e) => popup.remove())
+        footer.appendChild(closeBtn)
+
+        return popup
     }
 
     configPopup(popup) {
@@ -523,7 +548,7 @@ export class SettingsControl {
         const content = container.querySelector('.maplibregl-popup-content')
         const tip = container.querySelector('.maplibregl-popup-tip')
 
-        content.classList.add('p-0!', 'dark:text-white!')
+        content.classList.add('p-0!', 'dark:text-white!', 'flex', 'flex-col', 'gap-2')
         utils.appendBinding(content, ':class', `['${utils.dynamicBgExp()}']: true`)
         
         const displaySettings = Alpine.store('displaySettings')
@@ -551,6 +576,8 @@ export class SettingsControl {
         const contentObserver = utils.observeElement({el:content, callback, attributeFilter: ['class']})
 
         popup.on('close', (e) => {
+            this.clearPopup(Object.keys(this.popups).find(i => this.popups[i] === popup))
+          
             map.off('move', callback)
             document.removeEventListener('darkModeToggled', callback)
             document.removeEventListener('colorSchemeChanged', callback)

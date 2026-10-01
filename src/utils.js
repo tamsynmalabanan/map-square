@@ -343,9 +343,14 @@ export const createAbortController = ({
     
     if (Array.isArray(events)) {
         events.forEach(([el, types]) => types.forEach(type => {
+            const on = typeof el.on === "function" ? 'on' : 'addEventListener'
+            const off = typeof el.off === "function" ? 'off' : 'removeEventListener'
+
             const eventAbort = abort(`${el.id || el.tagName} ${type}`)
-            el.addEventListener(type, eventAbort)
-            signal.addEventListener('abort', () => el.removeEventListener(type, eventAbort))
+            el[on](type, eventAbort)
+            signal.addEventListener('abort', () => {
+                el[off](type, eventAbort)
+            })
         }))
     }
     
