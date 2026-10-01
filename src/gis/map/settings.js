@@ -503,7 +503,7 @@ export class SettingsControl {
 
         const popup = new maplibregl.Popup({closeButton: false})
         .setLngLat(e.lngLat)
-        .setHTML(`<span class="break-all text-center rounded">${label}</span>`)
+        .setHTML(`<span class="break-all text-center rounded px-1! py-0! font-bold min-w-[50px] max-w-[100px]">${label}</span>`)
         .addTo(map)
 
         this.configPopup(popup)
@@ -523,7 +523,7 @@ export class SettingsControl {
         const content = container.querySelector('.maplibregl-popup-content')
         const tip = container.querySelector('.maplibregl-popup-tip')
 
-        content.classList.add('p-2!', 'dark:text-white!')
+        content.classList.add('p-0!', 'dark:text-white!')
         utils.appendBinding(content, ':class', `['${utils.dynamicBgExp()}']: true`)
         
         const displaySettings = Alpine.store('displaySettings')

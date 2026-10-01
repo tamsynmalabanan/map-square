@@ -108,7 +108,7 @@ export default class Map extends maplibregl.Map {
         title: 'Untitled Map',
         
         logo: 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==',
-        creator: 'Unknown',
+        creator: 'Unknown Creator',
         website: '',
         email: '',
         license: '', // 'CC BY-SA 4.0',

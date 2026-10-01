@@ -1,26 +1,30 @@
 import button from './button.js';
 
-export default function table({
-    parent,
-    headers = {},
-    sort = {
-        sortOrder: 'descending'
-    },
-    items = [],
-    btns,
-    filter={
-        value: ''
-    },
-} = {}) {
+export default function table(options = {}) {
+    const {
+        parent,
+        headers = {},
+        sort = {
+            sortOrder: 'descending'
+        },
+        items = [],
+        btns,
+        filter = {
+            value: ''
+        },
+        menu,
+        state,
+    } = options
+    
     if (!parent) return
     parent.innerHTML = ''
 
-    let keys = Object.keys(headers)
+    const keys = Object.keys(headers)
     const cols = keys.length
     if (!cols) return
 
     const sortableKeys = keys.filter(key => {
-        return headers[key] !== '' && !Array('__no__', '__btns__').includes(key) && typeof items[0][key] !== 'object'
+        return headers[key] !== '' && !key.startsWith('__') && typeof items[0][key] !== 'object'
     })
 
     if (!sort.sortBy || !sortableKeys.includes(sort.sortBy)) {
@@ -31,9 +35,69 @@ export default function table({
     container.classList.add('size-full!', 'flex', 'flex-col', 'gap-5', 'p-3')
     parent.appendChild(container)
 
-    const filterContainer = document.createElement('div')
-    filterContainer.classList.add('flex', 'flex-nowrap', 'justify-end')
-    container.appendChild(filterContainer)
+    const navBar = document.createElement('div')
+    navBar.classList.add('flex', 'justify-between', 'gap-5')
+    container.appendChild(navBar)
+
+    const menuContainer = document.createElement('div')
+    menuContainer.classList.add(
+        'flex', 'gap-2', 'grow', 
+        'border-b', 'px-2',
+        'border-gray-950/25!',
+    )
+    navBar.appendChild(menuContainer)
+
+    if (keys.includes('__check__')) {
+        const selectContainer = document.createElement('div')
+        selectContainer.classList.add('flex', 'flex-nowrap', 'gap-1')
+        menuContainer.appendChild(selectContainer)
+
+        const selectMenu = document.createElement('span')
+        selectMenu.classList.add('font-bold', 'self-center', 'cursor-pointer')
+        selectMenu.innerText = 'Selection'
+        selectContainer.appendChild(selectMenu)
+
+        const selectAllBtn = utils.strToEl(button({
+            title: 'Select all',
+            icon: '✅',
+            classStr: 'self-center size-[20px]',
+        }))
+        selectAllBtn.addEventListener('click', async (e) => {
+            const checkboxes = Array.from(container.querySelector('tbody').querySelectorAll('[name="__check__"]'))
+            state.selected = checkboxes.map(i => {
+                i.checked = true
+                return i.value
+            })  
+        })
+        selectContainer.appendChild(selectAllBtn)
+
+        const invertSelectBtn = utils.strToEl(button({
+            title: 'Invert selection',
+            icon: '🔄',
+            classStr: 'self-center size-[20px]',
+        }))
+        invertSelectBtn.addEventListener('click', async (e) => {
+            const checkboxes = Array.from(container.querySelector('tbody').querySelectorAll('[name="__check__"]'))
+            state.selected = []
+            checkboxes.forEach(i => {
+                i.checked = !i.checked
+                if (i.checked) state.selected.push(i.value)
+            })  
+        })
+        selectContainer.appendChild(invertSelectBtn)
+
+        const deselectAllBtn = utils.strToEl(button({
+            title: 'Deselect all',
+            icon: '🔲',
+            classStr: 'self-center size-[20px]',
+        }))
+        deselectAllBtn.addEventListener('click', async (e) => {
+            const checkboxes = Array.from(container.querySelector('tbody').querySelectorAll('[name="__check__"]'))
+            checkboxes.forEach(i => i.checked = false)
+            state.selected = []  
+        })
+        selectContainer.appendChild(deselectAllBtn)
+    }
 
     const filterInput = document.createElement('input')
     filterInput.classList.add(
@@ -46,7 +110,7 @@ export default function table({
     filterInput.setAttribute('type', 'search')
     filterInput.setAttribute('value', filter.value)
     filterInput.setAttribute('placeholder', 'Filter table items')
-    filterContainer.appendChild(filterInput)
+    navBar.appendChild(filterInput)
     
     let timer
     filterInput.addEventListener('input', (e) => {
@@ -55,15 +119,8 @@ export default function table({
             const value = utils.removeWhitespace(filterInput.value)
             filter.value = value
 
-            table({
-                parent,
-                headers,
-                sort,
-                items,
-                btns,
-                filter,
-            })
-        }, 2000)
+            table(options)
+        }, 1000)
     })
 
     const tableContainer = document.createElement('div')
@@ -119,14 +176,7 @@ export default function table({
                     sort.sortBy = key
                 }
     
-                table({
-                    parent,
-                    headers,
-                    sort,
-                    items,
-                    btns,
-                    filter,
-                })
+                table(options)
             })
         }
 
@@ -172,6 +222,21 @@ export default function table({
                 el.innerText = index+1
             } else if (key === '__btns__') {
                 btns({item, el, valueRaw})
+            }  else if (key === '__check__') {
+                const checkbox = document.createElement('input')
+                checkbox.setAttribute('name', key)
+                checkbox.setAttribute('type', 'checkbox')
+                el.appendChild(checkbox)
+
+                checkbox.value = item.id
+                checkbox.checked = state.selected.includes(item.id)
+                checkbox.addEventListener('change', (e) => {
+                    if (checkbox.checked) {
+                        state.selected = [...new Set(...state.selected, item.id)]
+                    } else {
+                        state.selected = state.selected.filter(i => i !== item.id)
+                    }
+                })
             } else if (typeof value === 'string') {
                 if (isImg) {
                     const img = document.createElement('img')

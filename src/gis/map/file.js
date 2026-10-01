@@ -129,7 +129,7 @@ export class FileControl {
                     {
                         init: async (btn) => {
                             const modalEl = utils.strToEl(modal({
-                                open: false,
+                                open: true,
                                 parent: `#${map.getContainer().id}`,
                                 title: 'Local Maps',
                                 icon: '🗄️',
@@ -148,6 +148,7 @@ export class FileControl {
                                 snapshot: '',
                                 config: '',
                                 __btns__: '',
+                                __check__: '',
                             }
                             const sort = {
                                 sortBy: 'dateCreated',
@@ -195,10 +196,27 @@ export class FileControl {
                                             items: await getItems(),
                                             btns,
                                             filter,
+                                            menu,
+                                            state,
                                         })
                                     })
                                     container.appendChild(deleteBtn)
                                 }
+                            }
+                            const menu = (container) => {
+                                // const openBtn = utils.strToEl(button({
+                                //     title: 'Open map',
+                                //     icon: '📂',
+                                //     classStr: 'size-[20px] self-center',
+                                //     themedBg: false,
+                                // }))
+                                // openBtn.addEventListener('click', (e) => {
+                                //     this.loadMapFromConfig(item.config)
+                                // })
+                                // container.appendChild(openBtn)
+                            }
+                            const state = {
+                                selected: []
                             }
 
                             modalEl.addEventListener('modalToggled', async (e) => {
@@ -211,6 +229,8 @@ export class FileControl {
                                     items: await getItems(),
                                     btns,
                                     filter,
+                                    menu,
+                                    state,
                                 })
                             })
                         }
