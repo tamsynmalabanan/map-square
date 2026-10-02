@@ -1,5 +1,6 @@
 import { LngLat } from "maplibre-gl"
 import { saveToGISDB } from "./db"
+import { parseJSONResponse } from "../utils"
 
 export const searchNominatimOSM = async (place, {signal}={}) => {
     if (typeof place != 'string') return
@@ -26,6 +27,26 @@ export const searchNominatimOSM = async (place, {signal}={}) => {
         }
         return data
     }}).catch(error => {})
+}
+
+export const reverseSearchNominatimOSM = async (lngLat, {
+    signal, zoom,
+} = {}) => {
+    const {lng, lat} = lngLat
+    if (isNaN(lng) || isNaN(lat)) return
+    
+    zoom = Math.round(!zoom || zoom > 18 ? 18 : zoom)
+
+    const url = utils.pushURLParams('https://nominatim.openstreetmap.org/reverse?', {
+        lat, lon:lng, zoom,
+        format: 'geojson',
+        polygon_geojson: 1,
+        polygon_threshold: 0,
+    })
+
+    return await utils.customFetch(url, {
+        signal, callback: utils.parseJSONResponse
+    }).catch(error => {})
 }
 
 export const getElevation = async (lngLat, {signal}={}) => {

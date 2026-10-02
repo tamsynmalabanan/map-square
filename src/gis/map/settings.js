@@ -3,7 +3,7 @@ import Alpine from "alpinejs";
 import button from "../../templates/button.js";
 import menu from '../../templates/menu.js';
 import modal from '../../templates/modal.js'; 
-import _ from 'lodash';
+import _, { countBy } from 'lodash';
 import * as turf from '@turf/turf'
 
 export class SettingsControl {
@@ -181,7 +181,7 @@ export class SettingsControl {
                     },
                     {
                         title: 'Toggle OSM info',
-                        icon: '📍',
+                        icon: '🏠',
                         highlight: settings.popups.info.data.osm,
                         handler: async (event) => {
                             await this.updateConfig([
@@ -515,29 +515,109 @@ export class SettingsControl {
         const {signal} = controller
 
         this.configPopup(popup)
-    
-        const content = document.createElement('div')
-        content.classList.add('flex', 'flex-col', 'gap-2', 'p-2')
-        popup._content.appendChild(content)
-
-        const footer = document.createElement('div')
-        footer.classList.add('flex', 'flex-nowrap', 'justify-between', 'gap-5')
-        content.appendChild(footer)
-
-        const coords = document.createElement('span')
-        coords.classList.add('flex', 'flex-nowrap', 'gap-2')
-        coords.innerHTML = `<span>📍</span>${['lng', 'lat'].map(i => `<span>${lngLat[i].toFixed(6)}</span>`).join('')}`
-        footer.appendChild(coords)
-
+        
         const closeBtn = utils.strToEl(button({
             title: 'Close',
             icon: svg.xMini,
-            classStr: 'size-[15px] p-0! self-center',
+            classStr: 'size-[15px] self-center absolute top-1 right-1 p-0! opacity-25! hover:opacity-100!',
         }))
         closeBtn.addEventListener('click', (e) => popup.remove())
-        footer.appendChild(closeBtn)
-
+        popup._content.appendChild(closeBtn)
         
+        const content = document.createElement('div')
+        content.classList.add('flex', 'flex-col', 'p-2', 'gap-3')
+        popup._content.appendChild(content)
+
+        const featuresContainer = document.createElement('div')
+        const addressContainer = document.createElement('div')
+
+        const coords = document.createElement('span')
+        coords.classList.add('flex', 'flex-nowrap', 'gap-2')
+        content.appendChild(coords)
+
+        const coordsIcon = document.createElement('span')
+        coordsIcon.innerText = '📍'
+        coords.appendChild(coordsIcon)
+
+        const coordsValue = document.createElement('span')
+        coordsValue.classList.add('flex', 'flex-nowrap', 'gap-2')
+        coordsValue.innerHTML = ['lng', 'lat'].map(i => `<span>${lngLat[i].toFixed(6)}</span>`).join('')
+        coords.appendChild(coordsValue)
+
+        const coordsBtns = document.createElement('div')
+        coordsBtns.classList.add('flex', 'flex-nowrap', 'gap-1')
+        coords.appendChild(coordsBtns)
+
+        // const createFeatureContextMenu = ({
+        //     feature,
+        //     toggleContainer,
+        //     menuContainer,
+        // }={}) => {
+        //     Alpine.$data(menuContainer).showMenu = false
+
+        //     const menuToggle = utils.strToEl(button({
+        //         title: 'Feature menu',
+        //         icon: svg.ellipsisHorizontalMini,
+        //         classStr: 'size-[15px]! rounded! self-center border-none! opacity-25 hover:opacity-100',
+        //         minimal: true,
+        //         attrs: `x-ref="menuToggle" @click='showMenu = !showMenu'`,
+        //     }))
+        //     toggleContainer.appendChild(menuToggle)
+    
+        //     const menuContent = document.createElement('div')
+        //     menuContent.classList.add(
+        //         'absolute', 'top-5', 'right-0', 'w-30', 
+        //         'flex', 'flex-col', 'gap-1', 
+        //         'text-xs', 'z-5', 
+        //         'cursor-pointer', 
+        //         'justify-end', 
+        //         'rounded', 'shadow-lg'
+        //     )
+        //     menuContent.setAttribute('@click.outside', 'showMenu = false')
+        //     menuContent.setAttribute('x-show', 'showMenu')
+        //     menuContent.setAttribute('x-anchor.fixed', '$refs.menuToggle')
+        //     utils.appendBinding(menuContent, `:class`, `['${utils.dynamicBgExp()}']: true`)
+        //     menuContainer.appendChild(menuContent)
+    
+        //     const visibility = document.createElement('span')
+        //     visibility.innerText = 'Show feature' // check current feature visibility
+        //     visibility.addEventListener('click', async (e) => {
+        //     })
+        //     menuContent.appendChild(visibility)
+        // } 
+
+        // createFeatureContextMenu({
+        //     feature: turf.point(Array('lng', 'lat').map(i => lngLat[i])),
+        //     toggleContainer: coordsBtns,
+        //     menuContainer: coordsBtns,
+        // })
+
+        if (info.data.osm) {
+            const feature = (await gisData.reverseSearchNominatimOSM(lngLat, {
+                signal, zoom: map.getZoom()
+            }))?.features?.[0]
+            
+            if (feature) {
+                content.insertBefore(addressContainer, coords)
+                addressContainer.classList.add('flex', 'flex-nowrap', 'gap-2')
+
+                const addressIcon = document.createElement('span')
+                addressIcon.innerText = '🏠'
+                addressContainer.appendChild(addressIcon)
+
+                const addressValue = document.createElement('span')
+                addressValue.innerText = feature.properties.display_name
+                addressContainer.appendChild(addressValue)     
+                
+                const addressBtns = document.createElement('div')
+                addressBtns.classList.add('flex', 'flex-nowrap', 'gap-1')
+                addressContainer.appendChild(addressBtns)
+            }
+        }
+
+        // if (info.data.layers) {
+        //     content.insertBefore(featuresContainer, content.children[0])
+        // }
 
         return popup
     }
@@ -549,7 +629,7 @@ export class SettingsControl {
         const content = container.querySelector('.maplibregl-popup-content')
         const tip = container.querySelector('.maplibregl-popup-tip')
 
-        content.classList.add('p-0!', 'dark:text-white!', 'flex', 'flex-col', 'gap-2')
+        content.classList.add('p-0!', 'dark:text-white!', 'relative')
         utils.appendBinding(content, ':class', `['${utils.dynamicBgExp()}']: true`)
         
         const displaySettings = Alpine.store('displaySettings')
