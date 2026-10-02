@@ -501,7 +501,6 @@ export class SettingsControl {
         const info = map.getTheme().settings.popups.info
         if (!info.active) return
 
-        
         let lngLat = e.lngLat
         
         const popup = new maplibregl.Popup({closeButton: false})
@@ -525,10 +524,10 @@ export class SettingsControl {
         footer.classList.add('flex', 'flex-nowrap', 'justify-between', 'gap-5')
         content.appendChild(footer)
 
-        const xyz = document.createElement('span')
-        xyz.classList.add('flex', 'flex-nowrap', 'gap-2')
-        xyz.innerHTML = `<span>📍</span>${['lng', 'lat'].map(i => `<span>${lngLat[i].toFixed(6)}</span>`).join('')}`
-        footer.appendChild(xyz)
+        const coords = document.createElement('span')
+        coords.classList.add('flex', 'flex-nowrap', 'gap-2')
+        coords.innerHTML = `<span>📍</span>${['lng', 'lat'].map(i => `<span>${lngLat[i].toFixed(6)}</span>`).join('')}`
+        footer.appendChild(coords)
 
         const closeBtn = utils.strToEl(button({
             title: 'Close',
@@ -537,6 +536,8 @@ export class SettingsControl {
         }))
         closeBtn.addEventListener('click', (e) => popup.remove())
         footer.appendChild(closeBtn)
+
+        
 
         return popup
     }
