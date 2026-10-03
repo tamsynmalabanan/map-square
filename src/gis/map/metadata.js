@@ -845,7 +845,7 @@ export default class MetadataControl {
       const themeDropdown = dropdown({
         parent: btnsContainer,
         title: 'Theme options',
-        containerClassList: ['right-4'],
+        menuClassList: ['right-4'],
       })
       themeDropdown.setAttribute('x-show', `isRadioValue("current")`)
 

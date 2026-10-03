@@ -4,14 +4,10 @@ export default ({
     parent,
     title = 'Dropdown',
     icon = svg.ellipsisHorizontalMini,
-    containerClassList=[],
+    menuClassList=[],
 
 }={}) => {
     const container = document.createElement('div')
-    container.classList.add(
-        'fixed', 
-        'z-5', 
-        ...containerClassList)
     container.setAttribute('x-data', `{showDropdown: false}`)
     parent?.appendChild(container)
 
@@ -35,13 +31,13 @@ export default ({
         `,
     }))
     container.appendChild(toggle)
-
+    
     const menu = document.createElement('div')
     menu.classList.add(
-        'absolute', 
-        'top-2', 
-        'left-5', 
+        'fixed', 
+        'z-5!', 
         'w-max',
+        'right-0',
         'flex', 'flex-col', 'gap-1', 
         'text-xs', 'justify-end', 
         'cursor-pointer', 
@@ -54,6 +50,7 @@ export default ({
         `[&>*:first-child]:rounded-t!`,
         `[&>*:last-child]:rounded-b!`,
         `[&>*]:disabled:text-gray-600/100!`,
+        ...menuClassList
     )
     menu.setAttribute('@click.outside', 'showDropdown = false')
     menu.setAttribute('@click', 'showDropdown = false')

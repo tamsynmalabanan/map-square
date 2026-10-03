@@ -555,7 +555,7 @@ export class SettingsControl {
         const coordsValues = ['lng', 'lat'].map(i => lngLat[i])
 
         const coordsSpan = document.createElement('span')
-        coordsSpan.classList.add('flex', 'flex-nowrap', 'gap-2', 'me-5')
+        coordsSpan.classList.add('flex', 'flex-nowrap', 'gap-2', 'grow')
         coordsSpan.innerHTML = coordsValues.map(i => `<span>${i.toFixed(6)}</span>`).join('')
         coords.appendChild(coordsSpan)
 
@@ -571,7 +571,7 @@ export class SettingsControl {
         const [coordsToggle, coordsMenu] = dropdown({
             parent: coords,
             title: 'Feature menu',
-            containerClassList: ['right-1']
+            menuClassList: ['right-1']
         }).children
 
         this.configInfoFeatureMenu({
@@ -595,7 +595,7 @@ export class SettingsControl {
 
                 const addrSpan = document.createElement('span')
                 addrSpan.innerText = addrFeature.properties.display_name
-                addrSpan.classList.add('me-5')
+                addrSpan.classList.add('grow')
                 addrContainer.appendChild(addrSpan)     
             
                 layersControl.updateGeoJSONData({
@@ -607,7 +607,7 @@ export class SettingsControl {
                 const [addrToggle, addrMenu] = dropdown({
                     parent: addrContainer,
                     title: 'Feature menu',
-                    containerClassList: ['right-1']
+                    menuClassList: ['right-1']
                 }).children
 
                 this.configInfoFeatureMenu({
