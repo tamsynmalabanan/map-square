@@ -645,7 +645,7 @@ export default class MetadataControl {
         icon: params.icon,
         classStr: 'size-[15px]! self-center border-none! opacity-25 hover:opacity-100',
         minimal: true,
-        attrs: `x-data='{disabled:${params.isDisabled()}}' x-show='isRadioValue("current") && !disabled'}`,
+        attrs: `x-data='{disabled:${params.isDisabled()}}' x-show='isRadioValue("current") && !disabled && themesTotal > 1'}`,
       }))
       btn.addEventListener('click', async (e) => {
         const themes = this.config.themes
@@ -689,14 +689,14 @@ export default class MetadataControl {
     const count = document.createElement('span')
     count.classList.add('opacity-25', 'cursor-pointer')
     count.setAttribute('x-html', `[themeIndex, themesTotal].join(" of ")`)
-    count.setAttribute('x-show', `isRadioValue("current") && [themeIndex, themesTotal].every(i => i>0)`)
+    count.setAttribute('x-show', `isRadioValue("current") && themesTotal > 1`)
     header.insertBefore(count, navBtns.next.btn)
 
     if (!this._map.isStaticConfig()) {
       const addTheme = utils.strToEl(button({
         title: 'Add new theme',
         icon: svg.plusCircleMini,
-        classStr: 'size-[15px]! self-center border-none! opacity-50 hover:opacity-100',
+        classStr: 'size-[15px]! self-center border-none! opacity-50 hover:opacity-100 mx-1',
         attrs: `x-show=isRadioValue("current")`,
         minimal: true,
         themedBg: false,
