@@ -45,7 +45,10 @@ export const reverseSearchNominatimOSM = async (lngLat, {
     })
 
     return await utils.customFetch(url, {
-        signal, callback: utils.parseJSONResponse
+        signal, callback: async (response) => {
+            const data = await utils.parseJSONResponse(response)
+            return await gisUtils.normalizeGeoJSON(data)
+        }
     }).catch(error => {})
 }
 

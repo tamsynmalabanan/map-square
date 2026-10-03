@@ -4,7 +4,8 @@ export default ({
     parent,
     title = 'Dropdown',
     icon = svg.ellipsisHorizontalMini,
-    containerClassList=[]
+    containerClassList=[],
+
 }={}) => {
     const container = document.createElement('div')
     container.classList.add('fixed', 'z-5', ...containerClassList)
@@ -34,7 +35,9 @@ export default ({
 
     const menu = document.createElement('div')
     menu.classList.add(
-        'absolute', 'right-0', 'w-max',
+        'absolute', 
+        // 'right-0', 
+        'w-max',
         'flex', 'flex-col', 'gap-1', 
         'text-xs', 'justify-end', 
         'cursor-pointer', 

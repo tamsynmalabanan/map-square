@@ -85,24 +85,23 @@ export const normalizeGeoJSON = async (geojson) => {
     }
 
     for (const f of geojson.features) {
-        delete f.properties.__ms__
-
-        f.properties = normalizeProperties(f)
-
-        f.properties.__ms__ = {
-            id: await utils.hashJSON(turf.feature(f.geometry, f.properties))
-        }
+        await normalizeProperties(f)
     }
+
+    return geojson
 }
 
-export const normalizeProperties = (feature) => {
-    const properties = feature.properties ??= {}
+export const normalizeProperties = async (feature) => {
+    const {geometry, properties} = feature
+
     const normalProperties = {}
 
     const handler = (properties, prefix='') => {
         prefix = prefix.trim()
 
         Object.entries(properties).forEach(([property, value]) => {
+            if (property === '__ms__') return
+
             const name = prefix ? `${prefix}_${property}` : property
             
             if (Array.isArray(value) && !value.find(i => typeof i === 'object')) {
@@ -115,9 +114,15 @@ export const normalizeProperties = (feature) => {
         })
     }
 
-    handler(properties)    
+    handler(properties ?? {})    
 
-    return normalProperties
+    normalProperties.__ms__ = {
+        id: await utils.hashJSON(turf.feature(geometry, normalProperties))
+    }
+
+    feature.properties = normalProperties
+
+    return feature
 }
 
 export const transformCoordinates = async (geojson, source, target) => {

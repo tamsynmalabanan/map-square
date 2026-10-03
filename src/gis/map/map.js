@@ -169,9 +169,9 @@ export default class Map extends maplibregl.Map {
             view: {
               pitch: 0,
               bearing: 0,
-              zoom: 1,
+              zoom: 2,
               lng: 0,
-              lat: 3,
+              lat: 15,
               west: -140,
               south: -70,
               east: 160,

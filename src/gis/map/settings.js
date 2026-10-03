@@ -506,8 +506,11 @@ export class SettingsControl {
         const info = map.getTheme().settings.popups.info
         if (!info.active) return
 
+        const source = map.getSource('info')
+        const layersControl = map.getControls('layers')
+
         let lngLat = e.lngLat
-        
+
         const popup = new maplibregl.Popup({closeButton: false})
         .setLngLat(lngLat)
         .setHTML(``)
@@ -544,28 +547,24 @@ export class SettingsControl {
         coordsIcon.innerText = '📍'
         coords.appendChild(coordsIcon)
 
-        const coordsValue = document.createElement('span')
-        coordsValue.classList.add('flex', 'flex-nowrap', 'gap-2', 'me-5')
-        coordsValue.innerHTML = ['lng', 'lat'].map(i => `<span>${lngLat[i].toFixed(6)}</span>`).join('')
-        coords.appendChild(coordsValue)
+        const coordsValues = ['lng', 'lat'].map(i => lngLat[i])
 
-        const [coordsToggle, coordsMenu] = dropdown({
-            parent: coords,
-            title: 'test',
-            containerClassList: ['right-1']
-        }).children
+        const coordsSpan = document.createElement('span')
+        coordsSpan.classList.add('flex', 'flex-nowrap', 'gap-2', 'me-5')
+        coordsSpan.innerHTML = coordsValues.map(i => `<span>${i.toFixed(6)}</span>`).join('')
+        coords.appendChild(coordsSpan)
 
-        const visibility = document.createElement('button')
-        visibility.innerText = 'Toggle visibility'
-        visibility.addEventListener('click', async (e) => {
+        const coordsFeature = await gisUtils.normalizeProperties(turf.point(coordsValues))
+        source.setData(turf.featureCollection([coordsFeature]))
+        layersControl.addGeoJSONLayers('info', {
+            properties: layersControl.highlightedLayerProperties()
         })
-        coordsMenu.appendChild(visibility)
 
-        const visibility2 = document.createElement('button')
-        visibility2.innerText = 'Toggle visibility'
-        visibility2.addEventListener('click', async (e) => {
-        })
-        coordsMenu.appendChild(visibility2)
+        // const [coordsToggle, coordsMenu] = dropdown({
+        //     parent: coords,
+        //     title: 'Feature menu',
+        //     containerClassList: ['right-1']
+        // }).children
 
         if (info.data.osm) {
             const feature = (await gisData.reverseSearchNominatimOSM(lngLat, {
@@ -587,6 +586,11 @@ export class SettingsControl {
                 const addressBtns = document.createElement('div')
                 addressBtns.classList.add('flex', 'flex-nowrap', 'gap-1')
                 addressContainer.appendChild(addressBtns)
+            
+                source.setData(turf.featureCollection([
+                    ...(source._data?.geojson?.features ?? []), 
+                    feature
+                ]))
             }
         }
 
@@ -596,6 +600,20 @@ export class SettingsControl {
 
         return popup
     }
+
+    // configFeatureMenu({parent, feature, source}={}) {
+    //     const isShown = source._data.geojson.features.find(i => {
+    //         return i.properties.__ms__.id === feature.properties.__ms__.id
+    //     }) ? true : false
+
+    //     const visibility = document.createElement('button')
+    //     visibility.setAttribute('x-data', `{shown: ${isShown}`)
+    //     visibility.setAttribute('x-text', `shown ? "Hide feature" : "Show feature"`)
+    //     visibility.addEventListener('click', async (e) => {
+            
+    //     })
+    //     parent.appendChild(visibility)
+    // }
 
     configPopup(popup) {
         const map = this._map
