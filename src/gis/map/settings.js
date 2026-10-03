@@ -1,6 +1,7 @@
 import maplibregl from 'maplibre-gl';
 import Alpine from "alpinejs";
 import button from "../../templates/button.js";
+import dropdown from "../../templates/dropdown.js";
 import menu from '../../templates/menu.js';
 import modal from '../../templates/modal.js'; 
 import _, { countBy } from 'lodash';
@@ -529,7 +530,7 @@ export class SettingsControl {
         popup._content.appendChild(closeBtn)
         
         const content = document.createElement('div')
-        content.classList.add('flex', 'flex-col', 'p-2', 'gap-3')
+        content.classList.add('flex', 'flex-col', 'p-2', 'pt-4', 'gap-3')
         popup._content.appendChild(content)
 
         const featuresContainer = document.createElement('div')
@@ -544,13 +545,27 @@ export class SettingsControl {
         coords.appendChild(coordsIcon)
 
         const coordsValue = document.createElement('span')
-        coordsValue.classList.add('flex', 'flex-nowrap', 'gap-2')
+        coordsValue.classList.add('flex', 'flex-nowrap', 'gap-2', 'me-5')
         coordsValue.innerHTML = ['lng', 'lat'].map(i => `<span>${lngLat[i].toFixed(6)}</span>`).join('')
         coords.appendChild(coordsValue)
 
-        const coordsBtns = document.createElement('div')
-        coordsBtns.classList.add('flex', 'flex-nowrap', 'gap-1')
-        coords.appendChild(coordsBtns)
+        const [coordsToggle, coordsMenu] = dropdown({
+            parent: coords,
+            title: 'test',
+            containerClassList: ['right-1']
+        }).children
+
+        const visibility = document.createElement('button')
+        visibility.innerText = 'Toggle visibility'
+        visibility.addEventListener('click', async (e) => {
+        })
+        coordsMenu.appendChild(visibility)
+
+        const visibility2 = document.createElement('button')
+        visibility2.innerText = 'Toggle visibility'
+        visibility2.addEventListener('click', async (e) => {
+        })
+        coordsMenu.appendChild(visibility2)
 
         if (info.data.osm) {
             const feature = (await gisData.reverseSearchNominatimOSM(lngLat, {

@@ -4,6 +4,7 @@ import button from '../../templates/button.js';
 import Map from './map.js'
 import Quill from 'quill';
 import { map } from 'lodash';
+import dropdown from "../../templates/dropdown.js";
 
 export default class MetadataControl {
   onAdd(map) {
@@ -793,7 +794,6 @@ export default class MetadataControl {
 
     const headerContainer = document.createElement('div')
     headerContainer.classList.add('relative')
-    headerContainer.setAttribute('x-data', '{showOptions:false}')
     themeContainer.appendChild(headerContainer)
 
     const titleContainer = document.createElement('div')
@@ -807,6 +807,7 @@ export default class MetadataControl {
     const titleInput = document.createElement('span')
     titleInput.innerHTML = theme.metadata.title
     titleInput.classList.add('font-bold!', 'text-sm!')
+    utils.appendBinding(titleInput, ':class', `['me-5']: isRadioValue("current")`)
     titleInput.setAttribute('name', `title_${theme.id}`)
     titleInput.setAttribute('contenteditable', 'false')
     titleInput.setAttribute('x-init', `$el.setAttribute('contenteditable', isRadioValue("edit"))`)
@@ -842,34 +843,16 @@ export default class MetadataControl {
     btnsContainer.appendChild(activateTheme)  
 
     if (!this._map.isStaticConfig()) {
-      const optionsToggle = utils.strToEl(button({
+      const themeDropdown = dropdown({
+        parent: btnsContainer,
         title: 'Theme options',
-        icon: svg.ellipsisHorizontalMini,
-        classStr: 'size-[15px]! rounded! self-center border-none! opacity-25 hover:opacity-100',
-        minimal: true,
-        attrs: `
-          x-show=isRadioValue("current")
-          x-ref="optionsToggle"
-          @click='showOptions = !showOptions'
-        `,
-      }))
-      btnsContainer.appendChild(optionsToggle)
+        containerClassList: ['right-4'],
+      })
+      themeDropdown.setAttribute('x-show', `isRadioValue("current")`)
 
-      const optionsContent = document.createElement('div')
-      optionsContent.classList.add(
-        'absolute', 'top-5', 'right-0', 'w-30', 
-        'flex', 'flex-col', 'gap-1', 
-        'text-xs', 'z-5', 
-        'cursor-pointer', 
-        'justify-end', 
-        'rounded', 'shadow-lg')
-      optionsContent.setAttribute('@click.outside', 'showOptions = false')
-      optionsContent.setAttribute('x-show', 'showOptions && isRadioValue("current")')
-      optionsContent.setAttribute('x-anchor.fixed', '$refs.optionsToggle')
-      utils.appendBinding(optionsContent, `:class`, `['${utils.dynamicBgExp()}']: true`)
-      headerContainer.appendChild(optionsContent)
+      const [optionsToggle, optionsContent] = themeDropdown.children
 
-      const duplicateTheme = document.createElement('span')
+      const duplicateTheme = document.createElement('button')
       duplicateTheme.innerText = 'Duplicate'
       duplicateTheme.addEventListener('click', async (e) => {
         const newTheme = Map.getDefaultConfig().themes[0]
@@ -882,17 +865,17 @@ export default class MetadataControl {
       })
       optionsContent.appendChild(duplicateTheme)
 
-      const zoomToBookmark = document.createElement('span')
+      const zoomToBookmark = document.createElement('button')
       zoomToBookmark.innerText = 'Zoom to bookmark'
-      utils.appendBinding(zoomToBookmark, ':class', `['pointer-events-none -hover:bg-'+color+'-600/50! text-gray-600/100!']: locked`)
+      zoomToBookmark.setAttribute('x-bind:disabled', 'locked')
       zoomToBookmark.addEventListener('click', async (e) => {
         this._map.getControls('settings').goToBookmark()
       })
       optionsContent.appendChild(zoomToBookmark)
 
-      const removeTheme = document.createElement('span')
+      const removeTheme = document.createElement('button')
       removeTheme.innerText = 'Remove'
-      utils.appendBinding(removeTheme, ':class', `['pointer-events-none -hover:bg-'+color+'-600/50! text-gray-600/100!']: themesTotal <= 1`)
+      removeTheme.setAttribute('x-bind:disabled', 'themesTotal <= 1')
       removeTheme.addEventListener('click', async (e) => {
         const themes = this.config.themes
         const index = themes.findIndex(i => i.id === theme.id)
@@ -907,17 +890,6 @@ export default class MetadataControl {
         await settings.applyThemeConfig()
       })
       optionsContent.appendChild(removeTheme)
-
-      Array.from(optionsContent.children).forEach((el, index) => {
-        utils.appendBinding(el, `:class`, `['hover:bg-'+color+'-600/50!']: true`)
-        el.setAttribute('@click', `showOptions = false`)
-        el.classList.add(
-          'px-2', 'py-1', 
-          index === 0 ? 'rounded-t' 
-          : index === optionsContent.children.length-1 ? 'rounded-b' 
-          : 'rounded-0'
-        )
-      })
     }
 
     const descContainer = document.createElement('div')
