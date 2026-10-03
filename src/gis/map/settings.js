@@ -404,17 +404,21 @@ export class SettingsControl {
         let tooltipTimer
         map.on('mousemove', (e) => {
             this.clearPopup('tooltip')
+
             clearTimeout(tooltipTimer)
             tooltipTimer = setTimeout(async () => {
                 this.popups.tooltip = await this.createTooltipPopup(e)
             }, 100)
         })
         
-        let popupTimer
+        let infoTimer
         map.on('click', (e) => {
-            this.clearPopup('info')
-            clearTimeout(popupTimer)
-            popupTimer = setTimeout(async () => {
+            Array('tooltip', 'info').forEach(i => {
+                this.clearPopup(i)
+            })
+
+            clearTimeout(infoTimer)
+            infoTimer = setTimeout(async () => {
                 this.popups.info = await this.createInfoPopup(e)
             }, 100)
         })
@@ -547,50 +551,6 @@ export class SettingsControl {
         const coordsBtns = document.createElement('div')
         coordsBtns.classList.add('flex', 'flex-nowrap', 'gap-1')
         coords.appendChild(coordsBtns)
-
-        // const createFeatureContextMenu = ({
-        //     feature,
-        //     toggleContainer,
-        //     menuContainer,
-        // }={}) => {
-        //     Alpine.$data(menuContainer).showMenu = false
-
-        //     const menuToggle = utils.strToEl(button({
-        //         title: 'Feature menu',
-        //         icon: svg.ellipsisHorizontalMini,
-        //         classStr: 'size-[15px]! rounded! self-center border-none! opacity-25 hover:opacity-100',
-        //         minimal: true,
-        //         attrs: `x-ref="menuToggle" @click='showMenu = !showMenu'`,
-        //     }))
-        //     toggleContainer.appendChild(menuToggle)
-    
-        //     const menuContent = document.createElement('div')
-        //     menuContent.classList.add(
-        //         'absolute', 'top-5', 'right-0', 'w-30', 
-        //         'flex', 'flex-col', 'gap-1', 
-        //         'text-xs', 'z-5', 
-        //         'cursor-pointer', 
-        //         'justify-end', 
-        //         'rounded', 'shadow-lg'
-        //     )
-        //     menuContent.setAttribute('@click.outside', 'showMenu = false')
-        //     menuContent.setAttribute('x-show', 'showMenu')
-        //     menuContent.setAttribute('x-anchor.fixed', '$refs.menuToggle')
-        //     utils.appendBinding(menuContent, `:class`, `['${utils.dynamicBgExp()}']: true`)
-        //     menuContainer.appendChild(menuContent)
-    
-        //     const visibility = document.createElement('span')
-        //     visibility.innerText = 'Show feature' // check current feature visibility
-        //     visibility.addEventListener('click', async (e) => {
-        //     })
-        //     menuContent.appendChild(visibility)
-        // } 
-
-        // createFeatureContextMenu({
-        //     feature: turf.point(Array('lng', 'lat').map(i => lngLat[i])),
-        //     toggleContainer: coordsBtns,
-        //     menuContainer: coordsBtns,
-        // })
 
         if (info.data.osm) {
             const feature = (await gisData.reverseSearchNominatimOSM(lngLat, {
