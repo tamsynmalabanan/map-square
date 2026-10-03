@@ -602,7 +602,7 @@ export default class MetadataControl {
     container.setAttribute('x-data', `{
       show:true, 
       activeTheme:'${this.config.activeTheme}',
-      themeIndex: 0, themesTotal: 0, locked: false,
+      themeIndex: 0, themesTotal: 0
     }`)
     parent.appendChild(container)
   
@@ -679,7 +679,6 @@ export default class MetadataControl {
         const data = Alpine.$data(container)
         data.themesTotal = Math.max(themes.length, 1)
         data.themeIndex = Math.max(themes.findIndex(i => i.id === this.config.activeTheme)+1, 1)
-        data.locked = this._map.getTheme().settings.locked
         
         Object.entries(navBtns).forEach(([name, params]) => {
           Alpine.$data(params.btn).disabled = params.isDisabled()

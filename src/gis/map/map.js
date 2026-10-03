@@ -61,12 +61,6 @@ export default class Map extends maplibregl.Map {
     this.configSetProjection()
     this.configMovementFns()
 
-    this.on('data', (e) => {
-      if (e.dataType === 'source' && e.source.type === 'geojson') {
-        this.fire('geojsonupdated', {sourceId: e.sourceId, source: e.source})
-      }
-    })
-
     window.map = this
   }
 
@@ -466,7 +460,7 @@ export default class Map extends maplibregl.Map {
       const original = this[i].bind(this)
   
       this[i] = (value, options) => {
-        if (this._locked) {
+        if (Alpine.$data(this.getContainer()).locked) {
           throw new Error('Map is locked')
         } else {
           return original(value, options)

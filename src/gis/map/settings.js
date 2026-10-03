@@ -1,4 +1,4 @@
-import maplibregl from 'maplibre-gl';
+import maplibregl, { Padding } from 'maplibre-gl';
 import Alpine from "alpinejs";
 import button from "../../templates/button.js";
 import dropdown from "../../templates/dropdown.js";
@@ -439,7 +439,10 @@ export class SettingsControl {
         this.popups[name] = null
 
         const map = this._map
-        map.getSource(name)?.setData(turf.featureCollection([]))
+        map.getControls('layers').updateGeoJSONData({
+            sourceId: name,
+            features: [],
+        })
         map.getControls('layers').removeSourceLayers(name)
     }
 
@@ -485,8 +488,10 @@ export class SettingsControl {
 
          if (!label) return
 
-        const data = turf.featureCollection([turf.feature(feature.geometry)])
-        map.getSource('tooltip')?.setData(data)
+        layersControl.updateGeoJSONData({
+            sourceId: 'tooltip',
+            features: [turf.feature(feature.geometry)],
+        })
         layersControl.addGeoJSONLayers('tooltip', {
             properties: layersControl.highlightedLayerProperties()
         })
@@ -533,11 +538,11 @@ export class SettingsControl {
         popup._content.appendChild(closeBtn)
         
         const content = document.createElement('div')
-        content.classList.add('flex', 'flex-col', 'p-2', 'pt-4', 'gap-3')
+        content.classList.add('flex', 'flex-col', 'p-2', 'pt-5', 'gap-3')
         popup._content.appendChild(content)
 
         const featuresContainer = document.createElement('div')
-        const addressContainer = document.createElement('div')
+        const addrContainer = document.createElement('div')
 
         const coords = document.createElement('span')
         coords.classList.add('flex', 'flex-nowrap', 'gap-2')
@@ -555,42 +560,61 @@ export class SettingsControl {
         coords.appendChild(coordsSpan)
 
         const coordsFeature = await gisUtils.normalizeProperties(turf.point(coordsValues))
-        source.setData(turf.featureCollection([coordsFeature]))
+        layersControl.updateGeoJSONData({
+            sourceId: 'info',
+            features: [coordsFeature],
+        })
         layersControl.addGeoJSONLayers('info', {
             properties: layersControl.highlightedLayerProperties()
         })
 
-        // const [coordsToggle, coordsMenu] = dropdown({
-        //     parent: coords,
-        //     title: 'Feature menu',
-        //     containerClassList: ['right-1']
-        // }).children
+        const [coordsToggle, coordsMenu] = dropdown({
+            parent: coords,
+            title: 'Feature menu',
+            containerClassList: ['right-1']
+        }).children
+
+        this.configInfoFeatureMenu({
+            parent: coordsMenu,
+            feature: coordsFeature,
+            source,
+        })
 
         if (info.data.osm) {
-            const feature = (await gisData.reverseSearchNominatimOSM(lngLat, {
+            const addrFeature = (await gisData.reverseSearchNominatimOSM(lngLat, {
                 signal, zoom: map.getZoom()
             }))?.features?.[0]
             
-            if (feature) {
-                content.insertBefore(addressContainer, coords)
-                addressContainer.classList.add('flex', 'flex-nowrap', 'gap-2')
+            if (addrFeature) {
+                content.insertBefore(addrContainer, coords)
+                addrContainer.classList.add('flex', 'flex-nowrap', 'gap-2')
 
-                const addressIcon = document.createElement('span')
-                addressIcon.innerText = '🏠'
-                addressContainer.appendChild(addressIcon)
+                const addrIcon = document.createElement('span')
+                addrIcon.innerText = '🏠'
+                addrContainer.appendChild(addrIcon)
 
-                const addressValue = document.createElement('span')
-                addressValue.innerText = feature.properties.display_name
-                addressContainer.appendChild(addressValue)     
-                
-                const addressBtns = document.createElement('div')
-                addressBtns.classList.add('flex', 'flex-nowrap', 'gap-1')
-                addressContainer.appendChild(addressBtns)
+                const addrSpan = document.createElement('span')
+                addrSpan.innerText = addrFeature.properties.display_name
+                addrSpan.classList.add('me-5')
+                addrContainer.appendChild(addrSpan)     
             
-                source.setData(turf.featureCollection([
-                    ...(source._data?.geojson?.features ?? []), 
-                    feature
-                ]))
+                layersControl.updateGeoJSONData({
+                    sourceId: 'info',
+                    features: [addrFeature],
+                    action: 'add',
+                })
+
+                const [addrToggle, addrMenu] = dropdown({
+                    parent: addrContainer,
+                    title: 'Feature menu',
+                    containerClassList: ['right-1']
+                }).children
+
+                this.configInfoFeatureMenu({
+                    parent: addrMenu,
+                    feature: addrFeature,
+                    source,
+                })
             }
         }
 
@@ -601,19 +625,43 @@ export class SettingsControl {
         return popup
     }
 
-    // configFeatureMenu({parent, feature, source}={}) {
-    //     const isShown = source._data.geojson.features.find(i => {
-    //         return i.properties.__ms__.id === feature.properties.__ms__.id
-    //     }) ? true : false
+    configInfoFeatureMenu({parent, feature, source}={}) {
+        const map = this._map
 
-    //     const visibility = document.createElement('button')
-    //     visibility.setAttribute('x-data', `{shown: ${isShown}`)
-    //     visibility.setAttribute('x-text', `shown ? "Hide feature" : "Show feature"`)
-    //     visibility.addEventListener('click', async (e) => {
-            
-    //     })
-    //     parent.appendChild(visibility)
-    // }
+        const layersControl = map.getControls('layers')
+        const isVisible = source._data.geojson.features.find(i => {
+            return i.properties.__ms__.id === feature.properties.__ms__.id
+        }) ? true : false
+
+        const visibility = document.createElement('button')
+        visibility.setAttribute('x-data', `{visible: ${isVisible}}`)
+        visibility.setAttribute('x-text', `visible ? "Hide feature" : "Show feature"`)
+        visibility.addEventListener('click', async (e) => {
+            const data = Alpine.$data(visibility)
+            const makeVisible = !data.visible
+            data.visible = makeVisible
+
+            layersControl.updateGeoJSONData({
+                sourceId: 'info',
+                features: [feature],
+                action: makeVisible ? 'add' : 'remove',
+            })
+        })
+        parent.appendChild(visibility)
+
+        const zoomIn = document.createElement('button')
+        zoomIn.innerText = 'Zoom in'
+        zoomIn.setAttribute('x-bind:disabled', 'locked')
+        zoomIn.addEventListener('click', async () => {
+            const [w,s,e,n] = feature.bbox ?? turf.bbox(feature)
+            map.fitBounds([[w,s],[e,n]], {
+                padding: 100,
+                maxZoom: Math.max(13, map.getZoom())
+            })
+
+        })
+        parent.appendChild(zoomIn)
+    }
 
     configPopup(popup) {
         const map = this._map
@@ -719,12 +767,12 @@ export class SettingsControl {
         map.boxZoom.disable()
         map.dragRotate.disable()
 
-        map._locked = true
-
         const controls = map.getControls()
         Array('nav', 'fitToWorld').forEach(i => {
             Alpine.$data(controls[i].getContainer())[`${i}Disabled`] = true
         })
+
+        Alpine.$data(map.getContainer()).locked = true
 
         this.getContainer()?.firstElementChild
         .appendChild(utils.strToEl(`<span class="absolute top-0 right-0">🔒</span>`))
@@ -740,12 +788,12 @@ export class SettingsControl {
         map.boxZoom.enable()
         map.dragRotate.enable()
 
-        map._locked = false
-
         const controls = map.getControls()
         Array('nav', 'fitToWorld').forEach(i => {
             Alpine.$data(controls[i].getContainer())[`${i}Disabled`] = false
         })
+
+        Alpine.$data(map.getContainer()).locked = false
 
         this.getContainer()?.firstElementChild
         .firstElementChild.nextElementSibling?.remove()
@@ -753,7 +801,7 @@ export class SettingsControl {
 
     goToBookmark() {
         const map = this._map
-        if (map._locked) return
+        if (Alpine.$data(map.getContainer()).locked) return
 
         const {active, view, maxZoom, padding, duration} = map.getTheme().settings.bookmark
 

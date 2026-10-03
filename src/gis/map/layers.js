@@ -1,5 +1,6 @@
 import { indexOf } from "lodash"
 import button from "../../templates/button.js"
+import * as turf from '@turf/turf'
 
 export class LayersControl {
     constructor(options) {
@@ -1014,5 +1015,37 @@ export class LayersControl {
                 }
             }
         }
+    }
+
+    updateGeoJSONData({
+        sourceId, 
+        features=[], 
+        action='overwrite', // add, remove
+    }={}) {
+        const map = this._map
+        const source = map.getSource(sourceId)
+        if (!source || source.type !== 'geojson') return
+
+        let newData
+        if (action === 'overwrite') {
+            newData = turf.featureCollection(features)
+        } else {
+            let currentData = source._data?.geojson ?? {}
+            if (currentData.type === 'Feature') {
+                currentData = turf.featureCollection([currentData])
+            } else {
+                currentData.features ??= []
+            }
+            
+            if (action === 'add') {
+                newData = turf.featureCollection([...currentData.features, ...features])
+            } else if (action === 'remove') {
+                const removeIds = features.map(f => f.properties.__ms__.id)
+                newData = turf.featureCollection(currentData.features.filter(f => !removeIds.includes(f.properties.__ms__.id)))
+            }
+        }
+
+        source.setData(newData)
+        map.fire('geojsonupdated', {sourceId, source, newData})
     }
 }

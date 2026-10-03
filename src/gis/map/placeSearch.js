@@ -40,7 +40,10 @@ export default class PlaceSearchControl {
                 clearTimeout(timer)
                 
                 map.stop()
-                map.getSource('placeSearch')?.setData(turf.featureCollection([]))
+                map.getControls('layers').updateGeoJSONData({
+                    sourceId: 'placeSearch',
+                    features: [],
+                })
                 map.getControls('layers').removeSourceLayers('placeSearch')
                 
                 const value = input.value.trim()
@@ -88,8 +91,11 @@ export default class PlaceSearchControl {
         const source = map.getSource('placeSearch')
         if (!source) return
 
-        source.setData(data)
         const layersControl = map.getControls('layers')
+        layersControl.updateGeoJSONData({
+            sourceId: 'placeSearch',
+            features: data.features,
+        })
         const layers = layersControl.addGeoJSONLayers(source.id, {
             properties: {
                 metadata: {

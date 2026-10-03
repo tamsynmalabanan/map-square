@@ -8,7 +8,10 @@ export default ({
 
 }={}) => {
     const container = document.createElement('div')
-    container.classList.add('fixed', 'z-5', ...containerClassList)
+    container.classList.add(
+        'fixed', 
+        'z-5', 
+        ...containerClassList)
     container.setAttribute('x-data', `{showDropdown: false}`)
     parent?.appendChild(container)
 
@@ -36,7 +39,8 @@ export default ({
     const menu = document.createElement('div')
     menu.classList.add(
         'absolute', 
-        // 'right-0', 
+        'top-2', 
+        'left-5', 
         'w-max',
         'flex', 'flex-col', 'gap-1', 
         'text-xs', 'justify-end', 
