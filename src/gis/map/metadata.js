@@ -110,6 +110,10 @@ export default class MetadataControl {
     })
   }
 
+  targetSelector(name) {
+    return `[name="${name}"]:not(input):not([type="editor"])`
+  }
+
   addNavSection(parent) {
     const nav = this.nav = document.createElement('div')
     nav.classList.add('flex', 'flex-nowrap', 'gap-2', 'absolute', 'right-0', 'm-1', 'top-0')
@@ -118,8 +122,6 @@ export default class MetadataControl {
     let editBtn, backBtn, saveBtn, collapseBtn
     
     if (!this._map.isStaticConfig()) {
-      const targetSelector = (rawName) => `[name="${rawName}"]:not(input):not([type="editor"])`
-
       editBtn = utils.strToEl(button({
         title: 'Edit metadata',
         icon: svg.pencilSquareMini,
@@ -158,7 +160,7 @@ export default class MetadataControl {
           if (!(name in metadata)) return
 
           const type = i.getAttribute('type')
-          const target = this.form.querySelector(targetSelector(rawName))
+          const target = this.form.querySelector(this.targetSelector(rawName))
           const value = metadata[name]
   
           if (type === 'editor') {
@@ -223,7 +225,7 @@ export default class MetadataControl {
           const defaultMetadata = theme ? this.defaultThemeMetadata : this.defaultMetadata
           
           const type = i.getAttribute('type')
-          const target = this.form.querySelector(targetSelector(rawName))
+          const target = this.form.querySelector(this.targetSelector(rawName))
           let value = editableContent ? i.innerHTML : i.value
           
           if (type === 'editor') {
@@ -342,16 +344,18 @@ export default class MetadataControl {
 
   addLogoSection(parent) {
     const logoForm = document.createElement('div')
-    logoForm.classList.add('flex', 'flex-nowrap', 'gap-3')
+    logoForm.classList.add('flex', 'flex-nowrap')
     parent.appendChild(logoForm)
     
     const logoImg = document.createElement('img')
     logoImg.classList.add(
       'size-[68px]', 'min-w-[68px]', 
-      'rounded-full'
+      'rounded-full',
+      'me-3!'
     )
     logoImg.src = this.metadata.logo
     logoImg.setAttribute('name', 'logo')
+    logoImg.setAttribute('x-data', `{showImg: false}`)
     logoImg.setAttribute('x-effect', `showImg = isRadioValue("edit") || $el.src !== "${this.defaultMetadata.logo}"`)
     logoImg.setAttribute('x-show', `showImg`)
     logoForm.appendChild(logoImg)
@@ -390,8 +394,18 @@ export default class MetadataControl {
   addAttributionSection(parent) {
     const container = document.createElement('div')
     container.classList.add('flex', 'flex-col', 'gap-1', 'grow')
-    container.setAttribute('x-data', '{show:true}')
+    container.setAttribute('x-data', '{show: true, hasValues: false}')
+    container.setAttribute('x-show', `isRadioValue("edit") || hasValues`)
     parent.appendChild(container)
+    
+    Array('idle', 'configupdated').forEach(type => {
+      this._map[type === 'idle' ? 'once' : 'on'](type, (e) => {
+        Alpine.$data(container).hasValues = [...new Set(
+          Array.from(container.querySelectorAll('[name]'))
+          .map(i => i.getAttribute('name'))
+        )].some(i => this.metadata[i] !== this.defaultMetadata[i])
+      })
+    })
 
     const header = document.createElement('span')
     header.classList.add('flex', 'flex-nowrap', 'justify-between', 'align-middle', 'font-bold')
@@ -410,11 +424,6 @@ export default class MetadataControl {
     const content = document.createElement('div')
     content.classList.add('flex', 'flex-nowrap', 'grow')
     content.setAttribute('x-show', 'show')
-    content.setAttribute('x-data', `{showImg: false}`)
-    utils.appendBinding(content, ':class', `
-      ['gap-3']: showImg,  
-      ['-gap-3']: !showImg
-    `)
     utils.appendBinding(content, ':class', `['-flex-nowrap flex-col']: isRadioValue("edit")`)
     container.appendChild(content)
 
@@ -611,10 +620,10 @@ export default class MetadataControl {
     container.appendChild(header)
   
     const label = document.createElement('span')
-    label.classList.add('grow!', 'gap-2', 'flex', 'flex-nowrap')
+    label.classList.add('grow!', 'me-5', 'flex', 'flex-nowrap')
     label.innerText = 'Theme'
     header.appendChild(label)
-  
+
     const navBtns = Object.fromEntries(Object.entries({
       first: {
         title: 'Go to first theme',
@@ -672,8 +681,8 @@ export default class MetadataControl {
       return [name, params]
     }))
 
-    Object.entries({'idle': 'on', 'configupdated': 'on'}).forEach(([type, fn]) => {
-      this._map[fn](type, (e) => {
+    Array('idle', 'configupdated').forEach(type => {
+      this._map[[type === 'idle' ? 'once' : 'on']](type, (e) => {
         if (type === 'configupdated' && !Array('activeTheme', 'themes').includes(e.details.property[0])) return
         const themes = this.config.themes
         const data = Alpine.$data(container)

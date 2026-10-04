@@ -124,7 +124,7 @@ export default class HandleControls {
                         }))
                     }})
 
-                    control.getContainer().style.maxWidth = `70vw`
+                    // control.getContainer().style.maxWidth = `70vw`
                 },
                 elements: {
                     '.maplibregl-ctrl-attrib': {
@@ -156,9 +156,9 @@ export default class HandleControls {
             placeSearch: {
                 constructor: PlaceSearchControl,
                 handler: (control) => {
-                    map.once('idle', () => {
-                        control.getContainer().parentElement.style.zIndex = 5
-                    })
+                    // map.once('idle', () => {
+                    //     control.getContainer().parentElement.style.zIndex = 5
+                    // })
                 },
                 elements: {
                   '.maplibregl-ctrl-place-search': {

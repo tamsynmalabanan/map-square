@@ -528,18 +528,23 @@ export class SettingsControl {
         const {signal} = controller
 
         this.configPopup(popup)
+    
         
+        const content = document.createElement('div')
+        content.classList.add('flex', 'flex-col', 'p-2', 'gap-3')
+        popup._content.appendChild(content)
+
+        const navBar = document.createElement('div')
+        navBar.classList.add('flex', 'flex-nowrap', 'justify-end')
+        content.appendChild(navBar)
+
         const closeBtn = utils.strToEl(button({
             title: 'Close',
             icon: svg.xMini,
-            classStr: 'size-[15px] self-center absolute top-1 right-1 p-0! opacity-25! hover:opacity-100!',
+            classStr: 'size-[15px] p-0! self-center opacity-25! hover:opacity-100!',
         }))
         closeBtn.addEventListener('click', (e) => popup.remove())
-        popup._content.appendChild(closeBtn)
-        
-        const content = document.createElement('div')
-        content.classList.add('flex', 'flex-col', 'p-2', 'pt-5', 'gap-3')
-        popup._content.appendChild(content)
+        navBar.appendChild(closeBtn)
 
         const featuresContainer = document.createElement('div')
         const addrContainer = document.createElement('div')
