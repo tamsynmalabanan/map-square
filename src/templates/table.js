@@ -181,8 +181,6 @@ export default function table(options = {}) {
                 table(options)
             })
         }
-
-        return key
     })
 
     let filteredItems = utils.sortArray([...new Set(items.map(i => i[state.sortBy]))], {

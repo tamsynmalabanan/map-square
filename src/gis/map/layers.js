@@ -1082,10 +1082,62 @@ export class LayersControl {
 
     createPropertiesTable(feature) {
         const label = gisUtils.getFeatureLabel(feature)
-        const table = document.createElement('table')
-        table.innerText = label
+        
+        const tableEl = document.createElement('table')
+        tableEl.classList.add(
+            'table-auto',
+            // 'px-3', 'pb-3',
+            'w-full', 
+        )
 
-        return table
+        const thead = document.createElement('thead')
+        thead.classList.add('sticky', 'top-0')
+        utils.appendBinding(thead, ':class', `['${utils.dynamicBgExp()}']: true`)
+        tableEl.appendChild(thead)
+
+        const tbody = document.createElement('tbody')
+        tableEl.appendChild(tbody)
+
+        const tHeadRow = document.createElement('tr')
+        utils.appendBinding(tHeadRow, `:class`, `['border-b border-'+color+'-600/25!']: true`)
+        thead.appendChild(tHeadRow)
+        
+        const tHeadTd = document.createElement('td')
+        tHeadTd.classList.add('cursor-pointer', 'p-2')
+        tHeadTd.setAttribute('colspan', '2')
+        tHeadRow.appendChild(tHeadTd)
+
+        const tdContent = document.createElement('div')
+        tdContent.classList.add('flex', 'flex-nowrap', 'justify-between',  'gap-1', 'font-bold')
+        tHeadTd.appendChild(tdContent)
+        
+        const titleEl = document.createElement('span')
+        titleEl.classList.add('self-center', 'grow')
+        titleEl.innerText = label
+        tdContent.appendChild(titleEl)
+
+        Object.entries(feature.properties).forEach(([key, value], index) => {
+            if (key === '__ms__') return
+
+            const tRow = document.createElement('tr')
+            tRow.classList.add('rounded', ...(index%2===0 ? ['bg-gray-200/50!','dark:bg-gray-950/50!'] : []))
+            utils.appendBinding(tRow, `:class`, `['border-b border-'+color+'-600/25!']: true`)
+            tbody.appendChild(tRow)
+
+            const keyTd = document.createElement('td')
+            keyTd.classList.add('p-2')
+            keyTd.innerText = key
+            tRow.appendChild(keyTd)
+
+            const valueTd = document.createElement('td')
+            valueTd.classList.add('p-2', 'break-all')
+            valueTd.innerText = value
+            tRow.appendChild(valueTd)
+        })
+
+        // add geometry row
+
+        return tableEl
     }
 
     zoomToFeature(feature) {

@@ -518,6 +518,7 @@ export class SettingsControl {
 
         const popup = new maplibregl.Popup({closeButton: false})
         .setLngLat(lngLat)
+        // .setMaxWidth(`300px`)
         .setHTML(``)
         .addTo(map)
 
@@ -530,12 +531,12 @@ export class SettingsControl {
         this.configPopup(popup)
     
         const content = document.createElement('div')
-        content.classList.add('flex', 'flex-col', 'px-2', 'py-1', 'gap-3')
+        content.classList.add('flex', 'flex-col', 'gap-3')
         content.setAttribute('x-data', `{featureIndex:0}`)
         popup._content.appendChild(content)
 
         const navBar = document.createElement('div')
-        navBar.classList.add('flex', 'flex-nowrap', 'justify-between')
+        navBar.classList.add('flex', 'flex-nowrap', 'justify-between', 'px-1', 'pt-1')
         content.appendChild(navBar)
 
         const popupLabel = document.createElement('span')
@@ -555,7 +556,7 @@ export class SettingsControl {
         const addrContainer = document.createElement('div')
 
         const coords = document.createElement('span')
-        coords.classList.add('flex', 'flex-nowrap', 'gap-2')
+        coords.classList.add('flex', 'flex-nowrap', 'gap-2', 'px-2', 'pb-1')
         content.appendChild(coords)
 
         const coordsIcon = document.createElement('span')
@@ -597,7 +598,7 @@ export class SettingsControl {
             
             if (addrFeature) {
                 content.insertBefore(addrContainer, coords)
-                addrContainer.classList.add('flex', 'flex-nowrap', 'gap-2')
+                addrContainer.classList.add('flex', 'flex-nowrap', 'gap-2', 'px-2')
 
                 const addrIcon = document.createElement('span')
                 addrIcon.innerText = '🏠'
@@ -646,6 +647,8 @@ export class SettingsControl {
 
             if (features?.length) {
                 content.insertBefore(layersContainer, content.children[1])
+                layersContainer.classList.add('overflow-auto', 'max-h-[30vh]', 'ps-2')
+                utils.appendBinding(layersContainer , ':class', `['scrollbar-thumb-'+color+'-600/25!']: true`)
 
                 // if (features.length > 1) {
                 //     const buffer = map.getScaleInMeters()/1000/2
