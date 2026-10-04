@@ -531,12 +531,17 @@ export class SettingsControl {
     
         
         const content = document.createElement('div')
-        content.classList.add('flex', 'flex-col', 'p-2', 'gap-3')
+        content.classList.add('flex', 'flex-col', 'px-2', 'py-1', 'gap-3')
         popup._content.appendChild(content)
 
         const navBar = document.createElement('div')
-        navBar.classList.add('flex', 'flex-nowrap', 'justify-end')
+        navBar.classList.add('flex', 'flex-nowrap', 'justify-between')
         content.appendChild(navBar)
+
+        const popupLabel = document.createElement('span')
+        popupLabel.innerText = 'Information'
+        popupLabel.classList.add('font-bold')
+        navBar.appendChild(popupLabel)
 
         const closeBtn = utils.strToEl(button({
             title: 'Close',
