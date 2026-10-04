@@ -414,7 +414,7 @@ export class SettingsControl {
         
         let infoTimer
         map.on('click', (e) => {
-            Array('tooltip', 'info').forEach(i => {
+            Object.keys(this.popups).forEach(i => {
                 this.clearPopup(i)
             })
 
@@ -723,8 +723,12 @@ export class SettingsControl {
         const controls = map.getControls()
         const theme = map.getTheme()
         const settings = theme.settings
-        
+
         this.unlock()
+
+        Object.keys(this.popups).forEach(i => {
+            this.clearPopup(i)
+        })
 
         map.getStyle().layers.forEach(l => {
             map.removeLayer(l.id)
