@@ -529,9 +529,9 @@ export class SettingsControl {
 
         this.configPopup(popup)
     
-        
         const content = document.createElement('div')
         content.classList.add('flex', 'flex-col', 'px-2', 'py-1', 'gap-3')
+        content.setAttribute('x-data', `{featureIndex:0}`)
         popup._content.appendChild(content)
 
         const navBar = document.createElement('div')
@@ -551,7 +551,7 @@ export class SettingsControl {
         closeBtn.addEventListener('click', (e) => popup.remove())
         navBar.appendChild(closeBtn)
 
-        const featuresContainer = document.createElement('div')
+        const layersContainer = document.createElement('div')
         const addrContainer = document.createElement('div')
 
         const coords = document.createElement('span')
@@ -570,10 +570,10 @@ export class SettingsControl {
         coords.appendChild(coordsSpan)
 
         const coordsFeature = await gisUtils.normalizeProperties(turf.point(coordsValues))
-        // layersControl.updateGeoJSONData({
-        //     sourceId: 'info',
-        //     features: [coordsFeature],
-        // })
+        layersControl.updateGeoJSONData({
+            sourceId: 'info',
+            features: [coordsFeature],
+        })
         layersControl.addGeoJSONLayers('info', {
             properties: layersControl.highlightedLayerProperties()
         })
@@ -584,7 +584,7 @@ export class SettingsControl {
             menuClassList: ['right-1']
         }).children
 
-        this.configInfoFeatureMenu({
+        layersControl.configInfoFeatureMenu({
             parent: coordsMenu,
             feature: coordsFeature,
             source,
@@ -607,12 +607,12 @@ export class SettingsControl {
                 addrSpan.innerText = addrFeature.properties.display_name
                 addrSpan.classList.add('grow')
                 addrContainer.appendChild(addrSpan)     
-            
-                // layersControl.updateGeoJSONData({
-                //     sourceId: 'info',
-                //     features: [addrFeature],
-                //     action: 'add',
-                // })
+
+                layersControl.updateGeoJSONData({
+                    sourceId: 'info',
+                    features: [addrFeature],
+                    action: 'add',
+                })
 
                 const [addrToggle, addrMenu] = dropdown({
                     parent: addrContainer,
@@ -620,7 +620,7 @@ export class SettingsControl {
                     menuClassList: ['right-1']
                 }).children
 
-                this.configInfoFeatureMenu({
+                layersControl.configInfoFeatureMenu({
                     parent: addrMenu,
                     feature: addrFeature,
                     source,
@@ -645,72 +645,79 @@ export class SettingsControl {
             })
 
             if (features?.length) {
-                content.insertBefore(featuresContainer, content.children[1])
+                content.insertBefore(layersContainer, content.children[1])
 
-                if (features.length > 1) {
-                    const buffer = map.getScaleInMeters()/1000/2
+                // if (features.length > 1) {
+                //     const buffer = map.getScaleInMeters()/1000/2
                     
-                    const polygonFeatures = features.map(f => {
-                        if (f.geometry.type.includes('Polygon')) return f
+                //     const polygonFeatures = features.map(f => {
+                //         if (f.geometry.type.includes('Polygon')) return f
                         
-                        const cloneFeature = turf.clone(f)
-                        cloneFeature.originalFeature = f
-                        cloneFeature.geometry = turf.buffer(cloneFeature, buffer, { units: "meters" }).geometry
-                        return cloneFeature
-                    })
+                //         const cloneFeature = turf.clone(f)
+                //         cloneFeature.originalFeature = f
+                //         cloneFeature.geometry = turf.buffer(cloneFeature, buffer, { units: "meters" }).geometry
+                //         return cloneFeature
+                //     })
             
-                    features = polygonFeatures.map(f1 => {
-                        return polygonFeatures.filter(f2 => turf.booleanIntersects(f1, f2))
-                    }).reduce((a, b) => (b.length > a.length ? b : a)).map(f => f.originalFeature ?? f)
-                }
+                //     features = polygonFeatures.map(f1 => {
+                //         return polygonFeatures.filter(f2 => turf.booleanIntersects(f1, f2))
+                //     }).reduce((a, b) => (b.length > a.length ? b : a)).map(f => f.originalFeature ?? f)
+                // }
 
+                layersControl.updateGeoJSONData({
+                    sourceId: 'info', 
+                    features: features.map(f => turf.feature(f.geometry)),
+                    action: 'add',
+                })
+
+                layersContainer.appendChild(layersControl.createPropertiesTable(features[0]))
                 popup.setLngLat(turf.centroid(features[0]).geometry.coordinates)
 
-                
+                const featuresTotal = features.length
+                if (featuresTotal > 1) {
+                    const navBtns = document.createElement('div')
+                    navBtns.classList.add('flex', 'flex-nowrap', 'gap-1')
+                    navBar.insertBefore(navBtns, closeBtn)
+
+                    Object.entries({
+                        previous: {
+                            title: 'Previous feature',
+                            icon: svg.chevronLeftMini,
+                        },
+                        next: {
+                            title: 'Next feature',
+                            icon: svg.chevronRightMini,
+                        },
+                    }).map(([name, params]) => {
+                        const btn = utils.strToEl(button({
+                            title: params.title,
+                            icon: params.icon,
+                            classStr: 'size-[15px]! self-center border-none! opacity-25 hover:opacity-100 p-0!',
+                            minimal: true,
+                        }))
+                        btn.addEventListener('click', async (e) => {
+                            const data = Alpine.$data(content)
+                            const adjustedIndex = data.featureIndex + (name === 'next' ? 1 : -1)
+                            data.featureIndex = adjustedIndex > featuresTotal-1 ? 0 : adjustedIndex < 0 ? featuresTotal-1 : adjustedIndex
+
+                            const feature = features[data.featureIndex]
+                            popup.setLngLat(turf.centroid(feature).geometry.coordinates)
+                            
+                            layersContainer.innerHTML = ''
+                            layersContainer.appendChild(layersControl.createPropertiesTable(feature))
+                        })
+                        navBtns.appendChild(btn)
+                    })
+
+                    const count = document.createElement('span')
+                    count.setAttribute('x-text', `[featureIndex+1, ${featuresTotal}].join(" of ")`)
+                    count.classList.add('opacity-25', 'cursor-pointer')
+                    navBtns.insertBefore(count, navBtns.children[1])
+                }
             }
         }
 
         return popup
-    }
-
-    configInfoFeatureMenu({parent, feature, source}={}) {
-        const map = this._map
-
-        const layersControl = map.getControls('layers')
-        const isVisible = () => {
-            return source._data.geojson.features.find(f => {
-                return gisUtils.getFeatureId(f) === gisUtils.getFeatureId(feature)
-            }) ? true : false
-        }
-
-        const visibility = document.createElement('button')
-        visibility.setAttribute('x-data', `{visible: ${isVisible()}}`)
-        visibility.setAttribute('x-text', `visible ? "Hide feature" : "Show feature"`)
-        visibility.addEventListener('click', async (e) => {
-            layersControl.updateGeoJSONData({
-                sourceId: 'info',
-                features: [feature],
-                action: !Alpine.$data(visibility).visible ? 'add' : 'remove',
-            })
-        })
-        map.on('geojsonupdated', (e) => {
-            if (e.sourceId !== source.id) return
-            Alpine.$data(visibility).visible = isVisible()
-        })
-        parent.appendChild(visibility)
-
-        const zoomIn = document.createElement('button')
-        zoomIn.innerText = 'Zoom to extent'
-        zoomIn.setAttribute('x-bind:disabled', 'locked')
-        zoomIn.addEventListener('click', async () => {
-            const [w,s,e,n] = feature.bbox ?? turf.bbox(feature)
-            map.fitBounds([[w,s],[e,n]], {
-                padding: 100,
-                maxZoom: Math.max(13, map.getZoom())
-            })
-
-        })
-        parent.appendChild(zoomIn)
     }
 
     configPopup(popup) {

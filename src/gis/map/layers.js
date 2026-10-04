@@ -1031,16 +1031,71 @@ export class LayersControl {
             } else {
                 currentData.features ??= []
             }
-            
+
             if (action === 'add') {
                 newData = turf.featureCollection([...currentData.features, ...features])
             } else if (action === 'remove') {
-                const removeIds = features.map(f => f.properties.__ms__.id)
-                newData = turf.featureCollection(currentData.features.filter(f => !removeIds.includes(f.properties.__ms__.id)))
+                const removeIds = features.map(f => gisUtils.getFeatureId(f))
+                newData = turf.featureCollection(currentData.features.filter(f => !removeIds.includes(gisUtils.getFeatureId(f))))
             }
         }
 
         source.setData(newData)
         map.fire('geojsonupdated', {sourceId, source, action, newData, features})
+    }
+
+    configInfoFeatureMenu({parent, feature, source}={}) {
+        const map = this._map
+
+        const isVisible = () => {
+            return source._data.geojson.features.find(f => {
+                return gisUtils.getFeatureId(f) === gisUtils.getFeatureId(feature)
+            }) ? true : false
+        }
+
+        if (source.id === 'info') {
+            const visibility = document.createElement('button')
+            visibility.setAttribute('x-data', `{visible: ${isVisible()}}`)
+            visibility.setAttribute('x-text', `visible ? "Hide feature" : "Show feature"`)
+            visibility.addEventListener('click', async (e) => {
+                this.updateGeoJSONData({
+                    sourceId: source.id,
+                    features: [feature],
+                    action: !Alpine.$data(visibility).visible ? 'add' : 'remove',
+                })
+            })
+            map.on('geojsonupdated', (e) => {
+                if (e.sourceId !== source.id) return
+                Alpine.$data(visibility).visible = isVisible()
+            })
+            parent.appendChild(visibility)
+        }
+
+        const zoomIn = document.createElement('button')
+        zoomIn.innerText = 'Zoom to feature'
+        zoomIn.setAttribute('x-bind:disabled', 'locked')
+        zoomIn.addEventListener('click', async () => {
+            this.zoomToFeature(feature)
+        })
+        parent.appendChild(zoomIn)
+    }
+
+    createPropertiesTable(feature) {
+        const label = gisUtils.getFeatureLabel(feature)
+        const table = document.createElement('table')
+        table.innerText = label
+
+        return table
+    }
+
+    zoomToFeature(feature) {
+        const map = this._map
+        if (map.getTheme().settings.locked) return
+
+        const [w,s,e,n] = feature.bbox ?? turf.bbox(feature)
+        map.fitBounds([[w,s],[e,n]], {
+            padding: 100,
+            maxZoom: Math.max(13, map.getZoom())
+        })
     }
 }
