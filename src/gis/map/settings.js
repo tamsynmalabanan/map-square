@@ -463,7 +463,7 @@ export class SettingsControl {
                 Array('geojson', 'vector').includes(source?.type)
                 && l.metadata?.params?.tooltip?.active
                 && source?.data?.features?.length
-                && !Array('tooltip', 'info').includes(l.source)
+                && !Object.keys(this.popups).includes(l.source)
             )
         })
         if (!layers.length) return
@@ -562,18 +562,18 @@ export class SettingsControl {
         coordsIcon.innerText = '📍'
         coords.appendChild(coordsIcon)
 
-        const coordsValues = ['lng', 'lat'].map(i => lngLat[i])
+        const coordsValues = ['lng', 'lat'].map(i => parseFloat(lngLat[i].toFixed(6)))
 
         const coordsSpan = document.createElement('span')
         coordsSpan.classList.add('flex', 'flex-nowrap', 'gap-2', 'grow')
-        coordsSpan.innerHTML = coordsValues.map(i => `<span>${i.toFixed(6)}</span>`).join('')
+        coordsSpan.innerHTML = coordsValues.map(i => `<span>${i}</span>`).join('')
         coords.appendChild(coordsSpan)
 
         const coordsFeature = await gisUtils.normalizeProperties(turf.point(coordsValues))
-        layersControl.updateGeoJSONData({
-            sourceId: 'info',
-            features: [coordsFeature],
-        })
+        // layersControl.updateGeoJSONData({
+        //     sourceId: 'info',
+        //     features: [coordsFeature],
+        // })
         layersControl.addGeoJSONLayers('info', {
             properties: layersControl.highlightedLayerProperties()
         })
@@ -608,11 +608,11 @@ export class SettingsControl {
                 addrSpan.classList.add('grow')
                 addrContainer.appendChild(addrSpan)     
             
-                layersControl.updateGeoJSONData({
-                    sourceId: 'info',
-                    features: [addrFeature],
-                    action: 'add',
-                })
+                // layersControl.updateGeoJSONData({
+                //     sourceId: 'info',
+                //     features: [addrFeature],
+                //     action: 'add',
+                // })
 
                 const [addrToggle, addrMenu] = dropdown({
                     parent: addrContainer,
@@ -628,9 +628,47 @@ export class SettingsControl {
             }
         }
 
-        // if (info.data.layers) {
-        //     content.insertBefore(featuresContainer, content.children[0])
-        // }
+        if (info.data.layers) {
+            let features = (await layersControl.getCanvasData({
+                point: e.point, rasters: true,
+                layers: map.getStyle().layers.filter(l =>  {
+                    return (
+                        !Object.keys(this.popups).includes(l.source) 
+                        && l.metadata?.params?.info?.active
+                    )
+                }).map(l => l.id)
+            }))?.filter(f => {
+                return Object.keys(f.properties).find(i => i !== '__ms__')
+            }).map(f => {
+                f.geometry = layersControl.getRawFeature(f).geometry
+                return f
+            })
+
+            if (features?.length) {
+                content.insertBefore(featuresContainer, content.children[1])
+
+                if (features.length > 1) {
+                    const buffer = map.getScaleInMeters()/1000/2
+                    
+                    const polygonFeatures = features.map(f => {
+                        if (f.geometry.type.includes('Polygon')) return f
+                        
+                        const cloneFeature = turf.clone(f)
+                        cloneFeature.originalFeature = f
+                        cloneFeature.geometry = turf.buffer(cloneFeature, buffer, { units: "meters" }).geometry
+                        return cloneFeature
+                    })
+            
+                    features = polygonFeatures.map(f1 => {
+                        return polygonFeatures.filter(f2 => turf.booleanIntersects(f1, f2))
+                    }).reduce((a, b) => (b.length > a.length ? b : a)).map(f => f.originalFeature ?? f)
+                }
+
+                popup.setLngLat(turf.centroid(features[0]).geometry.coordinates)
+
+                
+            }
+        }
 
         return popup
     }
@@ -639,28 +677,30 @@ export class SettingsControl {
         const map = this._map
 
         const layersControl = map.getControls('layers')
-        const isVisible = source._data.geojson.features.find(i => {
-            return i.properties.__ms__.id === feature.properties.__ms__.id
-        }) ? true : false
+        const isVisible = () => {
+            return source._data.geojson.features.find(f => {
+                return gisUtils.getFeatureId(f) === gisUtils.getFeatureId(feature)
+            }) ? true : false
+        }
 
         const visibility = document.createElement('button')
-        visibility.setAttribute('x-data', `{visible: ${isVisible}}`)
+        visibility.setAttribute('x-data', `{visible: ${isVisible()}}`)
         visibility.setAttribute('x-text', `visible ? "Hide feature" : "Show feature"`)
         visibility.addEventListener('click', async (e) => {
-            const data = Alpine.$data(visibility)
-            const makeVisible = !data.visible
-            data.visible = makeVisible
-
             layersControl.updateGeoJSONData({
                 sourceId: 'info',
                 features: [feature],
-                action: makeVisible ? 'add' : 'remove',
+                action: !Alpine.$data(visibility).visible ? 'add' : 'remove',
             })
+        })
+        map.on('geojsonupdated', (e) => {
+            if (e.sourceId !== source.id) return
+            Alpine.$data(visibility).visible = isVisible()
         })
         parent.appendChild(visibility)
 
         const zoomIn = document.createElement('button')
-        zoomIn.innerText = 'Zoom in'
+        zoomIn.innerText = 'Zoom to extent'
         zoomIn.setAttribute('x-bind:disabled', 'locked')
         zoomIn.addEventListener('click', async () => {
             const [w,s,e,n] = feature.bbox ?? turf.bbox(feature)

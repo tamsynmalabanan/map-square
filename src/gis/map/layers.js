@@ -974,12 +974,7 @@ export class LayersControl {
         const uniqueFeatures = []
 
         features.forEach(f1 => {
-            if (uniqueFeatures.find(f2 => {
-                return (
-                    f1.source === f2.source 
-                    && gisUtils.featuresAreSimilar(f1, f2)
-                )
-            })) return
+            if (uniqueFeatures.find(f2 => f1.source === f2.source && gisUtils.featuresAreSimilar(f1, f2))) return
             uniqueFeatures.push(f1)
         })
 
@@ -1046,6 +1041,6 @@ export class LayersControl {
         }
 
         source.setData(newData)
-        map.fire('geojsonupdated', {sourceId, source, newData})
+        map.fire('geojsonupdated', {sourceId, source, action, newData, features})
     }
 }
