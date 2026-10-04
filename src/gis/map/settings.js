@@ -150,7 +150,7 @@ export class SettingsControl {
                 ]
             },
             {
-                label: 'Feature Info',
+                label: 'Location Information',
                 buttons: [
                     {
                         title: 'Toggle feature info',
@@ -539,7 +539,7 @@ export class SettingsControl {
         content.appendChild(navBar)
 
         const popupLabel = document.createElement('span')
-        popupLabel.innerText = 'Information'
+        popupLabel.innerText = 'ℹ️'
         popupLabel.classList.add('font-bold')
         navBar.appendChild(popupLabel)
 

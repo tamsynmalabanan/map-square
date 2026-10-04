@@ -227,12 +227,23 @@ export class FileControl {
                                             classStr: 'self-center size-[20px]',
                                         }))
                                         deleteSelectedBtn.addEventListener('click', async (e) => {
-                                            state.selected.forEach(async id => {
+                                            for (const id of state.selected) {
+                                                if (id === map.getConfig().id) continue
                                                 await gisDB.deleteFromGISDB('maps', id)
-                                                await createTable()
-                                            })
+                                            }
+                                            await createTable()
                                         })
                                         container.appendChild(deleteSelectedBtn)
+                                
+                                        const refreshBtn = utils.strToEl(button({
+                                            title: 'Refresh table',
+                                            icon: '🔃',
+                                            classStr: 'self-center size-[20px]',
+                                        }))
+                                        refreshBtn.addEventListener('click', async (e) => {
+                                            await createTable()
+                                        })
+                                        container.appendChild(refreshBtn)
                                     },
                                     state,
                                 })

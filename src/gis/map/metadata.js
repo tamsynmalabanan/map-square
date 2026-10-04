@@ -116,7 +116,10 @@ export default class MetadataControl {
 
   addNavSection(parent) {
     const nav = this.nav = document.createElement('div')
-    nav.classList.add('flex', 'flex-nowrap', 'gap-2', 'absolute', 'right-0', 'm-1', 'top-0')
+    nav.classList.add(
+      'flex', 'flex-nowrap', 'gap-2', 'absolute', 'right-0', 'm-1', 'top-0',
+      '[&>button]:border-t-0!'
+    )
     parent.appendChild(nav)
 
     let editBtn, backBtn, saveBtn, collapseBtn
@@ -126,7 +129,6 @@ export default class MetadataControl {
         title: 'Edit metadata',
         icon: svg.pencilSquareMini,
         attrs: `@click='toggleRadio("edit")' x-show='isRadioValue("current")'`,
-        classStr: `border-t-0!`,
       }))
       editBtn.addEventListener('click', () => {
         this.form.querySelectorAll(this.inputSelector).forEach(i => {
@@ -145,7 +147,6 @@ export default class MetadataControl {
           title: 'Go back',
           icon: svg.arrowUturnLeftMini,
           attrs: `@click='toggleRadio("current")' x-show='isRadioValue("edit")'`,
-          classStr: `border-t-0!`,
       }))
       backBtn.addEventListener('click', () => {
         this.form.querySelectorAll(this.inputSelector).forEach(i => {
@@ -198,7 +199,6 @@ export default class MetadataControl {
           title: 'Save changes',
           icon: svg.checkCircleMini,
           attrs: `@click='toggleRadio("current")' x-show='isRadioValue("edit")'`,
-          classStr: `border-t-0!`,
       }))
       saveBtn.addEventListener('click', async () => {
         const settings = this._map.getControls('settings')
@@ -277,25 +277,22 @@ export default class MetadataControl {
     const darkModeBtn = utils.strToEl(button({
       title: 'Toggle dark mode',
       icon: svg.moonMini,
-      classStr: 'border-t-0!',
-      minimal: true,
       attrs: `@click='$store.displaySettings.toggleDarkMode()'`,
     }))
     darkModeBtn.setAttribute('x-html', `dark ? svg.sunMini : svg.moonMini`)
     nav.appendChild(darkModeBtn)
 
-
     if (this.config.id) {
       collapseBtn = utils.strToEl(button({
         title: 'Toggle details',
-        icon: svg.arrowUpCircleMini,
+        icon: svg.chevronUpMini,
         attrs: `x-ref="collapseBtn"`,
-        classStr: `border-t-0!`,
       }))
       collapseBtn.addEventListener('click', () => {
         const data = Alpine.$data(this.details)
-        data.show = !data.show
-        collapseBtn.innerHTML = data.show ? svg.arrowUpCircleMini : svg.arrowDownCircleMini
+        const show = !data.show
+        data.show = show
+        collapseBtn.innerHTML = show ? svg.chevronUpMini : svg.chevronDownMini
       })
       nav.appendChild(collapseBtn)
     }
@@ -303,7 +300,7 @@ export default class MetadataControl {
     const closeBtn = utils.strToEl(button({
       title: 'Collapse metadata',
       icon: svg.xMini,
-      classStr: 'maplibregl-ctrl-close border-t-0! bg-transparent!',
+      classStr: 'maplibregl-ctrl-close bg-transparent!',
       attrs: `@click='toggleCollapse'  x-show='isRadioValue("current")'`,
     }))
     nav.appendChild(closeBtn)

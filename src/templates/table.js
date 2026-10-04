@@ -46,14 +46,14 @@ export default function table(options = {}) {
     navBar.appendChild(menuContainer)
 
     if (keys.includes('__check__')) {
-        const selectContainer = document.createElement('div')
-        selectContainer.classList.add('flex', 'flex-nowrap', 'gap-1')
-        menuContainer.appendChild(selectContainer)
+        const defaultMenu = document.createElement('div')
+        defaultMenu.classList.add('flex', 'flex-nowrap', 'gap-1')
+        menuContainer.appendChild(defaultMenu)
 
-        const selectMenu = document.createElement('span')
-        selectMenu.classList.add('font-bold', 'self-center', 'cursor-pointer')
-        selectMenu.innerText = 'Selection'
-        selectContainer.appendChild(selectMenu)
+        const tableMenu = document.createElement('span')
+        tableMenu.classList.add('font-bold', 'self-center', 'cursor-pointer')
+        tableMenu.innerText = 'Selection'
+        defaultMenu.appendChild(tableMenu)
 
         const selectAllBtn = utils.strToEl(button({
             title: 'Select all',
@@ -67,7 +67,7 @@ export default function table(options = {}) {
                 return i.value
             })  
         })
-        selectContainer.appendChild(selectAllBtn)
+        defaultMenu.appendChild(selectAllBtn)
 
         const invertSelectBtn = utils.strToEl(button({
             title: 'Invert selection',
@@ -82,7 +82,7 @@ export default function table(options = {}) {
                 if (i.checked) state.selected.push(i.value)
             })  
         })
-        selectContainer.appendChild(invertSelectBtn)
+        defaultMenu.appendChild(invertSelectBtn)
 
         const deselectAllBtn = utils.strToEl(button({
             title: 'Deselect all',
@@ -94,7 +94,7 @@ export default function table(options = {}) {
             checkboxes.forEach(i => i.checked = false)
             state.selected = []  
         })
-        selectContainer.appendChild(deselectAllBtn)
+        defaultMenu.appendChild(deselectAllBtn)
     }
 
     menu?.(menuContainer)
@@ -234,11 +234,11 @@ export default function table(options = {}) {
                 checkbox.value = item.id
                 checkbox.checked = state.selected.includes(item.id)
                 checkbox.addEventListener('change', (e) => {
-                    if (checkbox.checked) {
-                        state.selected = [...new Set(...state.selected, item.id)]
-                    } else {
-                        state.selected = state.selected.filter(i => i !== item.id)
-                    }
+                    state.selected = (
+                        checkbox.checked 
+                        ? [...new Set([...state.selected, item.id])] 
+                        : state.selected.filter(i => i !== item.id)
+                    )
                 })
             } else if (typeof value === 'string') {
                 if (isImg) {
