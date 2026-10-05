@@ -909,6 +909,7 @@ export class LayersControl {
         bbox, point,
         layers, filter,
         rasters=false,
+        signal,
     }={}) {
         const map = this._map
         const canvas = map.getCanvas()
@@ -944,6 +945,7 @@ export class LayersControl {
                 let data
 
                 if (Array('wms').includes(params?.type)) {
+                    console.log('use signal for wms fetch')
                     try {
                         data = await fetchWMSData(params, {map, point})
                     } catch (error) {

@@ -432,10 +432,9 @@ export class SettingsControl {
     }
 
     clearPopup(name) {
-        const popup = this.popups[name]
-        if (!popup) return
+        if (!name) return
 
-        popup.remove()
+        this.popups[name]?.remove()
         this.popups[name] = null
 
         const map = this._map
@@ -496,7 +495,7 @@ export class SettingsControl {
         .setHTML(`<span class="break-all text-center rounded px-1! py-0! font-bold min-w-[50px] max-w-[100px]">${label}</span>`)
         .addTo(map)
 
-        this.configPopup(popup)
+        this.configPopup('tooltip', popup)
 
         return popup
     }
@@ -517,14 +516,15 @@ export class SettingsControl {
         .setHTML(``)
         .addTo(map)
 
+        
         const controller = utils.createAbortController({
             name: 'Info popup',
             events: [[popup, ['close']]]
         })
         const {signal} = controller
-
-        this.configPopup(popup)
-    
+        
+        this.configPopup('info', popup)
+        
         const content = document.createElement('div')
         content.classList.add('flex', 'flex-col', 'gap-3', 'p-1')
         content.setAttribute('x-data', `{featureIndex:0}`)
@@ -620,7 +620,8 @@ export class SettingsControl {
                         !Object.keys(this.popups).includes(l.source) 
                         && l.metadata?.params?.popups?.info
                     )
-                }).map(l => l.id)
+                }).map(l => l.id),
+                signal,
             }))
             // ?.filter(f => {
             //     return Object.keys(f.properties).find(i => i !== '__ms__')
@@ -730,7 +731,7 @@ export class SettingsControl {
         return popup
     }
 
-    configPopup(popup) {
+    configPopup(name, popup) {
         const map = this._map
 
         const container = popup._container
@@ -765,7 +766,7 @@ export class SettingsControl {
         const contentObserver = utils.observeElement({el:content, callback, attributeFilter: ['class']})
 
         popup.on('close', (e) => {
-            this.clearPopup(Object.keys(this.popups).find(i => this.popups[i] === popup))
+            this.clearPopup(name)
           
             map.off('move', callback)
             document.removeEventListener('darkModeToggled', callback)
