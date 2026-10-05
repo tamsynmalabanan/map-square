@@ -131,7 +131,8 @@ export default class Map extends maplibregl.Map {
         },
         placeSearch: {
           type: 'geojson',
-          data: turf.featureCollection([])
+          data: turf.featureCollection([]),
+          attribution: '&copy; OpenStreetMap Contributors',
         },
         tooltip: {
           type: 'geojson',
