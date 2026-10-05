@@ -5,7 +5,11 @@ import { parseJSONResponse } from "../utils"
 export const searchNominatimOSM = async (place, {signal}={}) => {
     if (typeof place != 'string') return
 
-    place = utils.removeWhitespace(place).toLowerCase()
+    place = [...new Set(
+        utils.removeWhitespace(place)
+        .toLowerCase()
+        .split(" "))
+    ].sort((a, b) => a.localeCompare(b)).join(" ")
     if (place.length < 3) return
 
     const url = utils.pushURLParams('https://nominatim.openstreetmap.org/search', {

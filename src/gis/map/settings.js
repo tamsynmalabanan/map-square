@@ -511,14 +511,14 @@ export class SettingsControl {
         const info = map.getTheme().settings.popups.info
         if (!info.active) return
 
-        const source = map.getSource('info')
+        const sourceId = 'info'
         const layersControl = map.getControls('layers')
 
         let lngLat = e.lngLat
 
         const popup = new maplibregl.Popup({closeButton: false})
         .setLngLat(lngLat)
-        // .setMaxWidth(`300px`)
+        .setMaxWidth(`300px`)
         .setHTML(``)
         .addTo(map)
 
@@ -531,12 +531,12 @@ export class SettingsControl {
         this.configPopup(popup)
     
         const content = document.createElement('div')
-        content.classList.add('flex', 'flex-col', 'gap-3')
+        content.classList.add('flex', 'flex-col', 'gap-3', 'p-1')
         content.setAttribute('x-data', `{featureIndex:0}`)
         popup._content.appendChild(content)
 
         const navBar = document.createElement('div')
-        navBar.classList.add('flex', 'flex-nowrap', 'justify-between', 'px-1', 'pt-1')
+        navBar.classList.add('flex', 'flex-nowrap', 'justify-between')
         content.appendChild(navBar)
 
         const popupLabel = document.createElement('span')
@@ -556,7 +556,7 @@ export class SettingsControl {
         const addrContainer = document.createElement('div')
 
         const coords = document.createElement('span')
-        coords.classList.add('flex', 'flex-nowrap', 'gap-2', 'px-2', 'pb-1')
+        coords.classList.add('flex', 'flex-nowrap', 'gap-2')
         content.appendChild(coords)
 
         const coordsIcon = document.createElement('span')
@@ -572,23 +572,17 @@ export class SettingsControl {
 
         const coordsFeature = await gisUtils.normalizeProperties(turf.point(coordsValues))
         layersControl.updateGeoJSONData({
-            sourceId: 'info',
+            sourceId,
             features: [coordsFeature],
         })
-        layersControl.addGeoJSONLayers('info', {
+        layersControl.addGeoJSONLayers(sourceId, {
             properties: layersControl.highlightedLayerProperties()
         })
 
-        const [coordsToggle, coordsMenu] = dropdown({
-            parent: coords,
-            title: 'Feature menu',
-            menuClassList: ['right-1']
-        }).children
-
         layersControl.configInfoFeatureMenu({
-            parent: coordsMenu,
+            parent: coords,
             feature: coordsFeature,
-            source,
+            sourceId,
         })
 
         if (info.data.osm) {
@@ -598,7 +592,7 @@ export class SettingsControl {
             
             if (addrFeature) {
                 content.insertBefore(addrContainer, coords)
-                addrContainer.classList.add('flex', 'flex-nowrap', 'gap-2', 'px-2')
+                addrContainer.classList.add('flex', 'flex-nowrap', 'gap-2')
 
                 const addrIcon = document.createElement('span')
                 addrIcon.innerText = '🏠'
@@ -610,21 +604,15 @@ export class SettingsControl {
                 addrContainer.appendChild(addrSpan)     
 
                 layersControl.updateGeoJSONData({
-                    sourceId: 'info',
+                    sourceId,
                     features: [addrFeature],
                     action: 'add',
                 })
 
-                const [addrToggle, addrMenu] = dropdown({
-                    parent: addrContainer,
-                    title: 'Feature menu',
-                    menuClassList: ['right-1']
-                }).children
-
                 layersControl.configInfoFeatureMenu({
-                    parent: addrMenu,
+                    parent: addrContainer,
                     feature: addrFeature,
-                    source,
+                    sourceId,
                 })
             }
         }
@@ -647,7 +635,7 @@ export class SettingsControl {
 
             if (features?.length) {
                 content.insertBefore(layersContainer, content.children[1])
-                layersContainer.classList.add('overflow-auto', 'max-h-[30vh]', 'ps-2')
+                layersContainer.classList.add('overflow-auto', 'max-h-[30vh]')
                 utils.appendBinding(layersContainer , ':class', `['scrollbar-thumb-'+color+'-600/25!']: true`)
 
                 // if (features.length > 1) {
@@ -668,12 +656,12 @@ export class SettingsControl {
                 // }
 
                 layersControl.updateGeoJSONData({
-                    sourceId: 'info', 
-                    features: features.map(f => turf.feature(f.geometry)),
+                    sourceId, 
+                    features: features.map(f => turf.feature(f.geometry, f.properties)),
                     action: 'add',
                 })
 
-                layersContainer.appendChild(layersControl.createPropertiesTable(features[0]))
+                layersContainer.appendChild(layersControl.createPropertiesTable(features[0], {sourceId}))
                 popup.setLngLat(turf.centroid(features[0]).geometry.coordinates)
 
                 const featuresTotal = features.length
@@ -681,6 +669,19 @@ export class SettingsControl {
                     const navBtns = document.createElement('div')
                     navBtns.classList.add('flex', 'flex-nowrap', 'gap-1')
                     navBar.insertBefore(navBtns, closeBtn)
+
+                    const nextFeature = (adj) => {
+                        const data = Alpine.$data(content)
+                        const adjustedIndex = data.featureIndex + adj
+                        data.featureIndex = adjustedIndex > featuresTotal-1 ? 0 : adjustedIndex < 0 ? featuresTotal-1 : adjustedIndex
+
+                        const feature = features[data.featureIndex]
+                        popup.setLngLat(turf.centroid(feature).geometry.coordinates)
+                        
+                        const show = Alpine.$data(layersContainer.firstElementChild).show ?? false
+                        layersContainer.innerHTML = ''
+                        layersContainer.appendChild(layersControl.createPropertiesTable(feature, {sourceId, show}))
+                    }
 
                     Object.entries({
                         previous: {
@@ -699,17 +700,21 @@ export class SettingsControl {
                             minimal: true,
                         }))
                         btn.addEventListener('click', async (e) => {
-                            const data = Alpine.$data(content)
-                            const adjustedIndex = data.featureIndex + (name === 'next' ? 1 : -1)
-                            data.featureIndex = adjustedIndex > featuresTotal-1 ? 0 : adjustedIndex < 0 ? featuresTotal-1 : adjustedIndex
-
-                            const feature = features[data.featureIndex]
-                            popup.setLngLat(turf.centroid(feature).geometry.coordinates)
-                            
-                            layersContainer.innerHTML = ''
-                            layersContainer.appendChild(layersControl.createPropertiesTable(feature))
+                            nextFeature(name === 'next' ? 1 : -1)
                         })
                         navBtns.appendChild(btn)
+                    })
+
+                    layersContainer.addEventListener('touchstart', (eStart) => {
+                        const startX = eStart.touches[0].clientX
+                        const touchendHandler = (eEnd) => {
+                            const diffX = eEnd.changedTouches[0].clientX - startX
+                            if (Math.abs(diffX) > 50) {
+                                nextFeature(diffX > 0 ? 1 : -1)
+                            }
+                            document.removeEventListener('touchend', touchendHandler)
+                        }
+                        document.addEventListener("touchend", touchendHandler)
                     })
 
                     const count = document.createElement('span')

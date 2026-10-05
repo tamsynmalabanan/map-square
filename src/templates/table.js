@@ -204,7 +204,9 @@ export default function table(options = {}) {
     filteredItems.forEach((item, index) => {
         const tRow = document.createElement('tr')
         tRow.classList.add('rounded', ...(index%2===0 ? ['bg-gray-200/50!','dark:bg-gray-950/50!'] : []))
-        utils.appendBinding(tRow, `:class`, `['border-b border-'+color+'-600/25!']: true`)
+        if (index+1 !== filteredItems.length) {
+            utils.appendBinding(tRow, `:class`, `['border-b border-'+color+'-600/25!']: true`)
+        }
         tbody.appendChild(tRow)
 
         keys.forEach(key => {

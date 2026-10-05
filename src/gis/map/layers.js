@@ -1,6 +1,7 @@
 import { indexOf } from "lodash"
 import button from "../../templates/button.js"
 import * as turf from '@turf/turf'
+import dropdown from "../../templates/dropdown.js";
 
 export class LayersControl {
     constructor(options) {
@@ -981,14 +982,17 @@ export class LayersControl {
         return uniqueFeatures
     }
 
-    getRawFeature(f) {
-        const id = gisUtils.getFeatureId(f)
-        const source = this._map.getStyle().sources[f.source]
+    getRawFeature(feature) {
+        let rawFeature = feature
+        
+        const id = gisUtils.getFeatureId(feature)
+        const source = this._map.getStyle().sources[feature.source]
+        
         if (id && source) {
-            return source.data.features.find(i => i.properties.__ms__.id === id)
-        } else {
-            return f
+            rawFeature = source.data.features.find(i => gisUtils.getFeatureId(i) === id)
         }
+
+        return rawFeature ?? feature
     }
 
     highlightedLayerProperties() {
@@ -1044,49 +1048,62 @@ export class LayersControl {
         map.fire('geojsonupdated', {sourceId, source, action, newData, features})
     }
 
-    configInfoFeatureMenu({parent, feature, source}={}) {
+    configInfoFeatureMenu({parent, feature, sourceId}={}) {
         const map = this._map
+        const source = map.getSource(sourceId ?? feature.source ?? feature.layer?.source)
 
-        const isVisible = () => {
-            return source._data.geojson.features.find(f => {
-                return gisUtils.getFeatureId(f) === gisUtils.getFeatureId(feature)
-            }) ? true : false
-        }
+        const featureId = gisUtils.getFeatureId(feature)
+        const rawFeature = this.getRawFeature(feature)
 
-        if (source.id === 'info') {
+        const [toggle, menu] = dropdown({
+            parent,
+            title: 'Feature menu',
+            menuClassList: ['right-1']
+        }).children
+
+        if (source && sourceId === 'info') {
+            const isVisible = () => {
+                return source._data.geojson.features.find(f => {
+                    return gisUtils.getFeatureId(f) === featureId
+                }) ? true : false
+            }
+
             const visibility = document.createElement('button')
             visibility.setAttribute('x-data', `{visible: ${isVisible()}}`)
             visibility.setAttribute('x-text', `visible ? "Hide feature" : "Show feature"`)
             visibility.addEventListener('click', async (e) => {
                 this.updateGeoJSONData({
-                    sourceId: source.id,
-                    features: [feature],
+                    sourceId,
+                    features: [rawFeature],
                     action: !Alpine.$data(visibility).visible ? 'add' : 'remove',
                 })
             })
             map.on('geojsonupdated', (e) => {
-                if (e.sourceId !== source.id) return
+                if (e.sourceId !== sourceId) return
                 Alpine.$data(visibility).visible = isVisible()
             })
-            parent.appendChild(visibility)
+            menu.appendChild(visibility)
         }
 
         const zoomIn = document.createElement('button')
         zoomIn.innerText = 'Zoom to feature'
         zoomIn.setAttribute('x-bind:disabled', 'locked')
         zoomIn.addEventListener('click', async () => {
-            this.zoomToFeature(feature)
+            this.zoomToFeature(rawFeature)
         })
-        parent.appendChild(zoomIn)
+        menu.appendChild(zoomIn)
     }
 
-    createPropertiesTable(feature) {
+    createPropertiesTable(feature, {
+        sourceId,
+        show = true,
+    }={}) {
         const label = gisUtils.getFeatureLabel(feature)
         
         const tableEl = document.createElement('table')
+        tableEl.setAttribute('x-data', `{show:${show}}`)
         tableEl.classList.add(
             'table-auto',
-            // 'px-3', 'pb-3',
             'w-full', 
         )
 
@@ -1096,32 +1113,50 @@ export class LayersControl {
         tableEl.appendChild(thead)
 
         const tbody = document.createElement('tbody')
+        tbody.setAttribute('x-show', 'show')
         tableEl.appendChild(tbody)
 
         const tHeadRow = document.createElement('tr')
-        utils.appendBinding(tHeadRow, `:class`, `['border-b border-'+color+'-600/25!']: true`)
         thead.appendChild(tHeadRow)
         
         const tHeadTd = document.createElement('td')
-        tHeadTd.classList.add('cursor-pointer', 'p-2')
+        tHeadTd.classList.add('cursor-pointer')
         tHeadTd.setAttribute('colspan', '2')
         tHeadRow.appendChild(tHeadTd)
 
         const tdContent = document.createElement('div')
-        tdContent.classList.add('flex', 'flex-nowrap', 'justify-between',  'gap-1', 'font-bold')
+        tdContent.classList.add('flex', 'flex-nowrap', 'justify-between',  'gap-2')
         tHeadTd.appendChild(tdContent)
+        
+        const icon = document.createElement('span')
+        icon.classList.add('self-center')
+        icon.innerText = '📚'
+        tdContent.appendChild(icon)
         
         const titleEl = document.createElement('span')
         titleEl.classList.add('self-center', 'grow')
         titleEl.innerText = label
         tdContent.appendChild(titleEl)
+        
+        const collapseBtn = utils.strToEl(button({
+            title: 'Toggle properties table',
+            icon: svg.chevronUpMini,
+            attrs: `@click="show = !show" x-html="show ? svg.chevronUpMini : svg.chevronDownMini"`,
+            classStr: 'p-0! size-[15px] opacity-25! hover:opacity-100!',
+        }))
+        tdContent.appendChild(collapseBtn)
 
-        Object.entries(feature.properties).forEach(([key, value], index) => {
-            if (key === '__ms__') return
-
+        this.configInfoFeatureMenu({
+            parent: tdContent,
+            feature,
+            sourceId,
+        })
+        
+        const properties = Object.entries(feature.properties).filter(i => i[0] !== '__ms__')
+        properties.forEach(([key, value], index) => {
             const tRow = document.createElement('tr')
             tRow.classList.add('rounded', ...(index%2===0 ? ['bg-gray-200/50!','dark:bg-gray-950/50!'] : []))
-            utils.appendBinding(tRow, `:class`, `['border-b border-'+color+'-600/25!']: true`)
+            utils.appendBinding(tRow, `:class`, `['border-t border-'+color+'-600/25!']: true`)
             tbody.appendChild(tRow)
 
             const keyTd = document.createElement('td')
@@ -1130,12 +1165,10 @@ export class LayersControl {
             tRow.appendChild(keyTd)
 
             const valueTd = document.createElement('td')
-            valueTd.classList.add('p-2', 'break-all')
+            valueTd.classList.add('p-2', 'break-normal')
             valueTd.innerText = value
             tRow.appendChild(valueTd)
         })
-
-        // add geometry row
 
         return tableEl
     }
