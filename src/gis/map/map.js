@@ -405,8 +405,7 @@ export default class Map extends maplibregl.Map {
       
       if (!this.getControls('layers').getAllSystemLayerNames().find(i => layerId.startsWith(i))) {
         const sourceId = layer.source
-        const sourceLayer = this.getConfig().themes.flatMap(i => i.layers).find(i => i.source === sourceId)
-        if (!sourceLayer) {
+        if (!this.getConfig().themes.find(i => i.layers.find(j => j.source === sourceId))) {
           this.removeSource(sourceId)
         }
       }

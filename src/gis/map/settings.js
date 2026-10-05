@@ -376,8 +376,8 @@ export class SettingsControl {
                 clearTimeout(sourceTimer)
                 sourceTimer = setTimeout(async () => {
                     const sources = Object.fromEntries(Object.entries(structuredClone(map.getStyle().sources)).map(([id, source]) => {
-                        if (source.metadata?.params?.url && source.data) {
-                            delete source.data
+                        if ('data' in source && (source.metadata?.params?.url || systemLayers.includes(id))) {
+                            source.data = turf.featureCollection([])
                         }
                         return [id, source]
                     }))
@@ -394,7 +394,7 @@ export class SettingsControl {
                 
                 clearTimeout(layerTimer)
                 layerTimer = setTimeout(async () => {
-                    const layers = map.getStyle().layers
+                    const layers = structuredClone(map.getStyle().layers).filter(i => !systemLayers.find(j => i.id.startsWith(j)))
                     await this.updateConfig(['layers'], layers, {
                         themeId: map.getTheme().id,
                     })
