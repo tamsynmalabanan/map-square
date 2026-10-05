@@ -461,7 +461,7 @@ export class SettingsControl {
             const source = style.sources[sourceId]
             return (
                 Array('geojson', 'vector').includes(source?.type)
-                && l.metadata?.params?.tooltip?.active
+                && l.metadata?.params?.popups?.tooltip
                 && source?.data?.features?.length
                 && !Object.keys(this.popups).includes(l.source)
             )
@@ -476,17 +476,12 @@ export class SettingsControl {
         })
         if (!features?.length) return
 
-        let feature
-        let label
-
-        for (const f of features) {
-            label = gisUtils.getFeatureLabel(f)
-            if (!label) continue
-            feature = layersControl.getRawFeature(f)
-            break
-        }
-
-         if (!label) return
+        const feature = layersControl.getRawFeature(features[0])
+        const label = (
+            gisUtils.getFeatureLabel(features[0]) 
+            || features[0].layer?.metadata?.params?.title 
+            || feature.geometry.type
+        )
 
         layersControl.updateGeoJSONData({
             sourceId: 'tooltip',
@@ -514,7 +509,7 @@ export class SettingsControl {
         const sourceId = 'info'
         const layersControl = map.getControls('layers')
 
-        let lngLat = e.lngLat
+        const lngLat = e.lngLat
 
         const popup = new maplibregl.Popup({closeButton: false})
         .setLngLat(lngLat)
@@ -579,7 +574,7 @@ export class SettingsControl {
             properties: layersControl.highlightedLayerProperties()
         })
 
-        layersControl.configInfoFeatureMenu({
+        layersControl.configFeatureMenu({
             parent: coords,
             feature: coordsFeature,
             sourceId,
@@ -609,7 +604,7 @@ export class SettingsControl {
                     action: 'add',
                 })
 
-                layersControl.configInfoFeatureMenu({
+                layersControl.configFeatureMenu({
                     parent: addrContainer,
                     feature: addrFeature,
                     sourceId,
@@ -623,12 +618,14 @@ export class SettingsControl {
                 layers: map.getStyle().layers.filter(l =>  {
                     return (
                         !Object.keys(this.popups).includes(l.source) 
-                        && l.metadata?.params?.info?.active
+                        && l.metadata?.params?.popups?.info
                     )
                 }).map(l => l.id)
-            }))?.filter(f => {
-                return Object.keys(f.properties).find(i => i !== '__ms__')
-            }).map(f => {
+            }))
+            // ?.filter(f => {
+            //     return Object.keys(f.properties).find(i => i !== '__ms__')
+            // })
+            .map(f => {
                 f.geometry = layersControl.getRawFeature(f).geometry
                 return f
             })
@@ -661,8 +658,15 @@ export class SettingsControl {
                     action: 'add',
                 })
 
-                layersContainer.appendChild(layersControl.createPropertiesTable(features[0], {sourceId}))
-                popup.setLngLat(turf.centroid(features[0]).geometry.coordinates)
+                const updateTable = (feature, show=true) => {
+                    layersContainer.appendChild(layersControl.createPropertiesTable(feature, {sourceId, show}))
+                    if (turf.booleanIntersects(turf.point(
+                        ['lng', 'lat'].map(i => popup.getLngLat()[i])
+                    ), feature)) return
+                    popup.setLngLat(turf.pointOnFeature(feature).geometry.coordinates)
+                }
+
+                updateTable(features[0])
 
                 const featuresTotal = features.length
                 if (featuresTotal > 1) {
@@ -675,12 +679,10 @@ export class SettingsControl {
                         const adjustedIndex = data.featureIndex + adj
                         data.featureIndex = adjustedIndex > featuresTotal-1 ? 0 : adjustedIndex < 0 ? featuresTotal-1 : adjustedIndex
 
-                        const feature = features[data.featureIndex]
-                        popup.setLngLat(turf.centroid(feature).geometry.coordinates)
-                        
                         const show = Alpine.$data(layersContainer.firstElementChild).show ?? false
                         layersContainer.innerHTML = ''
-                        layersContainer.appendChild(layersControl.createPropertiesTable(feature, {sourceId, show}))
+                        
+                        updateTable(features[data.featureIndex], show)
                     }
 
                     Object.entries({

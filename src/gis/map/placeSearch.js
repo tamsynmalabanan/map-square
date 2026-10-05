@@ -101,6 +101,7 @@ export default class PlaceSearchControl {
                 metadata: {
                     name: 'default',
                     params: {
+                        title: 'Place search',
                         style: 'default',
                         styles: {
                             default: [

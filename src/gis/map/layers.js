@@ -629,33 +629,31 @@ export class LayersControl {
         return map.getLayer(layer)
     }
 
-    async addLayerFromParams(properties, {sourceId}={}) {
-        const params = (properties.metadata ??= {}).params = this.normalizeLayerParams(properties.metadata?.params ?? {})
+    async addLayerFromParams(params, {sourceId}={}) {
+        const normalParams = this.normalizeLayerParams(structuredClone(params ?? {}))
 
         if (!sourceId) {
-            sourceId = await utils.hashJSON(params) 
+            sourceId = await utils.hashJSON(normalParams) 
         }
 
-        if (Array('xyz', 'wms').includes(params.type)) {
-            this.addRasterLayer(sourceId, properties)
+        const properties = {metadata: {params: normalParams}}
+
+        if (Array('xyz', 'wms').includes(normalParams.type)) {
+            this.addRasterLayer(sourceId, {properties})
         }
         
         if (Array('wfs').includes(params.type)) {
-            this.addGeoJSONLayers(sourceId, {properties: structuredClone(properties)})
+            this.addGeoJSONLayers(sourceId, {properties})
         }
     }
 
     addGeoJSONLayers(sourceId, {beforeId, properties={}}={}) {
         const map = this._map
         
-        let source = map.getSource(sourceId)
-        if (!source) {
-            if (properties) {
-                source = this.getOrCreateSource(sourceId, {properties})
-            } else {
-                return
-            }
-        }
+        const source = (
+            map.getSource(sourceId) 
+            ?? this.getOrCreateSource(sourceId, {properties})
+        )
         
         const metadata = properties.metadata ??= {}
         const name = metadata.name ??= utils.randomId()
@@ -717,11 +715,9 @@ export class LayersControl {
                         groupId,
                         typeId,
                         params: {
-                            tooltip: {
-                                active: true,
-                            },
-                            info: {
-                                active: true,
+                            popups: {
+                                tooltip: true,
+                                info: true,
                             },
                             ...source.metadata?.params,
                             ...properties.metadata.params,
@@ -858,14 +854,9 @@ export class LayersControl {
         return map.getSource(id)
     }
 
-    createGeoJSONSource(id, {properties={}}={}) {
+    createGeoJSONSource(id, {properties={}, data=turf.featureCollection([])}={}) {
         const map = this._map
-
-        map.addSource(id, {
-            type: "geojson",
-            data: turf.featureCollection([])
-        })
-     
+        map.addSource(id, {type: "geojson", data})
         return map.getSource(id)
     }
 
@@ -1048,7 +1039,7 @@ export class LayersControl {
         map.fire('geojsonupdated', {sourceId, source, action, newData, features})
     }
 
-    configInfoFeatureMenu({parent, feature, sourceId}={}) {
+    configFeatureMenu({parent, feature, sourceId}={}) {
         const map = this._map
         const source = map.getSource(sourceId ?? feature.source ?? feature.layer?.source)
 
@@ -1092,13 +1083,39 @@ export class LayersControl {
             this.zoomToFeature(rawFeature)
         })
         menu.appendChild(zoomIn)
+
+        if (!map.isStaticConfig()) {
+            const addNewLayer = document.createElement('button')
+            addNewLayer.innerText = 'Add as new layer'
+            addNewLayer.addEventListener('click', async () => {
+                const source = this.getOrCreateSource(utils.randomId(), {
+                    properties: {metadata: {params: {
+                        title: (
+                            gisUtils.getFeatureLabel(feature) 
+                            || feature.layer?.metadata?.params?.title 
+                            || feature.geometry?.type 
+                            || 'Untitled layer'
+                        )
+                    }}}
+                })
+                this.updateGeoJSONData({
+                    sourceId: source.id,
+                    features: [rawFeature],
+                })
+                this.addGeoJSONLayers(source.id)
+            })
+            menu.appendChild(addNewLayer)
+        }
     }
 
     createPropertiesTable(feature, {
         sourceId,
         show = true,
     }={}) {
-        const label = gisUtils.getFeatureLabel(feature)
+        const label = [...new Set([
+            feature.layer?.metadata?.params?.title,
+            gisUtils.getFeatureLabel(feature) || feature.geometry?.type 
+        ].filter(Boolean))].join(' - ')
         
         const tableEl = document.createElement('table')
         tableEl.setAttribute('x-data', `{show:${show}}`)
@@ -1146,7 +1163,7 @@ export class LayersControl {
         }))
         tdContent.appendChild(collapseBtn)
 
-        this.configInfoFeatureMenu({
+        this.configFeatureMenu({
             parent: tdContent,
             feature,
             sourceId,

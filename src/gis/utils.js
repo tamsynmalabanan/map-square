@@ -163,15 +163,14 @@ export const fetchProj4Def = async (srid) => {
 
 export const getFeatureLabel = (f) => {
     const properties = Object.keys(f.properties)
-    return f.properties[
-        f.layer?.metadata?.label
-        || properties.find(i => Array(
+    const label = f.properties[
+        properties.find(i => Array(
             'display_name',
             'name:en', 
             'name', 
             'title', 
-            'label', 
+            'label',
         ).find(j => i.includes(j))) 
-        || properties.find(i => i !== '__ms__')
-    ]
+    ] ?? ''
+    return String(label)
 }
