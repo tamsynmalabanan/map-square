@@ -94,14 +94,16 @@ export const normalizeGeoJSON = async (geojson) => {
 export const normalizeProperties = async (feature) => {
     const {geometry, properties} = feature
 
+    if ('__ms__' in properties) {
+        delete properties.__ms__
+    }
+
     const normalProperties = {}
 
     const handler = (properties, prefix='') => {
         prefix = prefix.trim()
 
         Object.entries(properties).forEach(([property, value]) => {
-            if (property === '__ms__') return
-
             const name = prefix ? `${prefix}_${property}` : property
             
             if (Array.isArray(value) && !value.find(i => typeof i === 'object')) {
@@ -117,7 +119,8 @@ export const normalizeProperties = async (feature) => {
     handler(properties ?? {})    
 
     normalProperties.__ms__ = {
-        id: await utils.hashJSON(turf.feature(geometry, normalProperties))
+        id: utils.randomId(),
+        hash: await utils.hashJSON(turf.feature(geometry, normalProperties))
     }
 
     feature.properties = normalProperties
@@ -162,15 +165,15 @@ export const fetchProj4Def = async (srid) => {
 }
 
 export const getFeatureLabel = (f) => {
-    const properties = Object.keys(f.properties)
-    const label = f.properties[
-        properties.find(i => Array(
+    const property = Object.keys(f.properties).find(key => {
+        return f.properties[key] && Array(
             'display_name',
             'name:en', 
             'name', 
             'title', 
             'label',
-        ).find(j => i.includes(j))) 
-    ] ?? ''
+        ).find(name => name === key || key.includes(name)) 
+    })
+    const label = f.properties[property] ?? ''
     return String(label)
 }

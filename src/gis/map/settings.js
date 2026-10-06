@@ -633,7 +633,6 @@ export class SettingsControl {
 
             if (features?.length) {
                 content.insertBefore(layersContainer, content.children[1])
-                layersContainer.classList.add('overflow-auto', 'max-h-[30vh]')
                 utils.appendBinding(layersContainer , ':class', `['scrollbar-thumb-'+color+'-600/25!']: true`)
 
                 // if (features.length > 1) {
@@ -660,7 +659,12 @@ export class SettingsControl {
                 })
 
                 const updateTable = (feature, show=true) => {
-                    layersContainer.appendChild(layersControl.createPropertiesTable(feature, {sourceId, show}))
+                    layersControl.createPropertiesTable({
+                        feature, 
+                        parent:layersContainer, 
+                        sourceId, 
+                        show
+                    })
                     if (turf.booleanIntersects(turf.point(
                         ['lng', 'lat'].map(i => popup.getLngLat()[i])
                     ), feature)) return

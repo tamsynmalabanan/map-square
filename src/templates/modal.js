@@ -89,7 +89,7 @@ export default ({
               <div
                 :id="$id('modal', 'content')" 
                 :class="{['scrollbar-thumb-'+color+'-600/25!']: true}"
-                class="flex flex-col grow! overflow-auto"
+                class="flex grow! overflow-auto"
               >${content}</div>
             </div>
           </div>

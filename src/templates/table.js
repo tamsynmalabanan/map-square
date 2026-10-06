@@ -30,12 +30,11 @@ export default function table(options = {}) {
     }
 
     const container = document.createElement('div')
-    container.classList.add('size-full!', 'flex', 'flex-col', 'gap-5', 'p-3')
+    container.classList.add('grow!', 'flex', 'flex-col', 'gap-5', 'p-3')
     parent.appendChild(container)
 
     const navBar = document.createElement('div')
     navBar.classList.add('flex', 'justify-between', 'gap-5', 'pb-3')
-    utils.appendBinding(navBar, `:class`, `['border-b border-'+color+'-600/25!']: true`)
     container.appendChild(navBar)
 
     const menuContainer = document.createElement('div')

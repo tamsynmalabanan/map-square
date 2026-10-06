@@ -854,9 +854,9 @@ export class LayersControl {
         return map.getSource(id)
     }
 
-    createGeoJSONSource(id, {properties={}, data=turf.featureCollection([])}={}) {
+    createGeoJSONSource(id, {properties={}}={}) {
         const map = this._map
-        map.addSource(id, {type: "geojson", data})
+        map.addSource(id, {type: "geojson", data: turf.featureCollection([])})
         return map.getSource(id)
     }
 
@@ -1102,7 +1102,7 @@ export class LayersControl {
                 })
                 this.updateGeoJSONData({
                     sourceId: source.id,
-                    features: [rawFeature],
+                    features: [await gisUtils.normalizeProperties(rawFeature)],
                 })
                 this.addGeoJSONLayers(source.id)
             })
@@ -1110,7 +1110,9 @@ export class LayersControl {
         }
     }
 
-    createPropertiesTable(feature, {
+    createPropertiesTable({
+        feature,
+        parent,
         sourceId,
         show = true,
     }={}) {
@@ -1118,58 +1120,59 @@ export class LayersControl {
             feature.layer?.metadata?.params?.title,
             gisUtils.getFeatureLabel(feature) || feature.geometry?.type 
         ].filter(Boolean))].join(' - ')
-        
-        const tableEl = document.createElement('table')
-        tableEl.setAttribute('x-data', `{show:${show}}`)
-        tableEl.classList.add(
-            'table-auto',
-            'w-full', 
-        )
 
-        const thead = document.createElement('thead')
-        thead.classList.add('sticky', 'top-0')
-        utils.appendBinding(thead, ':class', `['${utils.dynamicBgExp()}']: true`)
-        tableEl.appendChild(thead)
+        const container = document.createElement('div')
+        container.setAttribute('x-data', `{show:${show}}`)
+        container.classList.add('flex', 'flex-col')
+        parent.appendChild(container)
 
-        const tbody = document.createElement('tbody')
-        tbody.setAttribute('x-show', 'show')
-        tableEl.appendChild(tbody)
-
-        const tHeadRow = document.createElement('tr')
-        thead.appendChild(tHeadRow)
-        
-        const tHeadTd = document.createElement('td')
-        tHeadTd.classList.add('cursor-pointer')
-        tHeadTd.setAttribute('colspan', '2')
-        tHeadRow.appendChild(tHeadTd)
-
-        const tdContent = document.createElement('div')
-        tdContent.classList.add('flex', 'flex-nowrap', 'justify-between',  'gap-2')
-        tHeadTd.appendChild(tdContent)
+        const header = document.createElement('div')
+        header.classList.add('flex', 'flex-nowrap', 'justify-between',  'gap-2')
+        container.appendChild(header)
         
         const icon = document.createElement('span')
         icon.classList.add('self-center')
         icon.innerText = '📚'
-        tdContent.appendChild(icon)
+        header.appendChild(icon)
         
         const titleEl = document.createElement('span')
         titleEl.classList.add('self-center', 'grow')
         titleEl.innerText = label
-        tdContent.appendChild(titleEl)
+        header.appendChild(titleEl)
         
+        const btns = document.createElement('div')
+        btns.classList.add('flex', 'flex-nowrap', 'gap-1')
+        header.appendChild(btns)
+
         const collapseBtn = utils.strToEl(button({
             title: 'Toggle properties table',
             icon: svg.chevronUpMini,
             attrs: `@click="show = !show" x-html="show ? svg.chevronUpMini : svg.chevronDownMini"`,
-            classStr: 'p-0! size-[15px] opacity-25! hover:opacity-100!',
+            classStr: 'p-0! w-[15px]! h-[15px]! opacity-25! hover:opacity-100! grow!',
         }))
-        tdContent.appendChild(collapseBtn)
+        btns.appendChild(collapseBtn)
 
         this.configFeatureMenu({
-            parent: tdContent,
+            parent: btns,
             feature,
             sourceId,
         })
+
+        const tableContainer = document.createElement('div')
+        tableContainer.classList.add('overflow-auto', 'max-h-[25vh]')
+        container.appendChild(tableContainer)
+
+        const tableEl = document.createElement('table')
+        tableEl.setAttribute('x-show', 'show')
+        tableEl.classList.add(
+            'table-auto',
+            'w-full', 
+            'h-[25vh]',
+        )
+        tableContainer.appendChild(tableEl)
+
+        const tbody = document.createElement('tbody')
+        tableEl.appendChild(tbody)
         
         const properties = Object.entries(feature.properties).filter(i => i[0] !== '__ms__')
         properties.forEach(([key, value], index) => {
@@ -1189,7 +1192,7 @@ export class LayersControl {
             tRow.appendChild(valueTd)
         })
 
-        return tableEl
+        return container
     }
 
     zoomToFeature(feature) {
