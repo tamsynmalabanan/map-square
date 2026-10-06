@@ -516,7 +516,6 @@ export class SettingsControl {
         .setHTML(``)
         .addTo(map)
 
-        
         const controller = utils.createAbortController({
             name: 'Info popup',
             events: [[popup, ['close']]]
@@ -717,7 +716,7 @@ export class SettingsControl {
                         const touchendHandler = (eEnd) => {
                             const diffX = eEnd.changedTouches[0].clientX - startX
                             if (Math.abs(diffX) > 50) {
-                                nextFeature(diffX > 0 ? 1 : -1)
+                                nextFeature(diffX < 0 ? 1 : -1)
                             }
                             document.removeEventListener('touchend', touchendHandler)
                         }
