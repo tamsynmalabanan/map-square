@@ -4,7 +4,7 @@ import button from "../../templates/button.js";
 import dropdown from "../../templates/dropdown.js";
 import menu from '../../templates/menu.js';
 import modal from '../../templates/modal.js'; 
-import _, { countBy } from 'lodash';
+import _, { countBy, includes } from 'lodash';
 import * as turf from '@turf/turf'
 
 export class SettingsControl {
@@ -496,6 +496,23 @@ export class SettingsControl {
         .addTo(map)
 
         this.configPopup('tooltip', popup)
+
+        let timer
+        const handler = (e) => {
+            clearTimeout(timer)
+            timer = setTimeout(() => {
+                const elements = document.elementsFromPoint(CURSOR.x, CURSOR.y)
+                const inCanvas = elements.find(el => el === map.getCanvas())
+                const offMap = elements.find(el => el.matches('.maplibregl-ctrl, .maplibregl-popup-content'))
+                if (inCanvas && !offMap) return 
+                popup.remove()
+            }, 100)
+        }
+
+        document.addEventListener('mousemove', handler)
+        popup.on('close', () => {
+            document.removeEventListener('mousemove', handler)
+        })
 
         return popup
     }
