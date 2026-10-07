@@ -2,6 +2,7 @@ import { indexOf } from "lodash"
 import button from "../../templates/button.js"
 import * as turf from '@turf/turf'
 import dropdown from "../../templates/dropdown.js";
+import Alpine from "alpinejs";
 
 export class LayersControl {
     constructor(options) {
@@ -1041,6 +1042,17 @@ export class LayersControl {
         map.fire('geojsonupdated', {sourceId, source, action, newData, features})
     }
 
+    findFeatureById(sourceId, featureId) {
+        const map = this._map
+        const source = map.getSource(sourceId)
+        if (source?.type !== 'geojson') return
+        
+        const features = source._data?.geojson?.features
+        if (!features?.length) return
+
+        return features.find(f => gisUtils.getFeatureId(f) === featureId)
+    }
+
     configFeatureMenu({parent, feature, sourceId}={}) {
         const map = this._map
         const source = map.getSource(sourceId ?? feature.source ?? feature.layer?.source)
@@ -1054,60 +1066,209 @@ export class LayersControl {
             menuClassList: ['right-1']
         }).children
 
-        if (source && sourceId === 'info') {
-            const isVisible = () => {
-                return source._data.geojson.features.find(f => {
-                    return gisUtils.getFeatureId(f) === featureId
-                }) ? true : false
+        const featureLabel = (
+            gisUtils.getFeatureLabel(feature) 
+            || feature.layer?.metadata?.params?.title 
+            || feature.geometry?.type 
+        )
+
+        const btns = Array(
+            {
+                title: 'Interactions',
+                options: [
+                    ...(source && sourceId === 'info' ? [
+                        {
+                            innerText: '',
+                            attrs: {
+                                'x-data': `{visible: ${
+                                    this.findFeatureById(
+                                        sourceId, 
+                                        featureId
+                                    ) ? true : false
+                                }}`,
+                                'x-text': `visible ? "Hide feature" : "Show feature"`
+                            },
+                            events: {
+                                'click': (e) => {
+                                    this.updateGeoJSONData({
+                                        sourceId,
+                                        features: [rawFeature],
+                                        action: !Alpine.$data(e.target).visible ? 'add' : 'remove',
+                                    })
+                                }
+                            },
+                            init: (btn) => {
+                                map.on('geojsonupdated', (e) => {
+                                    if (e.sourceId !== sourceId) return
+                                    Alpine.$data(btn).visible = (
+                                        this.findFeatureById(
+                                            sourceId, 
+                                            featureId
+                                        ) ? true : false
+                                    )
+                                })
+                            }
+                        }
+                    ] : []),
+                    {
+                        innerText: 'Zoom to feature',
+                        attrs: {
+                            'x-bind:disabled': 'locked',
+                        },
+                        events: {
+                            'click': () => this.zoomToFeature(rawFeature)
+                        }
+                    },
+                ],
+            },
+            {
+                title: 'GeoJSON options',
+                options: [
+                    {
+                        innerText: 'View feature',
+                        events: {
+                            'click': (e) => {
+                                const jsonString = JSON.stringify(rawFeature, null, 2)
+                                const blob = new Blob([jsonString], { type: "application/json" })
+                                const url = URL.createObjectURL(blob)
+                                window.open(url, "_blank")
+                            }
+                        }
+                    },
+                    {
+                        innerText: 'Copy feature',
+                        events: {
+                            'click': () => {
+                                navigator.clipboard.writeText(JSON.stringify(rawFeature))
+                            }
+                        }
+                    },
+                    {
+                        innerText: 'Download GeoJSON',
+                        events: {
+                            'click': () => {
+                                const blob = new Blob([JSON.stringify(
+                                    turf.featureCollection([rawFeature]), 
+                                    null, 2
+                                )], {type: "application/json"})
+                                const url = URL.createObjectURL(blob)
+                                const a = document.createElement("a")
+                                a.href = url
+                                a.download = featureLabel
+                                document.body.appendChild(a)
+                                a.click()
+                                document.body.removeChild(a)
+                                URL.revokeObjectURL(url)
+                            }
+                        }
+                    },
+                ]
+            },
+            {
+                title: 'Export options',
+                options: [
+                    ...(!map.isStaticConfig() ? [
+                        {
+                            innerText: 'Add as new layer',
+                            events: {
+                                'click': async () => {
+                                    const newSource = this.getOrCreateSource(utils.randomId(), {
+                                        properties: {metadata: {params: {
+                                            title: featureLabel || 'Untitled layer'
+                                        }}}
+                                    })
+                                    this.updateGeoJSONData({
+                                        sourceId: newSource.id,
+                                        features: [await gisUtils.normalizeProperties(rawFeature)],
+                                    })
+                                    this.addGeoJSONLayers(newSource.id)
+                                }
+                            }
+                        },
+                        {
+                            innerText: 'Add to existing layer',
+                            init: (btn) => {
+                                btn.addEventListener('click', (e) => {
+                                    e.preventDefault()
+                                    e.stopPropagation()
+                                })
+
+                                const [toggle, menu] = dropdown({
+                                    parent: btn,
+                                    title: 'Map geojson layers',
+                                    menuClassList: ['right-1']
+                                }).children
+
+                                toggle.addEventListener('click', (e) => {
+                                    const collapsed = Alpine.$data(toggle.parentElement).showDropdown
+                                    if (collapsed) return
+
+                                    menu.innerHTML = ''
+
+                                    const layers = []
+                                    map.getStyle().layers.forEach(l => {
+                                        if (this.getAllSystemLayerNames().find(i => i === l.source)) return
+                                        
+                                        const source = map.getSource(l.source)
+                                        if (source?.type !== 'geojson') return
+
+                                        if (layers.find(i => i.metadata.layerName === l.metadata.layerName)) return
+
+                                        layers.push(l)
+                                    })
+                                    
+                                    layers.filter(Boolean).reverse().forEach(l => {
+                                        const layerBtn = document.createElement('button')
+                                        layerBtn.innerText = l.metadata.params.title
+                                        layerBtn.addEventListener('click', async (e) => {
+                                            this.updateGeoJSONData({
+                                                sourceId: l.source,
+                                                features: [await gisUtils.normalizeProperties(rawFeature)],
+                                                action: 'add',
+                                            })
+                                        })
+                                        menu.appendChild(layerBtn)                              
+                                    })
+                                })
+                            }
+                        },
+                    ] : []),
+                ],
             }
+        )
+        
+        btns.forEach((group, index) => {
+            // const groupHeader = document.createElement('span')
+            // groupHeader.innerText = group.title
+            // menu.appendChild(groupHeader)
 
-            const visibility = document.createElement('button')
-            visibility.setAttribute('x-data', `{visible: ${isVisible()}}`)
-            visibility.setAttribute('x-text', `visible ? "Hide feature" : "Show feature"`)
-            visibility.addEventListener('click', async (e) => {
-                this.updateGeoJSONData({
-                    sourceId,
-                    features: [rawFeature],
-                    action: !Alpine.$data(visibility).visible ? 'add' : 'remove',
+            group.options.forEach(params => {
+                const btn = document.createElement('button')
+                btn.classList.add('flex', 'flex-nowrap', 'justify-between', 'gap-5')
+                menu.appendChild(btn)
+
+                Object.entries(params.attrs ?? {}).forEach(([key, value]) => {
+                    btn.setAttribute(key, value)
                 })
-            })
-            map.on('geojsonupdated', (e) => {
-                if (e.sourceId !== sourceId) return
-                Alpine.$data(visibility).visible = isVisible()
-            })
-            menu.appendChild(visibility)
-        }
+                
+                Object.entries(params.events ?? {}).forEach(([key, value]) => {
+                    btn.addEventListener(key, value)
+                })
+                
+                if (params.innerText) {
+                    const label = document.createElement('span')
+                    label.innerText = params.innerText
+                    btn.appendChild(label)
+                }
 
-        const zoomIn = document.createElement('button')
-        zoomIn.innerText = 'Zoom to feature'
-        zoomIn.setAttribute('x-bind:disabled', 'locked')
-        zoomIn.addEventListener('click', async () => {
-            this.zoomToFeature(rawFeature)
+                params.init?.(btn)
+            })
+
+            if (index === btns.length-1) return
+
+            const hr = document.createElement('hr')
+            menu.appendChild(hr)
         })
-        menu.appendChild(zoomIn)
-
-        if (!map.isStaticConfig()) {
-            const addNewLayer = document.createElement('button')
-            addNewLayer.innerText = 'Add as new layer'
-            addNewLayer.addEventListener('click', async () => {
-                const source = this.getOrCreateSource(utils.randomId(), {
-                    properties: {metadata: {params: {
-                        title: (
-                            gisUtils.getFeatureLabel(feature) 
-                            || feature.layer?.metadata?.params?.title 
-                            || feature.geometry?.type 
-                            || 'Untitled layer'
-                        )
-                    }}}
-                })
-                this.updateGeoJSONData({
-                    sourceId: source.id,
-                    features: [await gisUtils.normalizeProperties(rawFeature)],
-                })
-                this.addGeoJSONLayers(source.id)
-            })
-            menu.appendChild(addNewLayer)
-        }
     }
 
     createPropertiesTable({

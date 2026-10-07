@@ -38,7 +38,7 @@ export default ({
         'z-5!', 
         'w-max',
         'right-0',
-        'flex', 'flex-col', 'gap-1', 
+        'flex', 'flex-col',
         'text-xs', 'justify-end', 
         'cursor-pointer', 
         'rounded', 'shadow-lg',
@@ -50,6 +50,9 @@ export default ({
         `[&>*:first-child]:rounded-t!`,
         `[&>*:last-child]:rounded-b!`,
         `[&>*]:disabled:text-gray-600/100!`,
+        `[&>hr]:p-0!`,
+        `[&>hr]:border-t-1!`,
+        `[&>hr]:border-gray-600/25!`,
         ...menuClassList
     )
     menu.setAttribute('@click.outside', 'showDropdown = false')
