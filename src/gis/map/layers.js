@@ -661,7 +661,7 @@ export class LayersControl {
         const layerName = metadata.layerName ??= `${sourceId}-${name}`
         beforeId = this.getBeforeId(layerName, beforeId)
 
-        metadata.legendGroup ??= ['root']
+        metadata.legendGroup ??= []
 
         const params = metadata.params ??= {}
         const styles = params.styles ??= {default: [this.getVectorGroupParams()]}
