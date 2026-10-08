@@ -1168,7 +1168,7 @@ export class LayersControl {
                     },
                     ...(!map.isStaticConfig() ? [
                         {
-                            innerText: 'Add to existing layer',
+                            innerText: 'Add to layer',
                             init: (btn) => {
                                 btn.addEventListener('click', (e) => {
                                     e.preventDefault()
@@ -1200,7 +1200,7 @@ export class LayersControl {
                                     })
 
                                     const newBtn = document.createElement('button')
-                                    newBtn.innerText = 'Add as new layer'
+                                    newBtn.innerText = 'Create new layer'
                                     newBtn.addEventListener('click', async (e) => {
                                         const newSource = this.getOrCreateSource(utils.randomId(), {
                                             properties: {metadata: {params: {
