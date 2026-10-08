@@ -54,13 +54,34 @@ export default class MetadataControl {
 
     this.addTitleSection(form)
 
+    
     if (this.config.id) {
+      const themes = this.config.themes
+      const activeTheme = this.config.activeTheme
+
       const details = this.details = document.createElement('div')
       utils.appendBinding(details , ':class', `['scrollbar-thumb-'+color+'-600/25!']: true`)
       details.classList.add('flex', 'flex-col', 'gap-5', 'pe-2', 'overflow-auto', 'grow')
-      details.setAttribute('x-data', '{show:true}')
+      details.setAttribute('x-data', `{
+        show:true, 
+        activeTheme:'${activeTheme}',
+        themesTotal: ${themes.length},
+        themeIndex: ${themes.findIndex(i => i.id === activeTheme)},
+      }`)
       details.setAttribute('x-show', 'show')
       form.appendChild(details)
+
+      this._map.on('configupdated', (e) => {
+        if (!Array('activeTheme', 'themes').includes(e.details.property[0])) return
+        
+        const themes = this.config.themes
+        const activeTheme = this.config.activeTheme
+        
+        const data = Alpine.$data(details)
+        data.activeTheme = activeTheme
+        data.themesTotal = themes.length
+        data.themeIndex = themes.findIndex(i => i.id === activeTheme)
+      })
 
       const createdSpan = document.createElement('span')
       createdSpan.classList.add('font-thin!', 'text-xs!', 'opacity-50', 'italic')
@@ -69,11 +90,14 @@ export default class MetadataControl {
 
       this.addDescriptionSection(details)
       this.addThemesSection(details)
+      this.addLegendSection(details)
       this.addAttributionSection(details)
       this.addReferenceSection(details)
       Array('acknowledgements', 'license').forEach(property => {
         this.addPropertySection(details, property)
       })
+    } else {
+      this.addLegendSection(form)
     }
 
     this.configInputElements(form)
@@ -182,7 +206,7 @@ export default class MetadataControl {
   
         })
 
-        Alpine.$data(this.themesContainer).activeTheme = this.config.activeTheme
+        Alpine.$data(this.details).activeTheme = this.config.activeTheme
 
         const themeIds = this.config.themes.map(i => i.id)
         const sortItems = Object.fromEntries(
@@ -606,18 +630,17 @@ export default class MetadataControl {
     })
 
   }
-  
-  addThemesSection(parent) {
-    const themes = this.config.themes
 
+  addLegendSection(parent) {
+    const container = document.createElement('div')
+    container.classList.add('flex', 'flex-col', 'gap-1')
+    parent.appendChild(container)
+  }
+
+  addThemesSection(parent) {
     const container = this.themesContainer = document.createElement('div')
     container.classList.add('flex', 'flex-col', 'gap-1')
-    container.setAttribute('x-data', `{
-      show:true, 
-      activeTheme:'${this.config.activeTheme}',
-      themesTotal: ${themes.length},
-      themeIndex: ${themes.findIndex(i => i.id === this.config.activeTheme)},
-    }`)
+    container.setAttribute('x-data', `{show:true}`)
     parent.appendChild(container)
   
     const header = document.createElement('span')
@@ -676,7 +699,7 @@ export default class MetadataControl {
         }
 
         if (!theme || theme.id === this.config.activeTheme) return
-        Alpine.$data(container).activeTheme = theme.id
+        Alpine.$data(this.details).activeTheme = theme.id
         
         const settings = this._map.getControls('settings')
         settings.updateConfig(['activeTheme'], theme.id)
@@ -688,13 +711,6 @@ export default class MetadataControl {
 
     this._map.on('configupdated', (e) => {
       if (!Array('activeTheme', 'themes').includes(e.details.property[0])) return
-      
-      const themes = this.config.themes
-      const data = Alpine.$data(container)
-      
-      data.themesTotal = themes.length
-      data.themeIndex = themes.findIndex(i => i.id === this.config.activeTheme)
-      
       Object.entries(navBtns).forEach(([name, params]) => {
         Alpine.$data(params.btn).disabled = params.isDisabled()
       })
@@ -851,7 +867,7 @@ export default class MetadataControl {
     }))
     utils.appendBinding(activateTheme, ':class', `['text-green-500/100! dark:text-green-500/100!']: activeTheme === "${theme.id}"`)
     activateTheme.addEventListener('click', async (e) => {
-      Alpine.$data(this.themesContainer).activeTheme = theme.id
+      Alpine.$data(this.details).activeTheme = theme.id
     })
     btnsContainer.appendChild(activateTheme)  
 
@@ -895,7 +911,7 @@ export default class MetadataControl {
         const newActiveTheme = themes[index === themes.length-1 ? index-1 : index+1]
   
         themeContainer.remove()
-        Alpine.$data(this.themesContainer).activeTheme = newActiveTheme.id
+        Alpine.$data(this.details).activeTheme = newActiveTheme.id
   
         const settings = this._map.getControls('settings')
         settings.updateConfig(['themes'], themes.filter(i => i.id !== theme.id))
@@ -948,7 +964,7 @@ export default class MetadataControl {
     await settings.applyThemeConfig()
     
     this.createThemeSection(newTheme, {index})
-    Alpine.$data(this.themesContainer).activeTheme = newTheme.id
+    Alpine.$data(this.details).activeTheme = newTheme.id
   }
 
   addReferenceSection(parent) {
