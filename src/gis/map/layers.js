@@ -1128,8 +1128,7 @@ export class LayersControl {
                         innerText: 'View feature',
                         events: {
                             'click': (e) => {
-                                const jsonString = JSON.stringify(rawFeature, null, 2)
-                                const blob = new Blob([jsonString], { type: "application/json" })
+                                const blob = new Blob([JSON.stringify(rawFeature, null, 2)], { type: "application/json" })
                                 const url = URL.createObjectURL(blob)
                                 window.open(url, "_blank")
                             }
@@ -1143,14 +1142,19 @@ export class LayersControl {
                             }
                         }
                     },
+                ]
+            },
+            {
+                title: 'Export options',
+                options: [
                     {
                         innerText: 'Download GeoJSON',
                         events: {
                             'click': () => {
-                                const blob = new Blob([JSON.stringify(
-                                    turf.featureCollection([rawFeature]), 
-                                    null, 2
-                                )], {type: "application/json"})
+                                const blob = new Blob(
+                                    [JSON.stringify(turf.featureCollection([rawFeature]))], 
+                                    {type: "application/json"}
+                                )
                                 const url = URL.createObjectURL(blob)
                                 const a = document.createElement("a")
                                 a.href = url
@@ -1162,11 +1166,6 @@ export class LayersControl {
                             }
                         }
                     },
-                ]
-            },
-            {
-                title: 'Export options',
-                options: [
                     ...(!map.isStaticConfig() ? [
                         {
                             innerText: 'Add as new layer',

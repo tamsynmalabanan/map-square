@@ -321,7 +321,7 @@ export class FileControl {
         // dataFolder.file("test.geojson", JSON.stringify({
         //     type: "FeatureCollection",
         //     features: []
-        // }, null, 2))
+        // })
 
         const content = await zip.generateAsync({ type: "blob" })
         
