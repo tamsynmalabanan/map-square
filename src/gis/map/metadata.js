@@ -637,7 +637,29 @@ export default class MetadataControl {
     })
     header.appendChild(menuToggle)
 
+    
+    const collapse = document.createElement('span')
+    collapse.classList.add('size-[15px]!', 'self-center', 'cursor-pointer', 'opacity-25', 'hover:opacity-100')
+    collapse.setAttribute('x-html', 'show ? svg.chevronUpMini : svg.chevronDownMini')
+    collapse.setAttribute('@click', 'show=!show')
+    header.appendChild(collapse)
+    
+    const menuContainer = document.createElement('div')
+    menuContainer.classList.add('flex', 'gap-2')
+    menuContainer.setAttribute('x-show', 'showMenu')
+    container.appendChild(menuContainer)
+    
     if (!this._map.isStaticConfig()) {
+      const addGroup = utils.strToEl(button({
+        title: 'Add new group',
+        icon: svg.rectangleGroupMini,
+        classStr: 'size-[15px]! self-center border-none! opacity-25 hover:opacity-100',
+        minimal: true,
+      }))
+      addGroup.addEventListener('click', async (e) => {
+      })
+      menuContainer.appendChild(addGroup)
+
       const addLayer = utils.strToEl(button({
         title: 'Add new layer',
         icon: svg.plusCircleMini,
@@ -647,19 +669,8 @@ export default class MetadataControl {
       }))
       addLayer.addEventListener('click', async (e) => {
       })
-      header.appendChild(addLayer)
+      menuContainer.appendChild(addLayer)
     }
-
-    const collapse = document.createElement('span')
-    collapse.classList.add('size-[15px]!', 'self-center', 'cursor-pointer', 'opacity-25', 'hover:opacity-100')
-    collapse.setAttribute('x-html', 'show ? svg.chevronUpMini : svg.chevronDownMini')
-    collapse.setAttribute('@click', 'show=!show')
-    header.appendChild(collapse)
-
-    const menuContainer = document.createElement('div')
-    menuContainer.classList.add('flex', 'gap-1')
-    menuContainer.setAttribute('x-show', 'showMenu')
-    container.appendChild(menuContainer)
 
     const layersContainer = document.createElement('div')
     layersContainer.classList.add('flex', 'flex-col', 'gap-3')
