@@ -21,7 +21,7 @@ export class LayersControl {
         this._map = undefined;
     }
 
-    getSystemOverlayNames() {
+    getsystemOverlaySources() {
         return [
             'placeSearch',
             'info', 
@@ -29,15 +29,15 @@ export class LayersControl {
         ]
     }
 
-    getBaseLayerNames() {
+    getBaseLayerSources() {
         return [
             'basemap',
             'hillshade', 
         ]
     }
 
-    getAllSystemLayerNames() {
-        return [...this.getBaseLayerNames(), ...this.getSystemOverlayNames()]
+    getAllSystemSources() {
+        return [...this.getBaseLayerSources(), ...this.getsystemOverlaySources()]
     }
 
     getGeometryFilters() {
@@ -80,14 +80,14 @@ export class LayersControl {
             }
         }
 
-        let baseLayers = this.getBaseLayerNames()
+        let baseLayers = this.getBaseLayerSources()
         const baseIndex = baseLayers.indexOf(layerName)
         if (baseIndex !== -1) {
             baseLayers = baseLayers.splice(0, baseIndex+1)
             return layerIds.find(id => !baseLayers.includes(id))
         }
 
-        let systemOverlays = this.getSystemOverlayNames()
+        let systemOverlays = this.getsystemOverlaySources()
         const overlayMatch = systemOverlays.find(i => layerName.startsWith(i))
         if (overlayMatch) {
             const overlayIndex = systemOverlays.indexOf(overlayMatch)
@@ -661,8 +661,6 @@ export class LayersControl {
         const layerName = metadata.layerName ??= `${sourceId}-${name}`
         beforeId = this.getBeforeId(layerName, beforeId)
 
-        metadata.legendGroup ??= []
-
         const params = metadata.params ??= {}
         const styles = params.styles ??= {default: [this.getVectorGroupParams()]}
         const styleName = params.style = params.style in styles ? params.style : Object.keys(styles)[0]
@@ -1189,7 +1187,7 @@ export class LayersControl {
 
                                     const layers = []
                                     map.getStyle().layers.forEach(l => {
-                                        if (this.getAllSystemLayerNames().find(i => i === l.source)) return
+                                        if (this.getAllSystemSources().find(i => i === l.source)) return
                                         
                                         const source = map.getSource(l.source)
                                         if (source?.type !== 'geojson') return
@@ -1362,6 +1360,13 @@ export class LayersControl {
         map.fitBounds([[w,s],[e,n]], {
             padding: 100,
             maxZoom: Math.max(13, map.getZoom())
+        })
+    }
+
+    moveLayer(layerName, {beforeId}={}) {
+        beforeId = this.getBeforeId(layerName, beforeId)
+        this.getLayersByName(layerName).forEach(l => {
+            this._map.moveLayer(l.id, beforeId)
         })
     }
 }

@@ -241,7 +241,7 @@ export default class HandleControls {
                 fullscreen: {
                     active: true,
                     position: 'top-right',
-                    order: 7,
+                    order: 8,
                 },
                 
                 file: {
@@ -288,7 +288,7 @@ export default class HandleControls {
 
                 const params = this.controls[name]
                 if (!params) return
-
+                
                 const control = new params.constructor(props.options)
                 this._map.addControl(control, props.position)
 

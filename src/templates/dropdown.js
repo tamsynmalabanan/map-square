@@ -5,7 +5,7 @@ export default ({
     title = 'Dropdown',
     icon = svg.ellipsisHorizontalMini,
     menuClassList=[],
-
+    toggleClassStr='',
 }={}) => {
     const container = document.createElement('div')
     container.setAttribute('x-data', `{showDropdown: false}`)
@@ -23,6 +23,7 @@ export default ({
             cursor-pointer
             select-none
             p-0!
+            ${toggleClassStr}
         `,
         minimal: true,
         attrs: `

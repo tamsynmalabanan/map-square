@@ -3,7 +3,7 @@ import * as svg from '../../svg.js'
 import button from '../../templates/button.js';
 import Map from './map.js'
 import Quill from 'quill';
-import { map, property } from 'lodash';
+import { forEach, map, property } from 'lodash';
 import dropdown from "../../templates/dropdown.js";
 
 export default class MetadataControl {
@@ -611,6 +611,7 @@ export default class MetadataControl {
   }
 
   addLegendSection(parent) {
+    const map = this._map
     const container = document.createElement('div')
     container.classList.add('flex', 'flex-col', 'gap-1')
     container.setAttribute('x-data', `{show:true, showMenu:true}`)
@@ -626,57 +627,95 @@ export default class MetadataControl {
     label.innerText = 'Legend'
     header.appendChild(label)
 
-    const menuToggle = utils.strToEl(button({
-      title: 'Toggle menu',
-      icon: svg.bars3Mini,
-      classStr: 'size-[15px]! self-center border-none! opacity-25 hover:opacity-100',
-      attrs: `@click="showMenu = !showMenu"`,
-      minimal: true,
-    }))
-    menuToggle.addEventListener('click', async (e) => {
-    })
-    header.appendChild(menuToggle)
+    // const menuToggle = utils.strToEl(button({
+    //   title: 'Toggle menu',
+    //   icon: svg.bars3Mini,
+    //   classStr: 'size-[15px]! self-center border-none! opacity-25 hover:opacity-100',
+    //   attrs: `@click="showMenu = !showMenu"`,
+    //   minimal: true,
+    // }))
+    // header.appendChild(menuToggle)
 
-    
+    Array(
+      {
+        title: '',
+        btns: [
+          ...(!this._map.isStaticConfig() ? [
+            // {
+            //   title: 'Add new group',
+            //   icon: svg.rectangleGroupMini,
+            //   classStr: `opacity-25 hover:opacity-100`,
+            //   handler: async (e) => {}
+            // },
+            {
+              title: 'Add new layer',
+              icon: svg.plusCircleMini,
+              themeBg: false,
+              classStr: `text-green-500/100! dark:text-green-500/100! opacity-50 hover:opacity-100`,
+              handler: async (e) => {}
+            },
+          ] : []),
+        ],
+      },
+    ).forEach((group, index) => {
+      // const groupContainer = document.createElement('div')
+      // groupContainer.classList.add(
+      //   'flex', 'flex-nowrap', 'gap-2',
+      //   'rounded', 'p-1',
+      //   'bg-gray-600/25!',
+      // )
+      // menuContainer.appendChild(groupContainer)
+
+      group.btns.forEach(btn => {
+        const el = utils.strToEl(button({
+          title: btn.title,
+          icon: btn.icon,
+          classStr: `
+            size-[15px]! self-center border-none!
+            ${btn.classStr ?? ''}
+          `,
+          minimal: true,
+          themedBg: btn.themeBg ?? true,
+        }))
+        el.addEventListener('click', btn.handler)
+        header.appendChild(el)
+      })
+    })
+
     const collapse = document.createElement('span')
     collapse.classList.add('size-[15px]!', 'self-center', 'cursor-pointer', 'opacity-25', 'hover:opacity-100')
     collapse.setAttribute('x-html', 'show ? svg.chevronUpMini : svg.chevronDownMini')
     collapse.setAttribute('@click', 'show=!show')
     header.appendChild(collapse)
-    
-    const menuContainer = document.createElement('div')
-    menuContainer.classList.add('flex', 'gap-2')
-    menuContainer.setAttribute('x-show', 'showMenu')
-    container.appendChild(menuContainer)
-    
-    if (!this._map.isStaticConfig()) {
-      const addGroup = utils.strToEl(button({
-        title: 'Add new group',
-        icon: svg.rectangleGroupMini,
-        classStr: 'size-[15px]! self-center border-none! opacity-25 hover:opacity-100',
-        minimal: true,
-      }))
-      addGroup.addEventListener('click', async (e) => {
-      })
-      menuContainer.appendChild(addGroup)
 
-      const addLayer = utils.strToEl(button({
-        title: 'Add new layer',
-        icon: svg.plusCircleMini,
-        classStr: 'size-[15px]! self-center border-none! opacity-50 hover:opacity-100 text-green-500/100! dark:text-green-500/100!',
-        minimal: true,
-        themedBg: false,
-      }))
-      addLayer.addEventListener('click', async (e) => {
-      })
-      menuContainer.appendChild(addLayer)
-    }
+    // const menuContainer = document.createElement('div')
+    // menuContainer.classList.add('flex', 'gap-2')
+    // menuContainer.setAttribute('x-show', 'showMenu')
+    // container.appendChild(menuContainer)
 
-    const layersContainer = document.createElement('div')
-    layersContainer.classList.add('flex', 'flex-col', 'gap-3')
+    const layersContainer = this.layersContainer = document.createElement('div')
+    layersContainer.classList.add('flex', 'flex-col', `[&>*]:pt-3`)
     layersContainer.setAttribute('x-show', 'show')
-    layersContainer.setAttribute('x-sort', '')
+    layersContainer.setAttribute('x-sort', `$dispatch("sorted", {item: $item, position: $position})`)
     container.appendChild(layersContainer)
+
+    layersContainer.addEventListener('sorted', (e) => {
+      map.getControls('layers').moveLayer(e.detail.item, {
+        beforeId: layersContainer.children[e.detail.position-1]?.dataset.layerName
+      })
+    })
+
+    this._map.on('layeradded', (e) => {
+      const layer = e.layer
+      if (map.getControls('layers').getAllSystemSources().includes(layer.source)) return
+      this.createLegendSection(layer)
+    })
+
+    this._map.on('layerremoved', (e) => {
+      const layer = e.layer
+      if (map.getControls('layers').getAllSystemSources().includes(layer.source)) return
+      layersContainer.querySelector(`[data-layer-name="${layer.metadata.layerName}"]`)?.remove()
+    })
   }
 
   addThemesSection(parent) {
@@ -861,6 +900,52 @@ export default class MetadataControl {
     })
 
     return charLimit
+  }
+
+  createLegendSection(layer) {
+    const metadata = layer.metadata
+    const layerName = metadata.layerName
+    if (this.layersContainer.querySelector(`[data-layer-name="${layerName}"]`)) return
+
+    const layerContainer = document.createElement('div')
+    layerContainer.setAttribute('data-layer-name', layerName)
+    layerContainer.setAttribute(`x-sort:item`, `"${layerName}"`)
+    layerContainer.setAttribute(`x-data`, `{show:true}`)
+    layerContainer.classList.add('flex', 'flex-col', 'gap-1')
+    if (this.layersContainer.children.length) {
+      this.layersContainer.insertBefore(layerContainer, this.layersContainer.firstElementChild)
+    } else {
+      this.layersContainer.appendChild(layerContainer)
+    }
+    
+    const header = document.createElement('span')
+    header.classList.add('flex', 'flex-nowrap', 'justify-between', 'align-middle', 'gap-2')
+    layerContainer.appendChild(header)
+  
+    const label = document.createElement('span')
+    label.classList.add('grow!', 'me-5', 'flex', 'flex-nowrap', 'font-bold', 'max-w-[300px]', 'cursor-pointer')
+    label.innerText = metadata.params.title ?? 'Untitled layer'
+    header.appendChild(label)
+
+    const collapse = document.createElement('span')
+    collapse.classList.add('size-[15px]!', 'self-top', 'cursor-pointer', 'opacity-25', 'hover:opacity-100')
+    collapse.setAttribute('x-html', 'show ? svg.chevronUpMini : svg.chevronDownMini')
+    collapse.setAttribute('@click', 'show=!show')
+    header.appendChild(collapse)
+
+    const layerDetails = document.createElement('div')
+    layerDetails.classList.add('flex', 'flex-col', `gap-2`)
+    layerDetails.setAttribute('x-show', 'show')
+    layerContainer.appendChild(layerDetails)
+
+    const symbology = document.createElement('div')
+    symbology.classList.add('flex', 'flex-col', `gap-1`)
+    symbology.setAttribute('x-sort', '')
+    layerDetails.appendChild(symbology)
+
+    const attr = document.createElement('span')
+    attr.innerHTML = metadata.params.attribution ?? ''
+    layerDetails.appendChild(attr)
   }
 
   createThemeSection(theme, {index}={}) {

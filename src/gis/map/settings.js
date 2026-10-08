@@ -377,17 +377,17 @@ export class SettingsControl {
     async configMap() {
         const map = this._map
 
-        const systemLayers = map.getControls('layers').getAllSystemLayerNames()
+        const systemSources = map.getControls('layers').getAllSystemSources()
 
         let sourceTimer
         Array('sourceadded', 'sourceremoved', 'geojsonupdated').forEach(i => {
             map.on(i, (e) => {
-                if (systemLayers.includes(e.sourceId)) return
+                if (systemSources.includes(e.sourceId)) return
     
                 clearTimeout(sourceTimer)
                 sourceTimer = setTimeout(async () => {
                     const sources = Object.fromEntries(Object.entries(structuredClone(map.getStyle().sources)).map(([id, source]) => {
-                        if ('data' in source && (source.metadata?.params?.url || systemLayers.includes(id))) {
+                        if ('data' in source && (source.metadata?.params?.url || systemSources.includes(id))) {
                             source.data = turf.featureCollection([])
                         }
                         return [id, source]
@@ -398,14 +398,13 @@ export class SettingsControl {
         })
 
         let layerTimer
-        Array('layeradded', 'layerremoved', 'layersmoved').forEach(i => {
+        Array('layeradded', 'layerremoved', 'layermoved').forEach(i => {
             map.on(i, (e) => {
-                const layer = e.layer
-                if (systemLayers.find(i => layer.id.startsWith(i))) return
+                if (e.type !== 'layermoved' && systemSources.find(i => e.layer.id.startsWith(i))) return
                 
                 clearTimeout(layerTimer)
                 layerTimer = setTimeout(async () => {
-                    const layers = structuredClone(map.getStyle().layers).filter(i => !systemLayers.find(j => i.id.startsWith(j)))
+                    const layers = structuredClone(map.getStyle().layers).filter(i => !systemSources.find(j => i.id.startsWith(j)))
                     this.updateConfig(['layers'], layers, {
                         themeId: map.getTheme().id,
                     })
@@ -847,9 +846,9 @@ export class SettingsControl {
         this.configScaleBarUnit(settings.unit)
         this.configBasemap()
         
-        const systemLayers = controls.layers.getAllSystemLayerNames()
+        const systemSources = controls.layers.getAllSystemSources()
         theme.layers.forEach(layer => {
-            if (systemLayers.find(i => layer.id.startsWith(i))) return
+            if (systemSources.find(i => layer.id.startsWith(i))) return
             map.addLayer(layer)  
         })
 
