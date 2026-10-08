@@ -3,7 +3,7 @@ import * as svg from '../../svg.js'
 import button from '../../templates/button.js';
 import Map from './map.js'
 import Quill from 'quill';
-import { map } from 'lodash';
+import { map, property } from 'lodash';
 import dropdown from "../../templates/dropdown.js";
 
 export default class MetadataControl {
@@ -389,19 +389,24 @@ export default class MetadataControl {
   }
 
   addAttributionSection(parent) {
+    const map = this._map
+
     const container = document.createElement('div')
     container.classList.add('flex', 'flex-col', 'gap-1', 'grow')
-    container.setAttribute('x-data', '{show: true, hasValues: false}')
+    container.setAttribute('x-data', `{show: true, hasValues: ${Array(
+        'logo',
+        'creator',
+        'email',
+        'website',
+    ).some(name => this.metadata[name] !== this.defaultMetadata[name])}}`)
     container.setAttribute('x-show', `isRadioValue("edit") || hasValues`)
     parent.appendChild(container)
     
-    Array('idle', 'configupdated').forEach(type => {
-      this._map[type === 'idle' ? 'once' : 'on'](type, (e) => {
-        Alpine.$data(container).hasValues = [...new Set(
-          Array.from(container.querySelectorAll('[name]'))
-          .map(i => i.getAttribute('name'))
-        )].some(i => this.metadata[i] !== this.defaultMetadata[i])
-      })
+    map.on('configupdated', (e) => {
+      const property = e.details.property
+      const names = [...new Set(Array.from(container.querySelectorAll('[name]')).map(i => i.getAttribute('name')))].filter(i => i in this.metadata)
+      if (property[0] !== 'metadata' || !names.includes(property[property.length-1])) return
+      Alpine.$data(container).hasValues = names.some(name => this.metadata[name] !== this.defaultMetadata[name])
     })
 
     const header = document.createElement('span')
@@ -603,12 +608,15 @@ export default class MetadataControl {
   }
   
   addThemesSection(parent) {
+    const themes = this.config.themes
+
     const container = this.themesContainer = document.createElement('div')
     container.classList.add('flex', 'flex-col', 'gap-1')
     container.setAttribute('x-data', `{
       show:true, 
       activeTheme:'${this.config.activeTheme}',
-      themeIndex: 0, themesTotal: 0
+      themesTotal: ${themes.length},
+      themeIndex: ${themes.findIndex(i => i.id === this.config.activeTheme)},
     }`)
     parent.appendChild(container)
   
@@ -678,23 +686,23 @@ export default class MetadataControl {
       return [name, params]
     }))
 
-    Array('idle', 'configupdated').forEach(type => {
-      this._map[[type === 'idle' ? 'once' : 'on']](type, (e) => {
-        if (type === 'configupdated' && !Array('activeTheme', 'themes').includes(e.details.property[0])) return
-        const themes = this.config.themes
-        const data = Alpine.$data(container)
-        data.themesTotal = Math.max(themes.length, 1)
-        data.themeIndex = Math.max(themes.findIndex(i => i.id === this.config.activeTheme)+1, 1)
-        
-        Object.entries(navBtns).forEach(([name, params]) => {
-          Alpine.$data(params.btn).disabled = params.isDisabled()
-        })
+    this._map.on('configupdated', (e) => {
+      if (!Array('activeTheme', 'themes').includes(e.details.property[0])) return
+      
+      const themes = this.config.themes
+      const data = Alpine.$data(container)
+      
+      data.themesTotal = themes.length
+      data.themeIndex = themes.findIndex(i => i.id === this.config.activeTheme)
+      
+      Object.entries(navBtns).forEach(([name, params]) => {
+        Alpine.$data(params.btn).disabled = params.isDisabled()
       })
     })
 
     const count = document.createElement('span')
     count.classList.add('opacity-25', 'cursor-pointer')
-    count.setAttribute('x-html', `[themeIndex, themesTotal].join(" of ")`)
+    count.setAttribute('x-html', `[themeIndex + 1, themesTotal].join(" of ")`)
     count.setAttribute('x-show', `isRadioValue("current") && themesTotal > 1`)
     header.insertBefore(count, navBtns.next.btn)
 

@@ -105,6 +105,7 @@ export default class Map extends maplibregl.Map {
         creator: '',
         website: '',
         email: '',
+        
         license: '', // 'CC BY-SA 4.0',
         acknowledgements: '',
         
