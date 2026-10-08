@@ -6,6 +6,7 @@ export default ({
     icon = svg.ellipsisHorizontalMini,
     menuClassList=[],
     toggleClassStr='',
+    menuContent=[],
 }={}) => {
     const container = document.createElement('div')
     container.setAttribute('x-data', `{showDropdown: false}`)
@@ -44,6 +45,7 @@ export default ({
         'cursor-pointer', 
         'rounded', 'shadow-lg',
         `[&>*]:w-auto!`,
+        `[&>*]:max-w-[300px]!`,
         `[&>*]:text-left!`,
         `[&>*]:border-0!`,
         `[&>*]:px-2!`,
@@ -65,6 +67,35 @@ export default ({
         ['[&>*]:enabled:hover:bg-'+color+'-600/50!']: true
     `)
     container.appendChild(menu)
+
+    menuContent.forEach((group, index) => {
+        if (index !== 0) {
+            const hr = document.createElement('hr')
+            menu.appendChild(hr)
+        }
+
+        group.options.forEach(params => {
+            const btn = document.createElement('button')
+            btn.classList.add('flex', 'flex-nowrap', 'justify-between', 'gap-5')
+            menu.appendChild(btn)
+
+            Object.entries(params.attrs ?? {}).forEach(([key, value]) => {
+                btn.setAttribute(key, value)
+            })
+            
+            Object.entries(params.events ?? {}).forEach(([key, value]) => {
+                btn.addEventListener(key, value)
+            })
+            
+            if (params.innerText) {
+                const label = document.createElement('span')
+                label.innerText = params.innerText
+                btn.appendChild(label)
+            }
+
+            params.init?.(btn)
+        })
+    })
 
     return container
 }

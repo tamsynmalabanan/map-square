@@ -3,8 +3,8 @@ import * as svg from '../../svg.js'
 import button from '../../templates/button.js';
 import Map from './map.js'
 import Quill from 'quill';
-import { forEach, map, property } from 'lodash';
 import dropdown from "../../templates/dropdown.js";
+import * as turf from '@turf/turf'
 
 export default class MetadataControl {
   onAdd(map) {
@@ -903,6 +903,8 @@ export default class MetadataControl {
   }
 
   createLegendSection(layer) {
+    const map = this._map
+    
     const metadata = layer.metadata
     const layerName = metadata.layerName
     if (this.layersContainer.querySelector(`[data-layer-name="${layerName}"]`)) return
@@ -926,6 +928,54 @@ export default class MetadataControl {
     label.classList.add('grow!', 'me-5', 'flex', 'flex-nowrap', 'font-bold', 'max-w-[300px]', 'cursor-pointer')
     label.innerText = metadata.params.title ?? 'Untitled layer'
     header.appendChild(label)
+
+    const [toggle, menu] = dropdown({
+      parent: header,
+      title: 'Layer menu',
+      menuClassList: ['right-4'],
+      menuContent: Array(
+          {
+            title: '',
+            options: [
+              {
+                innerText: 'Remove layer',
+                events: {
+                  click: async (e) => {
+                    map.getControls('layers').getLayersByName(layerName).forEach(l => {
+                      map.removeLayer(l.id)
+                    })
+                  }
+                },
+              },
+              {
+                innerText: 'Zoom to layer',
+                attrs: {
+                  'x-bind:disabled': 'locked'
+                },
+                events: {
+                  click: async () => {
+                    let bbox = metadata.params.bbox
+                    if (!bbox) {
+                      const source = map.getSource(layer.source)
+                      if (source.type === 'geojson') {
+                        const geojson = source._data?.geojson
+                        if (geojson) {
+                          bbox = turf.bbox(geojson)
+                        }
+                      }
+                    }
+                    const [w,s,e,n] = bbox ?? [-180, -90, 180, 90]
+                    map.fitBounds([[w,s],[e,n]], {
+                        padding: 100,
+                        maxZoom: Math.max(13, map.getZoom())
+                    })
+                  }
+                },
+              },
+            ],
+          },
+        )
+    }).children
 
     const collapse = document.createElement('span')
     collapse.classList.add('size-[15px]!', 'self-top', 'cursor-pointer', 'opacity-25', 'hover:opacity-100')
@@ -1015,49 +1065,61 @@ export default class MetadataControl {
         parent: btnsContainer,
         title: 'Theme options',
         menuClassList: ['right-4'],
+        menuContent: Array(
+          {
+            title: '',
+            options: [
+              {
+                innerText: 'Duplicate',
+                events: {
+                  click: async (e) => {
+                    const newTheme = Map.getDefaultConfig().themes[0]
+                    newTheme.metadata.title = `${theme.metadata.title} copy`
+                    newTheme.metadata.description = theme.metadata.description
+                    newTheme.settings = structuredClone(theme.settings)
+                    newTheme.layers = structuredClone(theme.layers)
+
+                    await this.addNewTheme(newTheme)
+                  }
+                },
+              },
+              {
+                innerText: 'Zoom to bookmark',
+                attrs: {
+                  'x-bind:disabled': 'locked'
+                },
+                events: {
+                  click: async (e) => {
+                    this._map.getControls('settings').goToBookmark()
+                  }
+                },
+              },
+              {
+                innerText: 'Remove',
+                attrs: {
+                  'x-bind:disabled': 'themesTotal <= 1'
+                },
+                events: {
+                  click: async (e) => {
+                    const themes = this.config.themes
+                    const index = themes.findIndex(i => i.id === theme.id)
+                    const newActiveTheme = themes[index === themes.length-1 ? index-1 : index+1]
+              
+                    themeContainer.remove()
+                    Alpine.$data(this.themesContainer).activeTheme = newActiveTheme.id
+              
+                    const settings = this._map.getControls('settings')
+                    settings.updateConfig(['themes'], themes.filter(i => i.id !== theme.id))
+                    settings.updateConfig(['activeTheme'], newActiveTheme.id)
+                    await settings.applyThemeConfig()
+                  }
+                },
+              },
+            ],
+          },
+        )
       })
       themeDropdown.setAttribute('x-show', `isRadioValue("current")`)
-
-      const [optionsToggle, optionsContent] = themeDropdown.children
-
-      const duplicateTheme = document.createElement('button')
-      duplicateTheme.innerText = 'Duplicate'
-      duplicateTheme.addEventListener('click', async (e) => {
-        const newTheme = Map.getDefaultConfig().themes[0]
-        newTheme.metadata.title = `${theme.metadata.title} copy`
-        newTheme.metadata.description = theme.metadata.description
-        newTheme.settings = structuredClone(theme.settings)
-        newTheme.layers = structuredClone(theme.layers)
-
-        await this.addNewTheme(newTheme)
-      })
-      optionsContent.appendChild(duplicateTheme)
-
-      const zoomToBookmark = document.createElement('button')
-      zoomToBookmark.innerText = 'Zoom to bookmark'
-      zoomToBookmark.setAttribute('x-bind:disabled', 'locked')
-      zoomToBookmark.addEventListener('click', async (e) => {
-        this._map.getControls('settings').goToBookmark()
-      })
-      optionsContent.appendChild(zoomToBookmark)
-
-      const removeTheme = document.createElement('button')
-      removeTheme.innerText = 'Remove'
-      removeTheme.setAttribute('x-bind:disabled', 'themesTotal <= 1')
-      removeTheme.addEventListener('click', async (e) => {
-        const themes = this.config.themes
-        const index = themes.findIndex(i => i.id === theme.id)
-        const newActiveTheme = themes[index === themes.length-1 ? index-1 : index+1]
-  
-        themeContainer.remove()
-        Alpine.$data(this.themesContainer).activeTheme = newActiveTheme.id
-  
-        const settings = this._map.getControls('settings')
-        settings.updateConfig(['themes'], themes.filter(i => i.id !== theme.id))
-        settings.updateConfig(['activeTheme'], newActiveTheme.id)
-        await settings.applyThemeConfig()
-      })
-      optionsContent.appendChild(removeTheme)
     }
 
     const descContainer = document.createElement('div')
