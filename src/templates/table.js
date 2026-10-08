@@ -22,7 +22,14 @@ export default function table(options = {}) {
     if (!cols) return
 
     const sortableKeys = keys.filter(key => {
-        return headers[key] !== '' && !key.startsWith('__') && typeof items[0]?.[key] !== 'object'
+        return (
+            headers[key] !== '' 
+            && !key.startsWith('__') 
+            && (
+                typeof items[0]?.[key] !== 'object' 
+                || items.find(i => typeof i[key] !== 'object')
+            )
+        )
     })
 
     if (!state.sortBy || !sortableKeys.includes(state.sortBy)) {

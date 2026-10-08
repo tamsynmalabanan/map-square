@@ -144,7 +144,7 @@ export class FileControl {
                             const state = {
                                 selected: [],
                                 filter: '',
-                                sortBy: 'dateCreated',
+                                sortBy: 'dateUpdated',
                                 sortOrder: 'descending'
                             }
 
