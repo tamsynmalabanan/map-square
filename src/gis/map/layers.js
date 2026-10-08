@@ -1168,23 +1168,6 @@ export class LayersControl {
                     },
                     ...(!map.isStaticConfig() ? [
                         {
-                            innerText: 'Add as new layer',
-                            events: {
-                                'click': async () => {
-                                    const newSource = this.getOrCreateSource(utils.randomId(), {
-                                        properties: {metadata: {params: {
-                                            title: featureLabel || 'Untitled layer'
-                                        }}}
-                                    })
-                                    this.updateGeoJSONData({
-                                        sourceId: newSource.id,
-                                        features: [await gisUtils.normalizeProperties(rawFeature)],
-                                    })
-                                    this.addGeoJSONLayers(newSource.id)
-                                }
-                            }
-                        },
-                        {
                             innerText: 'Add to existing layer',
                             init: (btn) => {
                                 btn.addEventListener('click', (e) => {
@@ -1194,7 +1177,7 @@ export class LayersControl {
 
                                 const [toggle, menu] = dropdown({
                                     parent: btn,
-                                    title: 'Map geojson layers',
+                                    title: 'GeoJSON layers',
                                     menuClassList: ['right-1']
                                 }).children
 
@@ -1215,6 +1198,22 @@ export class LayersControl {
 
                                         layers.push(l)
                                     })
+
+                                    const newBtn = document.createElement('button')
+                                    newBtn.innerText = 'Add as new layer'
+                                    newBtn.addEventListener('click', async (e) => {
+                                        const newSource = this.getOrCreateSource(utils.randomId(), {
+                                            properties: {metadata: {params: {
+                                                title: featureLabel || 'Untitled layer'
+                                            }}}
+                                        })
+                                        this.updateGeoJSONData({
+                                            sourceId: newSource.id,
+                                            features: [await gisUtils.normalizeProperties(rawFeature)],
+                                        })
+                                        this.addGeoJSONLayers(newSource.id)
+                                    })
+                                    menu.appendChild(newBtn)                              
                                     
                                     layers.filter(Boolean).reverse().forEach(l => {
                                         const layerBtn = document.createElement('button')
