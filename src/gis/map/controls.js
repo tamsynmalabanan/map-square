@@ -43,7 +43,7 @@ export default class HandleControls {
                     button.addEventListener('click', async (e) => {
                         const settings = map.getControls('settings')
                         settings.configHillshade()
-                        await settings.updateConfig(['settings', 'terrain'], control.isEnabled(), {themeId: map.getTheme().id})
+                        settings.updateConfig(['settings', 'terrain'], control.isEnabled(), {themeId: map.getTheme().id})
                     })
                 },
                 elements: {
@@ -85,7 +85,7 @@ export default class HandleControls {
                         
                         if (control._watchState === 'BACKGROUND') return
 
-                        await settings.updateConfig(
+                        settings.updateConfig(
                             ['settings', 'geolocate'], 
                             !control.isEnabled(), 
                             {themeId: map.getTheme().id}

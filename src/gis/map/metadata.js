@@ -261,14 +261,14 @@ export default class MetadataControl {
 
         const newActiveTheme = Alpine.$data(this.themesContainer).activeTheme
         if (newActiveTheme !== this.config.activeTheme) {
-          await settings.updateConfig(['activeTheme'], newActiveTheme)
+          settings.updateConfig(['activeTheme'], newActiveTheme)
           await settings.applyThemeConfig()
         }
 
         const themes = Object.fromEntries(this.config.themes.map(i => [i.id, i]))
         const sortedThemeIds = Array.from(this.themesContainer.children).map(i => i.dataset.themeId)
         if (sortedThemeIds.join('') !== Object.keys(themes).join('')) {
-          await settings.updateConfig(['themes'], sortedThemeIds.map(i => themes[i]))
+          settings.updateConfig(['themes'], sortedThemeIds.map(i => themes[i]))
         }
       })
       nav.appendChild(saveBtn)
@@ -671,7 +671,7 @@ export default class MetadataControl {
         Alpine.$data(container).activeTheme = theme.id
         
         const settings = this._map.getControls('settings')
-        await settings.updateConfig(['activeTheme'], theme.id)
+        settings.updateConfig(['activeTheme'], theme.id)
         await settings.applyThemeConfig()
       })
       header.appendChild(btn)
@@ -890,8 +890,8 @@ export default class MetadataControl {
         Alpine.$data(this.themesContainer).activeTheme = newActiveTheme.id
   
         const settings = this._map.getControls('settings')
-        await settings.updateConfig(['themes'], themes.filter(i => i.id !== theme.id))
-        await settings.updateConfig(['activeTheme'], newActiveTheme.id)
+        settings.updateConfig(['themes'], themes.filter(i => i.id !== theme.id))
+        settings.updateConfig(['activeTheme'], newActiveTheme.id)
         await settings.applyThemeConfig()
       })
       optionsContent.appendChild(removeTheme)
@@ -931,12 +931,12 @@ export default class MetadataControl {
     const index = themes.findIndex(i => i.id === this.config.activeTheme)
 
     const settings = this._map.getControls('settings')
-    await settings.updateConfig(['themes'], [
+    settings.updateConfig(['themes'], [
       ...themes.slice(0, index+1),
       newTheme,
       ...themes.slice(index+1)
     ])
-    await settings.updateConfig(['activeTheme'], newTheme.id)
+    settings.updateConfig(['activeTheme'], newTheme.id)
     await settings.applyThemeConfig()
     
     this.createThemeSection(newTheme, {index})

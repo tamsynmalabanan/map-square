@@ -72,7 +72,7 @@ export class FileControl {
                                 highlight: config.autosave,
                                 handler: async (event) => {
                                     const value = event.detail.value
-                                    await map.getControls('settings').updateConfig(['autosave'], value)
+                                    map.getControls('settings').updateConfig(['autosave'], value)
                                     this._container.firstElementChild.firstElementChild.nextElementSibling.innerText = value ? `🟢` : ''
                                 },
                             },
@@ -109,8 +109,10 @@ export class FileControl {
                         icon: '💾',
                         highlight: null,
                         handler: async (event) => {
-                            const config = await map.getControls('settings')
-                            .updateConfig(['id'], utils.randomId())
+                            const config = (
+                                map.getControls('settings')
+                                .updateConfig(['id'], utils.randomId())
+                            )
                             this.loadMapFromConfig(config)
                         },
                     },
@@ -394,12 +396,12 @@ export class FileControl {
         }
 
         let timer
-        Array('themeupdated', 'configupdated', 'configSaved').forEach(i => {
+        Array('themeupdated', 'configupdated', 'configsaved').forEach(i => {
             clearTimeout(timer)
             setTimeout(() => {
                 map.on(i, async (e) => {
                     console.log(e.type, e)
-                    if (e.type === "configSaved") {
+                    if (e.type === "configsaved") {
                         if (config.autosave) {
                             icon.innerText = `🟢`
                         } else {

@@ -7,6 +7,17 @@ import modal from '../../templates/modal.js';
 import _, { countBy, includes } from 'lodash';
 import * as turf from '@turf/turf'
 
+const CURSOR = { x: null, y: null, }
+
+let mousemoveTimer
+document.addEventListener("mousemove", (e) => {
+    clearTimeout(mousemoveTimer)
+    mousemoveTimer = setTimeout(() => {
+        CURSOR.x = e.clientX
+        CURSOR.y = e.clientY
+    }, 100)
+})
+
 export class SettingsControl {
     constructor(options) {
         this.popups = {
@@ -83,7 +94,7 @@ export class SettingsControl {
                         handler: async (event) => {
                             const type = event.detail.value ? 'globe' : 'mercator'
                             map.setProjection({type})
-                            await this.updateConfig(['settings', 'projection'], type, {themeId: map.getTheme().id})
+                            this.updateConfig(['settings', 'projection'], type, {themeId: map.getTheme().id})
                         },
                     },
                     {
@@ -91,7 +102,7 @@ export class SettingsControl {
                         icon: '🗺️',
                         highlight: settings.basemap.render,
                         handler: async (event) => {
-                            await this.updateConfig([
+                            this.updateConfig([
                                 'settings', 
                                 'basemap', 
                                 'render'
@@ -104,7 +115,7 @@ export class SettingsControl {
                         icon: '🏔️',
                         highlight: settings.hillshade.render,
                         handler: async (event) => {
-                            await this.updateConfig([
+                            this.updateConfig([
                                 'settings', 
                                 'hillshade', 
                                 'render'
@@ -117,7 +128,7 @@ export class SettingsControl {
                         icon: '💬',
                         highlight: settings.popups.tooltip.active,
                         handler: async (event) => {
-                            await this.updateConfig([
+                            this.updateConfig([
                                 'settings', 
                                 'popups', 
                                 'tooltip',
@@ -133,7 +144,7 @@ export class SettingsControl {
                         handler: async (event) => {
                             const value = event.detail.value
                             value ? this.lock() : this.unlock()
-                            await this.updateConfig([
+                            this.updateConfig([
                                 'settings', 
                                 'locked', 
                             ], value, {themeId: map.getTheme().id})
@@ -157,7 +168,7 @@ export class SettingsControl {
                         icon: 'ℹ️',
                         highlight: settings.popups.info.active,
                         handler: async (event) => {
-                            await this.updateConfig([
+                            this.updateConfig([
                                 'settings', 
                                 'popups', 
                                 'info',
@@ -171,7 +182,7 @@ export class SettingsControl {
                         icon: '📚',
                         highlight: settings.popups.info.data.layers,
                         handler: async (event) => {
-                            await this.updateConfig([
+                            this.updateConfig([
                                 'settings', 
                                 'popups', 
                                 'info',
@@ -185,7 +196,7 @@ export class SettingsControl {
                         icon: '🏠',
                         highlight: settings.popups.info.data.osm,
                         handler: async (event) => {
-                            await this.updateConfig([
+                            this.updateConfig([
                                 'settings', 
                                 'popups', 
                                 'info',
@@ -205,7 +216,7 @@ export class SettingsControl {
                         highlight: null,
                         keyboard: 'B',
                         handler: async (event) => {
-                            await this.updateConfig(
+                            this.updateConfig(
                                 ['settings', 'bookmark', 'view'], 
                                 map.getView(), 
                                 {themeId: map.getTheme().id}
@@ -226,7 +237,7 @@ export class SettingsControl {
                                 active === 'centroid'
                                 ? '📍' : '🖼️'
                             )
-                            await this.updateConfig([
+                            this.updateConfig([
                                 'settings', 
                                 'bookmark', 
                                 'active',
@@ -274,7 +285,7 @@ export class SettingsControl {
                                 displaySettings.changeColorTheme(name)
                             }
                             
-                            await this.updateConfig([
+                            this.updateConfig([
                                 'settings', 
                                 'colorTheme', 
                             ], name, {themeId: map.getTheme().id})
@@ -292,7 +303,7 @@ export class SettingsControl {
 
         map.getControls('scalebar').setUnit(value)
 
-        await this.updateConfig([
+        this.updateConfig([
             'settings', 
             'unit', 
         ], value, {themeId: map.getTheme().id})
@@ -381,7 +392,7 @@ export class SettingsControl {
                         }
                         return [id, source]
                     }))
-                    await this.updateConfig(['sources'], sources)
+                    this.updateConfig(['sources'], sources)
                 }, 1000);
             })
         })
@@ -395,7 +406,7 @@ export class SettingsControl {
                 clearTimeout(layerTimer)
                 layerTimer = setTimeout(async () => {
                     const layers = structuredClone(map.getStyle().layers).filter(i => !systemLayers.find(j => i.id.startsWith(j)))
-                    await this.updateConfig(['layers'], layers, {
+                    this.updateConfig(['layers'], layers, {
                         themeId: map.getTheme().id,
                     })
                 }, 1000);
@@ -961,17 +972,14 @@ export class SettingsControl {
 
                 await snapshotPromise
                 await gisDB.saveToGISDB('maps', config)
-                map.fire('configSaved', {details: {config}})
+                map.fire('configsaved', {details: {config}})
 
                 resolve(config)
             }, timeout)
         })
     }
 
-    async updateConfig(property, value, {
-        themeId,
-        event,
-    }={}) {
+    updateConfig(property, value, {themeId}={}) {
         const map = this._map
         const config = map.getConfig()
         const theme = config.themes.find(i => i.id === themeId)
@@ -1026,20 +1034,10 @@ export class SettingsControl {
                 config.autosave || 
                 property[0] === 'autosave' || 
                 newMap
-            )) {await this.saveConfig({date})}
+            )) {this.saveConfig({date})}
         }
 
         return theme || config
     }
 }
 
-const CURSOR = { x: null, y: null, }
-
-let mousemoveTimer
-document.addEventListener("mousemove", (e) => {
-    clearTimeout(mousemoveTimer)
-    mousemoveTimer = setTimeout(() => {
-        CURSOR.x = e.clientX
-        CURSOR.y = e.clientY
-    }, 100)
-})
