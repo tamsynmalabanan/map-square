@@ -961,7 +961,6 @@ export default class MetadataControl {
                     map.getControls('layers').configGeoJSONLayers(layer.source, {
                       properties: layer
                     })
-                    console.log(layer)
                   }
                 },
               },
