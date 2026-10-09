@@ -957,10 +957,10 @@ export default class MetadataControl {
                   click: async () => {
                     const params = layer.metadata.params
                     params.visibility = !params.visibility
-                    
-                    map.getControls('layers').configGeoJSONLayers(layer.source, {
-                      properties: layer
-                    })
+                    console.log(layer)
+                    // map.getControls('layers').configGeoJSONLayers(layer.source, {
+                    //   properties: layer
+                    // })
                   }
                 },
               },
