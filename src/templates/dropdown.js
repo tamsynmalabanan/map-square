@@ -5,7 +5,17 @@ export default ({
     title = 'Dropdown',
     icon = svg.ellipsisHorizontalMini,
     menuClassList=[],
-    toggleClassStr='',
+    toggleClassStr=`
+        size-[15px]! 
+        rounded! 
+        self-center 
+        border-none! 
+        opacity-25 
+        hover:opacity-100
+        cursor-pointer
+        select-none
+        p-0!
+    `,
     menuContent=[],
 }={}) => {
     const container = document.createElement('div')
@@ -14,18 +24,7 @@ export default ({
 
     const toggle = utils.strToEl(button({
         title, icon,
-        classStr: `
-            size-[15px]! 
-            rounded! 
-            self-center 
-            border-none! 
-            opacity-25 
-            hover:opacity-100
-            cursor-pointer
-            select-none
-            p-0!
-            ${toggleClassStr}
-        `,
+        classStr: toggleClassStr,
         minimal: true,
         attrs: `
             x-ref="dropdownToggle"

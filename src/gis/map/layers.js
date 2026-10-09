@@ -627,6 +627,8 @@ export class LayersControl {
             (layer.metadata.params ??= {})[prop] = val
         })
 
+        map.fire('layerupdated', {layer, params})
+
         return map.getLayer(layer)
     }
 
@@ -644,11 +646,11 @@ export class LayersControl {
         }
         
         if (Array('wfs').includes(params.type)) {
-            this.addGeoJSONLayers(sourceId, {properties})
+            this.configGeoJSONLayers(sourceId, {properties})
         }
     }
 
-    addGeoJSONLayers(sourceId, {beforeId, properties={}}={}) {
+    configGeoJSONLayers(sourceId, {beforeId, properties={}}={}) {
         const map = this._map
         
         const source = (
@@ -662,28 +664,33 @@ export class LayersControl {
         beforeId = this.getBeforeId(layerName, beforeId)
 
         const params = metadata.params ??= {}
+        params.visibility ??= 'visible'
+
         const styles = params.styles ??= {default: [this.getVectorGroupParams()]}
         const styleName = params.style = params.style in styles ? params.style : Object.keys(styles)[0]
-        const style = styles[styleName]
+        const style = styles[styleName] // a style is an array of style params that apply to specific groups or categories in a layer
 
         const geomFilters = this.getGeometryFilters()
         const filterOperators = this.getFilterOperators()
 
         style.forEach(group => {
-            const groupId = group.groupId
-            if (group.visibility === 'none') return
-            group.layers.forEach(layer => {
-                const {type, paint, layout} = layer.params
-                if (layout.visibility === 'none') return
+            const {groupId, layers} = group
+
+            layers.forEach(layer => {
+                const {type, paint, layout} = structuredClone(layer.params)
+
+                if (Array(params, group).some(i => i.visibility === 'none')) {
+                    layout.visibility = 'none'
+                }
 
                 const typeId = layer.typeId
                 const id = Array(layerName, groupId, type, typeId).join('-')
 
-                const params = Array(metadata, group, layer)
-                const geometryFilters = Object.entries(geomFilters).filter(([k,v]) => params.every(i => {
+                const props = Array(params, group, layer)
+                const geometryFilters = Object.entries(geomFilters).filter(([k,v]) => props.every(i => {
                     return (i.geometryFilters ??= Object.keys(geomFilters)).find(j => j === k)
                 })).map(([k,v]) => v)
-                const propertyFilters = params.filter(i => (i.propertyFilters ??= []).length).map(i => {
+                const propertyFilters = props.filter(i => (i.propertyFilters ??= []).length).map(i => {
                     return ["all", ...(i.propertyFilters.filter(j => j.properties.length).map(j => {
                         return [j.combinator, ...(j.properties.filter(k => {
                             return filterOperators.includes(k.operator) && k.property
@@ -698,8 +705,8 @@ export class LayersControl {
                     type,
                     paint,
                     layout,
-                    minzoom: Math.max(...params.map(i => i['minzoom'] ?? 0)),
-                    maxzoom: Math.min(...params.map(i => i['maxzoom'] ?? 24)),
+                    minzoom: Math.max(...props.map(i => i['minzoom'] ?? 0)),
+                    maxzoom: Math.min(...props.map(i => i['maxzoom'] ?? 24)),
                     filter: [
                         "all",
                         ...(geometryFilters.length ? [["any", ...geometryFilters]] : []),
@@ -732,7 +739,8 @@ export class LayersControl {
             })
         })
 
-        return map.getStyle().layers.filter(l => l.id.startsWith(layerName))
+        const layers = map.getStyle().layers.filter(l => l.id.startsWith(layerName))
+        return layers
     }
 
     addRasterLayer (sourceId, {properties={}}={}) {
@@ -762,8 +770,8 @@ export class LayersControl {
                 params: {
                     ...source.metadata.params,
                     ...params,
-                    info: {
-                        active: Array('wms').includes(params.type) ? true : false,
+                    popups: {
+                        info: Array('wms').includes(params.type) ? true : false,
                     },
                 },
                 layerName: id,
@@ -1160,18 +1168,22 @@ export class LayersControl {
                             {
                                 innerText: 'Add to layer',
                                 init: (btn) => {
-                                    btn.addEventListener('click', (e) => {
-                                        e.preventDefault()
-                                        e.stopPropagation()
-                                    })
-
                                     const [toggle, menu] = dropdown({
                                         parent: btn,
                                         title: 'GeoJSON layers',
-                                        menuClassList: ['right-1']
+                                        menuClassList: ['right-1'],
                                     }).children
 
+                                    btn.addEventListener('click', (e) => {
+                                        e.preventDefault()
+                                        e.stopPropagation()
+                                        toggle.click()
+                                    })
+                                    
                                     toggle.addEventListener('click', (e) => {
+                                        e.preventDefault()
+                                        e.stopPropagation()
+                                        
                                         const collapsed = Alpine.$data(toggle.parentElement).showDropdown
                                         if (collapsed) return
 
@@ -1201,7 +1213,7 @@ export class LayersControl {
                                                 sourceId: newSource.id,
                                                 features: [await gisUtils.normalizeProperties(rawFeature)],
                                             })
-                                            this.addGeoJSONLayers(newSource.id)
+                                            this.configGeoJSONLayers(newSource.id)
                                         })
                                         menu.appendChild(newBtn)                              
                                         

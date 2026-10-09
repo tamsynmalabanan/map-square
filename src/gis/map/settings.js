@@ -398,7 +398,7 @@ export class SettingsControl {
         })
 
         let layerTimer
-        Array('layeradded', 'layerremoved', 'layermoved').forEach(i => {
+        Array('layeradded', 'layerremoved', 'layermoved', 'layerupdated').forEach(i => {
             map.on(i, (e) => {
                 if (e.type !== 'layermoved' && systemSources.find(i => e.layer.id.startsWith(i))) return
                 
@@ -496,7 +496,7 @@ export class SettingsControl {
             sourceId: 'tooltip',
             features: [turf.feature(feature.geometry)],
         })
-        layersControl.addGeoJSONLayers('tooltip', {
+        layersControl.configGeoJSONLayers('tooltip', {
             properties: layersControl.highlightedLayerProperties()
         })
 
@@ -596,7 +596,7 @@ export class SettingsControl {
             sourceId,
             features: [coordsFeature],
         })
-        layersControl.addGeoJSONLayers(sourceId, {
+        layersControl.configGeoJSONLayers(sourceId, {
             properties: layersControl.highlightedLayerProperties()
         })
 
@@ -954,8 +954,9 @@ export class SettingsControl {
 
             this.saveTimer = setTimeout(async () => {
                 const map = this._map
-                const config = map.getConfig()
-
+                const config = map?.getConfig()
+                if (!config) return
+                
                 const snapshotPromise = Promise.race([
                     new Promise((resolve) => {
                         map.once('idle', () => {

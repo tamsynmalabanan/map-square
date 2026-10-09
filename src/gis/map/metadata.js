@@ -705,16 +705,24 @@ export default class MetadataControl {
       })
     })
 
-    this._map.on('layeradded', (e) => {
-      const layer = e.layer
-      if (map.getControls('layers').getAllSystemSources().includes(layer.source)) return
-      this.createLegendSection(layer)
-    })
+    Array('layeradded', 'layerremoved').forEach(type => {
+      map.on(type, (e) => {
+        const layer = e.layer
 
-    this._map.on('layerremoved', (e) => {
-      const layer = e.layer
-      if (map.getControls('layers').getAllSystemSources().includes(layer.source)) return
-      layersContainer.querySelector(`[data-layer-name="${layer.metadata.layerName}"]`)?.remove()
+        const layersControl = map.getControls('layers')
+        if (layersControl.getAllSystemSources().includes(layer.source)) return
+
+        const layerName = layer.metadata.layerName
+        const layerContainer = layersContainer.querySelector(`[data-layer-name="${layerName}"]`)
+
+        if (e.type === 'layeradded' && !layerContainer) {
+          this.createLegendSection(layer)
+        }
+
+        if (e.type === 'layerremoved' && layerContainer && !layersControl.getLayersByName(layerName).length) {
+          layerContainer?.remove()
+        }
+      })
     })
   }
 
@@ -907,7 +915,6 @@ export default class MetadataControl {
     
     const metadata = layer.metadata
     const layerName = metadata.layerName
-    if (this.layersContainer.querySelector(`[data-layer-name="${layerName}"]`)) return
 
     const layerContainer = document.createElement('div')
     layerContainer.setAttribute('data-layer-name', layerName)
@@ -927,6 +934,7 @@ export default class MetadataControl {
     const label = document.createElement('span')
     label.classList.add('grow!', 'me-5', 'flex', 'flex-nowrap', 'font-bold', 'max-w-[300px]', 'cursor-pointer')
     label.innerText = metadata.params.title ?? 'Untitled layer'
+    label.setAttribute('x-sort:handle', '')
     header.appendChild(label)
 
     const [toggle, menu] = dropdown({
@@ -938,12 +946,22 @@ export default class MetadataControl {
             title: '',
             options: [
               {
-                innerText: 'Remove layer',
+                innerText: '',
+                attrs: {
+                  'x-bind:disabled': 'locked',
+                  'x-data': `{visible: ${metadata.params.visibility === 'visible'}}`,
+                  'x-text': `visible ? "Hide feature" : "Show feature"`,
+                  '@click': `visible = !visible`,
+                },
                 events: {
-                  click: async (e) => {
-                    map.getControls('layers').getLayersByName(layerName).forEach(l => {
-                      map.removeLayer(l.id)
+                  click: async () => {
+                    const params = layer.metadata.params
+                    params.visibility = !params.visibility
+                    
+                    map.getControls('layers').configGeoJSONLayers(layer.source, {
+                      properties: layer
                     })
+                    console.log(layer)
                   }
                 },
               },
@@ -972,14 +990,26 @@ export default class MetadataControl {
                   }
                 },
               },
+              {
+                innerText: 'Remove layer',
+                events: {
+                  click: async (e) => {
+                    map.getControls('layers').getLayersByName(layerName).forEach(l => {
+                      map.removeLayer(l.id)
+                    })
+                  }
+                },
+              },
             ],
           },
         )
     }).children
-
+    toggle.setAttribute('x-sort:ignore', '')
+    
     const collapse = document.createElement('span')
     collapse.classList.add('size-[15px]!', 'self-top', 'cursor-pointer', 'opacity-25', 'hover:opacity-100')
     collapse.setAttribute('x-html', 'show ? svg.chevronUpMini : svg.chevronDownMini')
+    collapse.setAttribute('x-sort:ignore', '')
     collapse.setAttribute('@click', 'show=!show')
     header.appendChild(collapse)
 
@@ -1036,15 +1066,14 @@ export default class MetadataControl {
     utils.appendBinding(btnsContainer, ':class', `['me-1']: isRadioValue("edit")`)
     headerContainer.appendChild(btnsContainer)
 
-    const moveTheme = utils.strToEl(button({
+    btnsContainer.appendChild(utils.strToEl(button({
       title: 'Move theme',
       icon: svg.bars3Mini,
       classStr: `size-[15px]! self-center border-none! opacity-25 hover:opacity-100`,
       attrs: `x-show=isRadioValue("edit") x-sort:handle`,
       themedBg: false,
       minimal: true,
-    }))
-    btnsContainer.appendChild(moveTheme)  
+    })))  
     
     const activateTheme = utils.strToEl(button({
       title: 'Set as active theme',
