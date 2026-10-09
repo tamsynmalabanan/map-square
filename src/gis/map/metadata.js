@@ -5,6 +5,7 @@ import Map from './map.js'
 import Quill from 'quill';
 import dropdown from "../../templates/dropdown.js";
 import * as turf from '@turf/turf'
+import { before } from 'lodash';
 
 export default class MetadataControl {
   onAdd(map) {
@@ -710,13 +711,17 @@ export default class MetadataControl {
         const layer = e.layer
 
         const layersControl = map.getControls('layers')
-        if (layersControl.getAllSystemSources().includes(layer.source)) return
+        const systemSources = layersControl.getAllSystemSources()
+        if (systemSources.includes(layer.source)) return
 
         const layerName = layer.metadata.layerName
         const layerContainer = layersContainer.querySelector(`[data-layer-name="${layerName}"]`)
 
-        if (e.type === 'layeradded' && !layerContainer) {
-          this.createLegendSection(layer)
+        if (e.type === 'layeradded' && !layerContainer && layer.type !== "background") {
+          const beforeId = e.beforeId
+          this.createLegendSection(layer, {
+            beforeId: !beforeId || systemSources.find(i => beforeId.startsWith(i)) ? null : beforeId
+          })
         }
 
         if (e.type === 'layerremoved' && layerContainer && !layersControl.getLayersByName(layerName).length) {
@@ -910,7 +915,7 @@ export default class MetadataControl {
     return charLimit
   }
 
-  createLegendSection(layer) {
+  createLegendSection(layer, {beforeId}={}) {
     const map = this._map
     
     const metadata = layer.metadata
@@ -921,7 +926,18 @@ export default class MetadataControl {
     layerContainer.setAttribute(`x-sort:item`, `"${layerName}"`)
     layerContainer.setAttribute(`x-data`, `{show:true}`)
     layerContainer.classList.add('flex', 'flex-col', 'gap-1')
-    if (this.layersContainer.children.length) {
+    
+    
+    if (beforeId) {
+      const beforeLayerName = beforeId.split('-').slice(0,2).join('-')
+      const beforeEl = this.layersContainer.querySelector(`[data-layer-name="${beforeLayerName}"]`)
+      const afterEl = beforeEl?.nextElementSibling
+      if (afterEl) {
+        this.layersContainer.insertBefore(layerContainer, afterEl)
+      } else {
+        this.layersContainer.appendChild(layerContainer)
+      }
+    } else if (this.layersContainer.children.length) {
       this.layersContainer.insertBefore(layerContainer, this.layersContainer.firstElementChild)
     } else {
       this.layersContainer.appendChild(layerContainer)
@@ -955,12 +971,23 @@ export default class MetadataControl {
                 },
                 events: {
                   click: async () => {
-                    const params = layer.metadata.params
-                    params.visibility = !params.visibility
-                    console.log(layer)
-                    // map.getControls('layers').configGeoJSONLayers(layer.source, {
-                    //   properties: layer
-                    // })
+                    const metadata = layer.metadata
+                    const params = metadata.params
+                    const visibility = params.visibility === 'visible' ? 'none' : 'visible'
+
+                    map.getControls('layers')
+                    .configGeoJSONLayers(layer.source, {
+                      beforeId: layerContainer.previousElementSibling?.dataset.layerName, 
+                      properties: {
+                        metadata: {
+                          ...metadata,
+                          params: {
+                            ...params,
+                            visibility,
+                          }
+                        }
+                      }
+                    })
                   }
                 },
               },

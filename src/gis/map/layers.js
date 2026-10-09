@@ -653,30 +653,29 @@ export class LayersControl {
     configGeoJSONLayers(sourceId, {beforeId, properties={}}={}) {
         const map = this._map
         
-        const source = (
-            map.getSource(sourceId) 
-            ?? this.getOrCreateSource(sourceId, {properties})
-        )
+        const source = map.getSource(sourceId) 
+        ?? this.getOrCreateSource(sourceId, {properties})
         
         const metadata = properties.metadata ??= {}
         const name = metadata.name ??= utils.randomId()
         const layerName = metadata.layerName ??= `${sourceId}-${name}`
-        beforeId = this.getBeforeId(layerName, beforeId)
 
+        beforeId = this.getBeforeId(layerName, beforeId)
+        
         const params = metadata.params ??= {}
         params.visibility ??= 'visible'
-
+        
         const styles = params.styles ??= {default: [this.getVectorGroupParams()]}
         const styleName = params.style = params.style in styles ? params.style : Object.keys(styles)[0]
-        const style = styles[styleName] // a style is an array of style params that apply to specific groups or categories in a layer
-
+        const style = styles[styleName] 
+        
         const geomFilters = this.getGeometryFilters()
         const filterOperators = this.getFilterOperators()
-
-        style.forEach(group => {
+        
+        const layers = style.flatMap(group => {
             const {groupId, layers} = group
 
-            layers.forEach(layer => {
+            return layers.map(layer => {
                 const {type, paint, layout} = structuredClone(layer.params)
 
                 if (Array(params, group).some(i => i.visibility === 'none')) {
@@ -699,7 +698,7 @@ export class LayersControl {
                 })
                 const spatialFilters = []
                 
-                const layerParams = {
+                return {
                     source: sourceId,
                     id,
                     type,
@@ -730,17 +729,16 @@ export class LayersControl {
                         },
                     },
                 }
-
-                if (map.getLayer(id)) {
-                    this.updateLayerParams(id, layerParams)
-                } else {
-                    map.addLayer(layerParams, beforeId)
-                }
             })
         })
 
-        const layers = map.getStyle().layers.filter(l => l.id.startsWith(layerName))
-        return layers
+        this.getLayersByName(layerName).forEach(l => {
+            map.removeLayer(l.id)
+        })
+        
+        layers.forEach(l => {
+            map.addLayer(l, beforeId)
+        })
     }
 
     addRasterLayer (sourceId, {properties={}}={}) {

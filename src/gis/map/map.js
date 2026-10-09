@@ -392,7 +392,7 @@ export default class Map extends maplibregl.Map {
 
     this.addLayer = (layer, beforeId) => {
       const result = originalAddLayer(layer, beforeId)
-      this.fire('layeradded', { layer })
+      this.fire('layeradded', { layer, beforeId })
       return result
     }
   }
