@@ -927,11 +927,12 @@ export default class MetadataControl {
     layerContainer.setAttribute(`x-data`, `{show:true}`)
     layerContainer.classList.add('flex', 'flex-col', 'gap-1')
     
-    
     if (beforeId) {
-      const beforeLayerName = beforeId.split('-').slice(0,2).join('-')
-      const beforeEl = this.layersContainer.querySelector(`[data-layer-name="${beforeLayerName}"]`)
-      const afterEl = beforeEl?.nextElementSibling
+      const afterEl = (
+        this.layersContainer.querySelector(`[data-layer-name="${
+          beforeId.split('-').slice(0,2).join('-')
+        }"]`)?.nextElementSibling
+      )
       if (afterEl) {
         this.layersContainer.insertBefore(layerContainer, afterEl)
       } else {
