@@ -977,7 +977,7 @@ export default class MetadataControl {
                     const visibility = params.visibility === 'visible' ? 'none' : 'visible'
 
                     map.getControls('layers')
-                    .configGeoJSONLayers(layer.source, {
+                    .addGeoJSONLayers(layer.source, {
                       beforeId: layerContainer.previousElementSibling?.dataset.layerName, 
                       properties: {
                         metadata: {
@@ -1031,7 +1031,8 @@ export default class MetadataControl {
           },
         )
     }).children
-    toggle.setAttribute('x-sort:ignore', '')
+
+    toggle.parentElement.setAttribute('x-sort:ignore', '')
     
     const collapse = document.createElement('span')
     collapse.classList.add('size-[15px]!', 'self-top', 'cursor-pointer', 'opacity-25', 'hover:opacity-100')
@@ -1039,9 +1040,10 @@ export default class MetadataControl {
     collapse.setAttribute('x-sort:ignore', '')
     collapse.setAttribute('@click', 'show=!show')
     header.appendChild(collapse)
-
+    
     const layerDetails = document.createElement('div')
     layerDetails.classList.add('flex', 'flex-col', `gap-2`)
+    layerDetails.setAttribute('x-sort:ignore', '')
     layerDetails.setAttribute('x-show', 'show')
     layerContainer.appendChild(layerDetails)
 

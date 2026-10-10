@@ -496,7 +496,7 @@ export class SettingsControl {
             sourceId: 'tooltip',
             features: [turf.feature(feature.geometry)],
         })
-        layersControl.configGeoJSONLayers('tooltip', {
+        layersControl.addGeoJSONLayers('tooltip', {
             properties: layersControl.highlightedLayerProperties()
         })
 
@@ -596,7 +596,7 @@ export class SettingsControl {
             sourceId,
             features: [coordsFeature],
         })
-        layersControl.configGeoJSONLayers(sourceId, {
+        layersControl.addGeoJSONLayers(sourceId, {
             properties: layersControl.highlightedLayerProperties()
         })
 
@@ -946,7 +946,7 @@ export class SettingsControl {
         )
     }
 
-    async saveConfig({date=(new Date()).toLocaleString("en-US"), timeout=1000}) {
+    async saveConfig({date=(new Date()).toLocaleString("en-US"), timeout=5000}) {
         return new Promise((resolve, reject) => {
             if (this.saveTimer) {
                 clearTimeout(this.saveTimer)
@@ -956,7 +956,7 @@ export class SettingsControl {
                 const map = this._map
                 const config = map?.getConfig()
                 if (!config) return
-                
+
                 const snapshotPromise = Promise.race([
                     new Promise((resolve) => {
                         map.once('idle', () => {

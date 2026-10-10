@@ -646,11 +646,11 @@ export class LayersControl {
         }
         
         if (Array('wfs').includes(params.type)) {
-            this.configGeoJSONLayers(sourceId, {properties})
+            this.addGeoJSONLayers(sourceId, {properties})
         }
     }
 
-    configGeoJSONLayers(sourceId, {beforeId, properties={}}={}) {
+    addGeoJSONLayers(sourceId, {beforeId, properties={}}={}) {
         const map = this._map
         
         const source = map.getSource(sourceId) 
@@ -1211,7 +1211,7 @@ export class LayersControl {
                                                 sourceId: newSource.id,
                                                 features: [await gisUtils.normalizeProperties(rawFeature)],
                                             })
-                                            this.configGeoJSONLayers(newSource.id)
+                                            this.addGeoJSONLayers(newSource.id)
                                         })
                                         menu.appendChild(newBtn)                              
                                         

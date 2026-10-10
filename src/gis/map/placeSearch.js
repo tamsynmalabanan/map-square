@@ -96,7 +96,7 @@ export default class PlaceSearchControl {
             sourceId: 'placeSearch',
             features: data.features,
         })
-        const layers = layersControl.configGeoJSONLayers(source.id, {
+        const layers = layersControl.addGeoJSONLayers(source.id, {
             properties: {
                 metadata: {
                     name: 'default',
