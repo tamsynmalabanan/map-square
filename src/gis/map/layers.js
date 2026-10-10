@@ -33,11 +33,15 @@ export class LayersControl {
         return [
             'basemap',
             'hillshade', 
+            'terrain', 
         ]
     }
 
     getAllSystemSources() {
-        return [...this.getBaseLayerSources(), ...this.getsystemOverlaySources()]
+        return [
+            ...this.getBaseLayerSources(), 
+            ...this.getsystemOverlaySources()
+        ]
     }
 
     getGeometryFilters() {

@@ -954,82 +954,104 @@ export default class MetadataControl {
     label.setAttribute('x-sort:handle', '')
     header.appendChild(label)
 
+    const menuContent = Array(
+      {
+        title: '',
+        options: [
+          {
+            innerText: '',
+            attrs: {
+              'x-bind:disabled': 'locked',
+              'x-data': `{visible: ${metadata.params.visibility === 'visible'}}`,
+              'x-text': `visible ? "Hide layer" : "Show layer"`,
+              '@click': `visible = !visible`,
+            },
+            events: {
+              click: async () => {
+                const metadata = layer.metadata
+                const params = metadata.params
+                const visibility = params.visibility === 'visible' ? 'none' : 'visible'
+
+                map.getControls('layers').addGeoJSONLayers(layer.source, {
+                  beforeId: layerContainer.previousElementSibling?.dataset.layerName, 
+                  properties: {
+                    metadata: {
+                      ...metadata,
+                      params: {
+                        ...params,
+                        visibility,
+                      }
+                    }
+                  }
+                })
+              }
+            },
+          },
+          {
+            innerText: 'Zoom to layer',
+            attrs: {
+              'x-bind:disabled': 'locked'
+            },
+            events: {
+              click: async () => {
+                let bbox = metadata.params.bbox
+                if (!bbox) {
+                  const source = map.getSource(layer.source)
+                  if (source.type === 'geojson') {
+                    const geojson = source._data?.geojson
+                    if (geojson) {
+                      bbox = turf.bbox(geojson)
+                    }
+                  }
+                }
+                const [w,s,e,n] = bbox ?? [-180, -90, 180, 90]
+                map.fitBounds([[w,s],[e,n]], {
+                    padding: 100,
+                    maxZoom: Math.max(13, map.getZoom())
+                })
+              }
+            },
+          },
+        ],
+      },
+      {
+        titl: '',
+        options: [
+          {
+            innerText: 'Duplicate layer',
+            events: {
+              click: async (e) => {
+                map.getControls('layers').addGeoJSONLayers(layer.source, {
+                  beforeId: layerContainer.previousElementSibling?.dataset.layerName, 
+                  properties: {metadata: {params: structuredClone(layer.metadata.params)}}
+                })
+              }
+            },
+          },
+        ],
+      },
+      {
+        titl: '',
+        options: [
+          {
+            innerText: 'Remove layer',
+            events: {
+              click: async (e) => {
+                map.getControls('layers').getLayersByName(layerName).forEach(l => {
+                  map.removeLayer(l.id)
+                })
+              }
+            },
+          },
+        ],
+      },
+    )
+
     const [toggle, menu] = dropdown({
       parent: header,
       title: 'Layer menu',
       menuClassList: ['right-4'],
-      menuContent: Array(
-          {
-            title: '',
-            options: [
-              {
-                innerText: '',
-                attrs: {
-                  'x-bind:disabled': 'locked',
-                  'x-data': `{visible: ${metadata.params.visibility === 'visible'}}`,
-                  'x-text': `visible ? "Hide feature" : "Show feature"`,
-                  '@click': `visible = !visible`,
-                },
-                events: {
-                  click: async () => {
-                    const metadata = layer.metadata
-                    const params = metadata.params
-                    const visibility = params.visibility === 'visible' ? 'none' : 'visible'
-
-                    map.getControls('layers')
-                    .addGeoJSONLayers(layer.source, {
-                      beforeId: layerContainer.previousElementSibling?.dataset.layerName, 
-                      properties: {
-                        metadata: {
-                          ...metadata,
-                          params: {
-                            ...params,
-                            visibility,
-                          }
-                        }
-                      }
-                    })
-                  }
-                },
-              },
-              {
-                innerText: 'Zoom to layer',
-                attrs: {
-                  'x-bind:disabled': 'locked'
-                },
-                events: {
-                  click: async () => {
-                    let bbox = metadata.params.bbox
-                    if (!bbox) {
-                      const source = map.getSource(layer.source)
-                      if (source.type === 'geojson') {
-                        const geojson = source._data?.geojson
-                        if (geojson) {
-                          bbox = turf.bbox(geojson)
-                        }
-                      }
-                    }
-                    const [w,s,e,n] = bbox ?? [-180, -90, 180, 90]
-                    map.fitBounds([[w,s],[e,n]], {
-                        padding: 100,
-                        maxZoom: Math.max(13, map.getZoom())
-                    })
-                  }
-                },
-              },
-              {
-                innerText: 'Remove layer',
-                events: {
-                  click: async (e) => {
-                    map.getControls('layers').getLayersByName(layerName).forEach(l => {
-                      map.removeLayer(l.id)
-                    })
-                  }
-                },
-              },
-            ],
-          },
-        )
+      menuContent,
     }).children
 
     toggle.parentElement.setAttribute('x-sort:ignore', '')

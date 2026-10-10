@@ -641,12 +641,10 @@ export class SettingsControl {
         if (info.data.layers) {
             let features = (await layersControl.getCanvasData({
                 point: e.point, rasters: true,
-                layers: map.getStyle().layers.filter(l =>  {
-                    return (
-                        !Object.keys(this.popups).includes(l.source) 
-                        && l.metadata?.params?.popups?.info
-                    )
-                }).map(l => l.id),
+                layers: map.getStyle().layers.filter(l => (
+                    !Object.keys(this.popups).includes(l.source) 
+                    && l.metadata?.params?.popups?.info
+                )).map(l => l.id),
                 signal,
             }))
             // ?.filter(f => {
@@ -961,10 +959,10 @@ export class SettingsControl {
                     new Promise((resolve) => {
                         map.once('idle', () => {
                             config.metadata.snapshot = map.getCanvas().toDataURL('image/png')
-                            map.setPixelRatio(window.devicePixelRatio)
+                            // map.setPixelRatio(window.devicePixelRatio)
                             resolve()
                         })
-                        map.setPixelRatio(0.1)
+                        // map.setPixelRatio(0.1)
                         map.triggerRepaint()
                     }),
                     new Promise((resolve) => setTimeout(() => resolve(), 3000))

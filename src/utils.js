@@ -461,3 +461,21 @@ export const dynamicBgExp = ({prefix='', opacity=100}={}) => {
         ${prefix? `${prefix}:` : ''}dark:bg-'+color+'-950/${opacity}!
     `
 }
+
+export const downscaleDataURL = (dataURL, width, height) => {
+  return new Promise((resolve) => {
+    const img = new Image()
+    img.onload = () => {
+      const canvas = document.createElement('canvas')
+      canvas.width = width
+      canvas.height = height
+      const ctx = canvas.getContext('2d')
+      
+      ctx.drawImage(img, 0, 0, width, height)
+      
+      const resizedDataURL = canvas.toDataURL('image/png')
+      resolve(resizedDataURL)
+    };
+    img.src = dataURL
+  })
+}
