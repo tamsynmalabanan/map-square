@@ -1032,7 +1032,7 @@ export default class MetadataControl {
             events: {
               click: async (e) => {
                 // save to indexdb data
-                  // can be updated
+                  // listen for geojsonupdated in settings.configMap
                 // remove existing layers
                 // add new layers from new source
               }
