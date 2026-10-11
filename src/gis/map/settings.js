@@ -6,6 +6,7 @@ import menu from '../../templates/menu.js';
 import modal from '../../templates/modal.js'; 
 import _, { countBy, includes } from 'lodash';
 import * as turf from '@turf/turf'
+import { LayersControl } from './layers.js';
 
 const CURSOR = { x: null, y: null, }
 
@@ -81,17 +82,17 @@ export class SettingsControl {
     async configMap() {
         const map = this._map
 
-        const systemSources = map.getControls('layers').getAllSystemSources()
+        const layersControl = map.getControls('layers')
 
         let sourceTimer
         Array('sourceadded', 'sourceremoved', 'geojsonupdated').forEach(i => {
             map.on(i, (e) => {
-                if (systemSources.includes(e.sourceId)) return
+                if (layersControl.isSystemSource(e.sourceId)) return
     
                 clearTimeout(sourceTimer)
                 sourceTimer = setTimeout(async () => {
                     const sources = Object.fromEntries(Object.entries(structuredClone(map.getStyle().sources)).map(([id, source]) => {
-                        if ('data' in source && (source.metadata?.params?.url || systemSources.includes(id))) {
+                        if ('data' in source && (source.metadata?.params?.url || layersControl.isSystemSource(id))) {
                             source.data = turf.featureCollection([])
                         }
                         return [id, source]
@@ -104,15 +105,15 @@ export class SettingsControl {
         let layerTimer
         Array('layeradded', 'layerremoved', 'layermoved', 'layerupdated').forEach(i => {
             map.on(i, (e) => {
-                if (e.type !== 'layermoved' && systemSources.find(i => e.layer.id.startsWith(i))) return
+                if (e.type !== 'layermoved' && layersControl.isSystemSource(e.layer.id)) return
                 
                 clearTimeout(layerTimer)
                 layerTimer = setTimeout(async () => {
-                    const layers = structuredClone(map.getStyle().layers).filter(i => !systemSources.find(j => i.id.startsWith(j)))
+                    const layers = structuredClone(layersControl.getLegendLayers())
                     this.updateConfig(['layers'], layers, {
                         themeId: map.getTheme().id,
                     })
-                }, 1000);
+                }, 1000)
             })
         })
 
@@ -448,11 +449,11 @@ export class SettingsControl {
         this.popups[name] = null
 
         const map = this._map
+        map.getControls('layers').removeSourceLayers(name)
         map.getControls('layers').updateGeoJSONData({
             sourceId: name,
             features: [],
         })
-        map.getControls('layers').removeSourceLayers(name)
     }
 
     async createTooltipPopup(e) {
@@ -535,6 +536,8 @@ export class SettingsControl {
         const sourceId = 'info'
         const layersControl = map.getControls('layers')
 
+        map.getSource(sourceId).attribution = ''
+
         const lngLat = e.lngLat
 
         const popup = new maplibregl.Popup({closeButton: false})
@@ -596,6 +599,7 @@ export class SettingsControl {
             sourceId,
             features: [coordsFeature],
         })
+
         layersControl.addGeoJSONLayers(sourceId, {
             properties: layersControl.highlightedLayerProperties()
         })
@@ -623,6 +627,8 @@ export class SettingsControl {
                 addrSpan.innerText = addrFeature.properties.display_name
                 addrSpan.classList.add('grow')
                 addrContainer.appendChild(addrSpan)     
+
+                map.getSource(sourceId).attribution = '&copy; OpenStreetMap Contributors'
 
                 layersControl.updateGeoJSONData({
                     sourceId,
@@ -844,9 +850,8 @@ export class SettingsControl {
         this.configScaleBarUnit(settings.unit)
         this.configBasemap()
         
-        const systemSources = controls.layers.getAllSystemSources()
         theme.layers.forEach(layer => {
-            if (systemSources.find(i => layer.id.startsWith(i))) return
+            if (controls.layers.isSystemSource(layer.id)) return
             map.addLayer(layer)  
         })
 

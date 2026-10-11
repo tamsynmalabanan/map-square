@@ -1181,7 +1181,7 @@ export class LayersControl {
 
                                         const layers = []
                                         map.getStyle().layers.forEach(l => {
-                                            if (this.getAllSystemSources().find(i => i === l.source)) return
+                                            if (this.isSystemSource(l.source)) return
                                             
                                             const source = map.getSource(l.source)
                                             if (source?.type !== 'geojson') return
@@ -1233,6 +1233,24 @@ export class LayersControl {
             || feature.layer?.metadata?.params?.title 
             || feature.geometry?.type 
         )
+    }
+
+    isSystemSource(layerName) {
+        if (!layerName) return
+        return this.getAllSystemSources().find(i => layerName.startsWith(i))
+    }
+
+    getLegendSources() {
+        return (
+            Object.fromEntries(
+                Object.entries(this._map.getStyle().sources)
+                .filter(([id, params]) => !this.isSystemSource(id))
+            )
+        )
+    }
+
+    getLegendLayers() {
+        return this._map.getStyle().layers.filter(l => !this.isSystemSource(l.id))
     }
 
     createPropertiesTable({

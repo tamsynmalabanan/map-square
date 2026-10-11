@@ -141,7 +141,8 @@ export default class Map extends maplibregl.Map {
         },
         info: {
           type: 'geojson',
-          data: turf.featureCollection([])
+          data: turf.featureCollection([]),
+          // attribution: '&copy; OpenStreetMap Contributors',
         },
       },
       themes: [{
@@ -403,14 +404,19 @@ export default class Map extends maplibregl.Map {
     this.removeLayer = (layerId) => {
       const layer = this.getLayer(layerId)
       const result = originalRemoveLayer(layerId)
-      this.fire('layerremoved', { layerId, layer })
+      this.fire('layerremoved', { layer })
       
-      // if (!this.getControls('layers').getAllSystemSources().find(i => layerId.startsWith(i))) {
-      //   const sourceId = layer.source
-      //   if (!this.getConfig().themes.find(i => i.layers.find(j => j.source === sourceId))) {
-      //     this.removeSource(sourceId)
-      //   }
-      // }
+      const sourceId = layer.source
+      const layersControl = this.getControls('layers')
+      if (sourceId && !layersControl.isSystemSource(sourceId)) {
+        if (!layersControl.getLegendLayers().some(l => l.source === sourceId)) {
+          const config = this.getConfig()
+          if (!config.themes.some(theme => {
+            if (theme.id === config.activeTheme) return false
+            return theme.layers.some(l => l.source === sourceId)
+          })) this.removeSource(sourceId)
+        }
+      }
 
       return result
     }

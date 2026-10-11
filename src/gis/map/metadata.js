@@ -711,8 +711,7 @@ export default class MetadataControl {
         const layer = e.layer
 
         const layersControl = map.getControls('layers')
-        const systemSources = layersControl.getAllSystemSources()
-        if (systemSources.includes(layer.source)) return
+        if (layersControl.isSystemSource(layer.source)) return
 
         const layerName = layer.metadata.layerName
         const layerContainer = layersContainer.querySelector(`[data-layer-name="${layerName}"]`)
@@ -720,7 +719,7 @@ export default class MetadataControl {
         if (e.type === 'layeradded' && !layerContainer && layer.type !== "background") {
           const beforeId = e.beforeId
           this.createLegendSection(layer, {
-            beforeId: !beforeId || systemSources.find(i => beforeId.startsWith(i)) ? null : beforeId
+            beforeId: !beforeId || layersControl.isSystemSource(beforeId) ? null : beforeId
           })
         }
 
