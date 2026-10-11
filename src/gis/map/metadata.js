@@ -1027,6 +1027,21 @@ export default class MetadataControl {
               }
             },
           },
+          {
+            innerText: 'Save as local data',
+            events: {
+              click: async (e) => {
+                // save to indexdb data
+                  // can be updated
+                // remove existing layers
+                // add new layers from new source
+                map.getControls('layers').addGeoJSONLayers(layer.source, {
+                  beforeId: layerContainer.previousElementSibling?.dataset.layerName, 
+                  properties: {metadata: {params: structuredClone(layer.metadata.params)}}
+                })
+              }
+            },
+          },
         ],
       },
       {

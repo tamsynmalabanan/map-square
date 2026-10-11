@@ -1185,6 +1185,7 @@ export class LayersControl {
                                             
                                             const source = map.getSource(l.source)
                                             if (source?.type !== 'geojson') return
+                                            if (source?.metadata?.params?.url) return
 
                                             if (layers.find(i => i.metadata.layerName === l.metadata.layerName)) return
 

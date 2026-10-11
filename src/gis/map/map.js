@@ -142,7 +142,6 @@ export default class Map extends maplibregl.Map {
         info: {
           type: 'geojson',
           data: turf.featureCollection([]),
-          // attribution: '&copy; OpenStreetMap Contributors',
         },
       },
       themes: [{
