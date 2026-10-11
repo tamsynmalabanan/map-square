@@ -1154,76 +1154,76 @@ export class LayersControl {
                                 }
                             }
                         },
-                        ...(!map.isStaticConfig() ? [
-                            {
-                                innerText: 'Add to layer',
-                                init: (btn) => {
-                                    const [toggle, menu] = dropdown({
-                                        parent: btn,
-                                        title: 'GeoJSON layers',
-                                        menuClassList: ['right-1'],
-                                    }).children
+                        // ...(!map.isStaticConfig() ? [
+                        //     {
+                        //         innerText: 'Add to layer',
+                        //         init: (btn) => {
+                        //             const [toggle, menu] = dropdown({
+                        //                 parent: btn,
+                        //                 title: 'GeoJSON layers',
+                        //                 menuClassList: ['right-1'],
+                        //             }).children
 
-                                    btn.addEventListener('click', (e) => {
-                                        e.preventDefault()
-                                        e.stopPropagation()
-                                        toggle.click()
-                                    })
+                        //             btn.addEventListener('click', (e) => {
+                        //                 e.preventDefault()
+                        //                 e.stopPropagation()
+                        //                 toggle.click()
+                        //             })
                                     
-                                    toggle.addEventListener('click', (e) => {
-                                        e.preventDefault()
-                                        e.stopPropagation()
+                        //             toggle.addEventListener('click', (e) => {
+                        //                 e.preventDefault()
+                        //                 e.stopPropagation()
                                         
-                                        const collapsed = Alpine.$data(toggle.parentElement).showDropdown
-                                        if (collapsed) return
+                        //                 const collapsed = Alpine.$data(toggle.parentElement).showDropdown
+                        //                 if (collapsed) return
 
-                                        menu.innerHTML = ''
+                        //                 menu.innerHTML = ''
 
-                                        const layers = []
-                                        map.getStyle().layers.forEach(l => {
-                                            if (this.isSystemSource(l.source)) return
+                        //                 const layers = []
+                        //                 map.getStyle().layers.forEach(l => {
+                        //                     if (this.isSystemSource(l.source)) return
                                             
-                                            const source = map.getSource(l.source)
-                                            if (source?.type !== 'geojson') return
-                                            if (source?.metadata?.params?.url) return
+                        //                     const source = map.getSource(l.source)
+                        //                     if (source?.type !== 'geojson') return
+                        //                     if (source?.metadata?.params?.url) return
 
-                                            if (layers.find(i => i.metadata.layerName === l.metadata.layerName)) return
+                        //                     if (layers.find(i => i.metadata.layerName === l.metadata.layerName)) return
 
-                                            layers.push(l)
-                                        })
+                        //                     layers.push(l)
+                        //                 })
 
-                                        const newBtn = document.createElement('button')
-                                        newBtn.innerText = 'Create new layer'
-                                        newBtn.addEventListener('click', async (e) => {
-                                            const newSource = this.getOrCreateSource(utils.randomId(), {
-                                                properties: {metadata: {params: {
-                                                    title: featureLabel || 'Untitled layer'
-                                                }}}
-                                            })
-                                            this.updateGeoJSONData({
-                                                sourceId: newSource.id,
-                                                features: [await gisUtils.normalizeProperties(rawFeature)],
-                                            })
-                                            this.addGeoJSONLayers(newSource.id)
-                                        })
-                                        menu.appendChild(newBtn)                              
+                        //                 const newBtn = document.createElement('button')
+                        //                 newBtn.innerText = 'Create new layer'
+                        //                 newBtn.addEventListener('click', async (e) => {
+                        //                     const newSource = this.getOrCreateSource(utils.randomId(), {
+                        //                         properties: {metadata: {params: {
+                        //                             title: featureLabel || 'Untitled layer'
+                        //                         }}}
+                        //                     })
+                        //                     this.updateGeoJSONData({
+                        //                         sourceId: newSource.id,
+                        //                         features: [await gisUtils.normalizeProperties(rawFeature)],
+                        //                     })
+                        //                     this.addGeoJSONLayers(newSource.id)
+                        //                 })
+                        //                 menu.appendChild(newBtn)                              
                                         
-                                        layers.filter(Boolean).reverse().forEach(l => {
-                                            const layerBtn = document.createElement('button')
-                                            layerBtn.innerText = l.metadata.params.title
-                                            layerBtn.addEventListener('click', async (e) => {
-                                                this.updateGeoJSONData({
-                                                    sourceId: l.source,
-                                                    features: [await gisUtils.normalizeProperties(rawFeature)],
-                                                    action: 'add',
-                                                })
-                                            })
-                                            menu.appendChild(layerBtn)                              
-                                        })
-                                    })
-                                }
-                            },
-                        ] : []),
+                        //                 layers.filter(Boolean).reverse().forEach(l => {
+                        //                     const layerBtn = document.createElement('button')
+                        //                     layerBtn.innerText = l.metadata.params.title
+                        //                     layerBtn.addEventListener('click', async (e) => {
+                        //                         this.updateGeoJSONData({
+                        //                             sourceId: l.source,
+                        //                             features: [await gisUtils.normalizeProperties(rawFeature)],
+                        //                             action: 'add',
+                        //                         })
+                        //                     })
+                        //                     menu.appendChild(layerBtn)                              
+                        //                 })
+                        //             })
+                        //         }
+                        //     },
+                        // ] : []),
                     ],
                 }
             )
