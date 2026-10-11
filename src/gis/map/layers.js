@@ -1089,7 +1089,6 @@ export class LayersControl {
                                 },
                                 events: {
                                     'click': (e) => {
-                                        console.log(Alpine.$data(e.target).visible)
                                         this.updateGeoJSONData({
                                             sourceId,
                                             features: [rawFeature],
