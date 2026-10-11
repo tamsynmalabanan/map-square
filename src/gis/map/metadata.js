@@ -1035,10 +1035,6 @@ export default class MetadataControl {
                   // can be updated
                 // remove existing layers
                 // add new layers from new source
-                map.getControls('layers').addGeoJSONLayers(layer.source, {
-                  beforeId: layerContainer.previousElementSibling?.dataset.layerName, 
-                  properties: {metadata: {params: structuredClone(layer.metadata.params)}}
-                })
               }
             },
           },
