@@ -1080,34 +1080,23 @@ export class LayersControl {
                             {
                                 innerText: '',
                                 attrs: {
-                                    'x-data': `{visible: ${
-                                        this.findFeatureById(
-                                            sourceId, 
-                                            featureId
-                                        ) ? true : false
-                                    }}`,
-                                    'x-text': `visible ? "Hide feature" : "Show feature"`
+                                    'x-data': `{visible: ${this.findFeatureById(
+                                        sourceId, 
+                                        featureId
+                                    ) ? true : false}}`,
+                                    'x-text': `visible ? "Hide feature" : "Show feature"`,
+                                    '@click': `visible = !visible`,
                                 },
                                 events: {
                                     'click': (e) => {
+                                        console.log(Alpine.$data(e.target).visible)
                                         this.updateGeoJSONData({
                                             sourceId,
                                             features: [rawFeature],
-                                            action: !Alpine.$data(e.target).visible ? 'add' : 'remove',
+                                            action: Alpine.$data(e.target).visible ? 'remove' : 'add',
                                         })
                                     }
                                 },
-                                init: (btn) => {
-                                    map.on('geojsonupdated', (e) => {
-                                        if (e.sourceId !== sourceId) return
-                                        Alpine.$data(btn).visible = (
-                                            this.findFeatureById(
-                                                sourceId, 
-                                                featureId
-                                            ) ? true : false
-                                        )
-                                    })
-                                }
                             }
                         ] : []),
                         {

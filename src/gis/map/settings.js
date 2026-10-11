@@ -77,6 +77,73 @@ export class SettingsControl {
         this._container.parentNode.removeChild(this._container);
         this._map = undefined;
     }
+
+    async configMap() {
+        const map = this._map
+
+        const systemSources = map.getControls('layers').getAllSystemSources()
+
+        let sourceTimer
+        Array('sourceadded', 'sourceremoved', 'geojsonupdated').forEach(i => {
+            map.on(i, (e) => {
+                if (systemSources.includes(e.sourceId)) return
+    
+                clearTimeout(sourceTimer)
+                sourceTimer = setTimeout(async () => {
+                    const sources = Object.fromEntries(Object.entries(structuredClone(map.getStyle().sources)).map(([id, source]) => {
+                        if ('data' in source && (source.metadata?.params?.url || systemSources.includes(id))) {
+                            source.data = turf.featureCollection([])
+                        }
+                        return [id, source]
+                    }))
+                    this.updateConfig(['sources'], sources)
+                }, 1000);
+            })
+        })
+
+        let layerTimer
+        Array('layeradded', 'layerremoved', 'layermoved', 'layerupdated').forEach(i => {
+            map.on(i, (e) => {
+                if (e.type !== 'layermoved' && systemSources.find(i => e.layer.id.startsWith(i))) return
+                
+                clearTimeout(layerTimer)
+                layerTimer = setTimeout(async () => {
+                    const layers = structuredClone(map.getStyle().layers).filter(i => !systemSources.find(j => i.id.startsWith(j)))
+                    this.updateConfig(['layers'], layers, {
+                        themeId: map.getTheme().id,
+                    })
+                }, 1000);
+            })
+        })
+
+        let tooltipTimer
+        map.on('mousemove', (e) => {
+            this.clearPopup('tooltip')
+
+            clearTimeout(tooltipTimer)
+            tooltipTimer = setTimeout(async () => {
+                this.popups.tooltip = await this.createTooltipPopup(e)
+            }, 100)
+        })
+        
+        let infoTimer
+        map.on('click', (e) => {
+            Object.keys(this.popups).forEach(i => {
+                this.clearPopup(i)
+            })
+
+            clearTimeout(infoTimer)
+            infoTimer = setTimeout(async () => {
+                this.popups.info = await this.createInfoPopup(e)
+            }, 100)
+        })
+
+        document.addEventListener('darkModeToggled', (e) => {
+            this.configBasemap()
+        })
+
+        await this.applyThemeConfig()
+    }
     
     getMenuButtons() {
         const map = this._map
@@ -372,73 +439,6 @@ export class SettingsControl {
         if (colorTheme === displaySettings.colorTheme) return
         
         displaySettings.changeColorTheme(colorTheme)
-    }
-
-    async configMap() {
-        const map = this._map
-
-        const systemSources = map.getControls('layers').getAllSystemSources()
-
-        let sourceTimer
-        Array('sourceadded', 'sourceremoved', 'geojsonupdated').forEach(i => {
-            map.on(i, (e) => {
-                if (systemSources.includes(e.sourceId)) return
-    
-                clearTimeout(sourceTimer)
-                sourceTimer = setTimeout(async () => {
-                    const sources = Object.fromEntries(Object.entries(structuredClone(map.getStyle().sources)).map(([id, source]) => {
-                        if ('data' in source && (source.metadata?.params?.url || systemSources.includes(id))) {
-                            source.data = turf.featureCollection([])
-                        }
-                        return [id, source]
-                    }))
-                    this.updateConfig(['sources'], sources)
-                }, 1000);
-            })
-        })
-
-        let layerTimer
-        Array('layeradded', 'layerremoved', 'layermoved', 'layerupdated').forEach(i => {
-            map.on(i, (e) => {
-                if (e.type !== 'layermoved' && systemSources.find(i => e.layer.id.startsWith(i))) return
-                
-                clearTimeout(layerTimer)
-                layerTimer = setTimeout(async () => {
-                    const layers = structuredClone(map.getStyle().layers).filter(i => !systemSources.find(j => i.id.startsWith(j)))
-                    this.updateConfig(['layers'], layers, {
-                        themeId: map.getTheme().id,
-                    })
-                }, 1000);
-            })
-        })
-
-        let tooltipTimer
-        map.on('mousemove', (e) => {
-            this.clearPopup('tooltip')
-
-            clearTimeout(tooltipTimer)
-            tooltipTimer = setTimeout(async () => {
-                this.popups.tooltip = await this.createTooltipPopup(e)
-            }, 100)
-        })
-        
-        let infoTimer
-        map.on('click', (e) => {
-            Object.keys(this.popups).forEach(i => {
-                this.clearPopup(i)
-            })
-
-            clearTimeout(infoTimer)
-            infoTimer = setTimeout(async () => {
-                this.popups.info = await this.createInfoPopup(e)
-            }, 100)
-        })
-
-        document.addEventListener('darkModeToggled', (e) => {
-            this.configBasemap()
-        })
-
-        await this.applyThemeConfig()
     }
 
     clearPopup(name) {
