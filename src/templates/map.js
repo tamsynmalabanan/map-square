@@ -5,7 +5,7 @@ Alpine.data('mapApp', ({
   params=null,
 }={}) => ({
     locked: false,
-    edit: false,
+    vectorEdit: false,
     init() {
       this.$nextTick(async () => {
         const map = await Map.create(this.$el, JSON.parse(params))

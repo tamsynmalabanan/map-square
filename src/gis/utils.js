@@ -51,10 +51,16 @@ export const featuresAreSimilar = (f1, f2) => {
     try {
         if (!turf.booleanIntersects(f1, f2)) return false
     } catch {}
+    
+    // try {
+    //     if (!_.isEqual(f1.geometry, f2.geometry)) return false
+    // } catch (error) {
+    // }
 
-    try {
-        if (!turf.booleanEqual(f1.geometry, f2.geometry)) return false
-    } catch {}
+    // try {
+    //     if (!turf.booleanEqual(f1.geometry, f2.geometry)) return false
+    // } catch (error) {
+    // }
     
     if (!_.isEqual(f1.properties, f2.properties)) return false
     return true

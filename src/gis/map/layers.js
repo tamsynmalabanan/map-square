@@ -977,7 +977,11 @@ export class LayersControl {
         const uniqueFeatures = []
 
         features.forEach(f1 => {
-            if (uniqueFeatures.find(f2 => f1.source === f2.source && gisUtils.featuresAreSimilar(f1, f2))) return
+            if (uniqueFeatures.find(f2 => (
+                f1.source === f2.source 
+                && f1.layer?.id === f1.layer?.id
+                && gisUtils.featuresAreSimilar(f1, f2)
+            ))) return
             uniqueFeatures.push(f1)
         })
 
@@ -1063,183 +1067,208 @@ export class LayersControl {
 
     configFeatureMenu({parent, feature, sourceId}={}) {
         const map = this._map
-        const mapdata = Alpine.$data(map.getContainer())
-        const source = map.getSource(sourceId ?? feature.source ?? feature.layer?.source)
-
+        const featureSource = feature.source ?? feature.layer?.source
+        const source = map.getSource(sourceId ?? featureSource)
         const featureId = gisUtils.getFeatureId(feature)
         const rawFeature = this.getRawFeature(feature)
+
+        const menuContent = Array(
+            {
+                title: 'Interactions',
+                options: [
+                    ...(source && sourceId === 'info' ? [
+                        {
+                            innerText: '',
+                            attrs: {
+                                'x-data': `{visible: ${this.findFeatureById(
+                                    sourceId, 
+                                    featureId
+                                ) ? true : false}}`,
+                                'x-text': `visible ? "Hide feature" : "Show feature"`,
+                                '@click': `visible = !visible`,
+                            },
+                            events: {
+                                'click': (e) => {
+                                    this.updateGeoJSONData({
+                                        sourceId,
+                                        features: [rawFeature],
+                                        action: Alpine.$data(e.target).visible ? 'remove' : 'add',
+                                    })
+                                }
+                            },
+                        }
+                    ] : []),
+                    {
+                        innerText: 'Zoom to feature',
+                        attrs: {
+                            'x-bind:disabled': 'locked',
+                        },
+                        events: {
+                            'click': () => this.zoomToFeature(rawFeature)
+                        }
+                    },
+                ],
+            },
+            {
+                title: 'GeoJSON options',
+                options: [
+                    {
+                        innerText: 'View feature',
+                        events: {
+                            'click': (e) => {
+                                const blob = new Blob([JSON.stringify(rawFeature, null, 2)], { type: "application/json" })
+                                const url = URL.createObjectURL(blob)
+                                window.open(url, "_blank")
+                            }
+                        }
+                    },
+                    {
+                        innerText: 'Copy feature',
+                        events: {
+                            'click': () => {
+                                navigator.clipboard.writeText(JSON.stringify(rawFeature))
+                            }
+                        }
+                    },
+                    {
+                        innerText: 'Download GeoJSON',
+                        events: {
+                            'click': () => {
+                                const blob = new Blob(
+                                    [JSON.stringify(turf.featureCollection([rawFeature]))], 
+                                    {type: "application/json"}
+                                )
+                                const url = URL.createObjectURL(blob)
+                                const a = document.createElement("a")
+                                a.href = url
+                                a.download = featureLabel
+                                document.body.appendChild(a)
+                                a.click()
+                                document.body.removeChild(a)
+                                URL.revokeObjectURL(url)
+                            }
+                        }
+                    },
+
+                ]
+            },
+            {
+                title: 'Export options',
+                options: [
+                    ...(!map.isStaticConfig() ? [
+                        {
+                            innerText: 'Add as new layer',
+                            events: {
+                                'click': async () => {
+                                    const newSource = this.getOrCreateSource(utils.randomId(), {
+                                        properties: {metadata: {params: {
+                                            title: featureLabel || 'Untitled layer'
+                                        }}}
+                                    })
+                                    this.updateGeoJSONData({
+                                        sourceId: newSource.id,
+                                        features: [await gisUtils.normalizeProperties(rawFeature)],
+                                    })
+                                    this.addGeoJSONLayers(newSource.id)
+                                }
+                            }
+                        },
+                        {
+                            innerText: 'Add to existing layer',
+                            init: (btn) => {
+                                btn.setAttribute('x-show', 'vectorEdit')
+
+                                const [toggle, menu] = dropdown({
+                                    parent: btn,
+                                    title: 'GeoJSON layers',
+                                    menuClassList: ['right-1'],
+                                }).children
+
+                                btn.addEventListener('click', (e) => {
+                                    e.preventDefault()
+                                    e.stopPropagation()
+                                    toggle.click()
+                                })
+                                
+                                toggle.addEventListener('click', (e) => {
+                                    e.preventDefault()
+                                    e.stopPropagation()
+                                    
+                                    const collapsed = Alpine.$data(toggle.parentElement).showDropdown
+                                    if (collapsed) return
+
+                                    menu.innerHTML = ''
+
+                                    let layers = []
+                                    map.getStyle().layers.forEach(l => {
+                                        if (this.isSystemSource(l.source)) return
+                                        
+                                        const source = map.getSource(l.source)
+                                        if (source?.type !== 'geojson') return
+                                        if (source?.metadata?.params?.url) return
+
+                                        if (layers.find(i => i.metadata.layerName === l.metadata.layerName)) return
+
+                                        layers.push(l)
+                                    })
+                                    layers = layers.filter(Boolean)
+
+                                    if (layers.length) {
+                                        layers.reverse().forEach(l => {
+                                            const layerBtn = document.createElement('button')
+                                            layerBtn.innerText = l.metadata.params.title
+                                            layerBtn.addEventListener('click', async (e) => {
+                                                this.updateGeoJSONData({
+                                                    sourceId: l.source,
+                                                    features: [await gisUtils.normalizeProperties(rawFeature)],
+                                                    action: 'add',
+                                                })
+                                            })
+                                            menu.appendChild(layerBtn)                              
+                                        })
+                                    } else {
+                                        const layerBtn = document.createElement('button')
+                                        layerBtn.disabled = true
+                                        layerBtn.innerText = 'No editable vector layer'
+                                        menu.appendChild(layerBtn)                              
+                                    }
+                                })
+                            }
+                        },
+                    ] : []),
+                ],
+            },
+            {
+                title: '',
+                options: [
+                    ...(!map.isStaticConfig() && featureSource && !this.isSystemSource(featureSource) ? [
+                        {
+                            innerText: 'Delete feature',
+                            init: (btn) => {
+                                btn.setAttribute('x-show', 'vectorEdit')
+                            },
+                            events: {
+                                'click': async (e) => {
+                                    this.updateGeoJSONData({
+                                        sourceId: featureSource,
+                                        features: [rawFeature],
+                                        action: 'remove',
+                                    })
+
+                                    e.target.remove()
+                                }
+                            }
+                        },
+                    ] : [])
+                ]
+            }
+        )
 
         const [toggle, menu] = dropdown({
             parent,
             title: 'Feature menu',
             menuClassList: ['right-1'],
-            menuContent: Array(
-                {
-                    title: 'Interactions',
-                    options: [
-                        ...(source && sourceId === 'info' ? [
-                            {
-                                innerText: '',
-                                attrs: {
-                                    'x-data': `{visible: ${this.findFeatureById(
-                                        sourceId, 
-                                        featureId
-                                    ) ? true : false}}`,
-                                    'x-text': `visible ? "Hide feature" : "Show feature"`,
-                                    '@click': `visible = !visible`,
-                                },
-                                events: {
-                                    'click': (e) => {
-                                        this.updateGeoJSONData({
-                                            sourceId,
-                                            features: [rawFeature],
-                                            action: Alpine.$data(e.target).visible ? 'remove' : 'add',
-                                        })
-                                    }
-                                },
-                            }
-                        ] : []),
-                        {
-                            innerText: 'Zoom to feature',
-                            attrs: {
-                                'x-bind:disabled': 'locked',
-                            },
-                            events: {
-                                'click': () => this.zoomToFeature(rawFeature)
-                            }
-                        },
-                    ],
-                },
-                {
-                    title: 'GeoJSON options',
-                    options: [
-                        {
-                            innerText: 'View feature',
-                            events: {
-                                'click': (e) => {
-                                    const blob = new Blob([JSON.stringify(rawFeature, null, 2)], { type: "application/json" })
-                                    const url = URL.createObjectURL(blob)
-                                    window.open(url, "_blank")
-                                }
-                            }
-                        },
-                        {
-                            innerText: 'Copy feature',
-                            events: {
-                                'click': () => {
-                                    navigator.clipboard.writeText(JSON.stringify(rawFeature))
-                                }
-                            }
-                        },
-                        {
-                            innerText: 'Download GeoJSON',
-                            events: {
-                                'click': () => {
-                                    const blob = new Blob(
-                                        [JSON.stringify(turf.featureCollection([rawFeature]))], 
-                                        {type: "application/json"}
-                                    )
-                                    const url = URL.createObjectURL(blob)
-                                    const a = document.createElement("a")
-                                    a.href = url
-                                    a.download = featureLabel
-                                    document.body.appendChild(a)
-                                    a.click()
-                                    document.body.removeChild(a)
-                                    URL.revokeObjectURL(url)
-                                }
-                            }
-                        },
-
-                    ]
-                },
-                {
-                    title: 'Export options',
-                    options: [
-                        ...(!map.isStaticConfig() ? [
-                            {
-                                innerText: 'Add as new layer',
-                                events: {
-                                    'click': async () => {
-                                        const newSource = this.getOrCreateSource(utils.randomId(), {
-                                            properties: {metadata: {params: {
-                                                title: featureLabel || 'Untitled layer'
-                                            }}}
-                                        })
-                                        this.updateGeoJSONData({
-                                            sourceId: newSource.id,
-                                            features: [await gisUtils.normalizeProperties(rawFeature)],
-                                        })
-                                        this.addGeoJSONLayers(newSource.id)
-                                    }
-                                }
-                            },
-                            {
-                                innerText: 'Add to existing layer',
-                                init: (btn) => {
-                                    btn.setAttribute('x-show', 'edit')
-
-                                    const [toggle, menu] = dropdown({
-                                        parent: btn,
-                                        title: 'GeoJSON layers',
-                                        menuClassList: ['right-1'],
-                                    }).children
-
-                                    btn.addEventListener('click', (e) => {
-                                        e.preventDefault()
-                                        e.stopPropagation()
-                                        toggle.click()
-                                    })
-                                    
-                                    toggle.addEventListener('click', (e) => {
-                                        e.preventDefault()
-                                        e.stopPropagation()
-                                        
-                                        const collapsed = Alpine.$data(toggle.parentElement).showDropdown
-                                        if (collapsed) return
-
-                                        menu.innerHTML = ''
-
-                                        let layers = []
-                                        map.getStyle().layers.forEach(l => {
-                                            if (this.isSystemSource(l.source)) return
-                                            
-                                            const source = map.getSource(l.source)
-                                            if (source?.type !== 'geojson') return
-                                            if (source?.metadata?.params?.url) return
-
-                                            if (layers.find(i => i.metadata.layerName === l.metadata.layerName)) return
-
-                                            layers.push(l)
-                                        })
-                                        layers = layers.filter(Boolean)
-
-                                        if (layers.length) {
-                                            layers.reverse().forEach(l => {
-                                                const layerBtn = document.createElement('button')
-                                                layerBtn.innerText = l.metadata.params.title
-                                                layerBtn.addEventListener('click', async (e) => {
-                                                    this.updateGeoJSONData({
-                                                        sourceId: l.source,
-                                                        features: [await gisUtils.normalizeProperties(rawFeature)],
-                                                        action: 'add',
-                                                    })
-                                                })
-                                                menu.appendChild(layerBtn)                              
-                                            })
-                                        } else {
-                                            const layerBtn = document.createElement('button')
-                                            layerBtn.disabled = true
-                                            layerBtn.innerText = 'No editable vector layer'
-                                            menu.appendChild(layerBtn)                              
-                                        }
-                                    })
-                                }
-                            },
-                        ] : []),
-                    ],
-                }
-            )
+            menuContent,
         }).children
 
         const featureLabel = (

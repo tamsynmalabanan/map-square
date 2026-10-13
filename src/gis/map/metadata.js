@@ -656,7 +656,7 @@ export default class MetadataControl {
             title: 'Local data',
             icon: svg.circleStackMini,
           },
-          ...(!this._map.isStaticConfig() ? [
+          ...(!map.isStaticConfig() ? [
             {
               title: 'Add layer',
               icon: svg.plusCircleMini,
@@ -676,15 +676,22 @@ export default class MetadataControl {
                 } catch {}
               }
             },
+          ] : []),
+        ],
+      },
+      {
+        title: 'Editor', 
+        btns: [
+          ...(!map.isStaticConfig() ? [
             {
-              title: 'Edit mode',
+              title: 'Edit vectors',
               icon: svg.pencilSquareMini,
               attrs: `@click="edit = !edit"`,
-              highlightExp: 'edit',
+              highlightExp: 'vectorEdit',
               handler: async (e) => {
               }
             },
-          ] : []),
+          ] : [])
         ],
       },
     ).forEach((group, index) => {
@@ -1014,6 +1021,7 @@ export default class MetadataControl {
             events: {
               click: async () => {
                 let bbox = metadata.params.bbox
+                
                 if (!bbox) {
                   const source = map.getSource(layer.source)
                   if (source.type === 'geojson') {
@@ -1023,6 +1031,9 @@ export default class MetadataControl {
                     }
                   }
                 }
+                
+                if (!bbox || bbox.some(i => i === Infinity)) return
+
                 const [w,s,e,n] = bbox ?? [-180, -90, 180, 90]
                 map.fitBounds([[w,s],[e,n]], {
                     padding: 100,
