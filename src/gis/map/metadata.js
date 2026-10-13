@@ -664,6 +664,19 @@ export default class MetadataControl {
               }
             },
             {
+              title: 'Paste layer',
+              icon: svg.clipboardDocumentMini,
+              handler: async (e) => {
+                try {
+                  const [sourceId, options] = JSON.parse((await navigator.clipboard.readText()) ?? '[]')
+                  if (!map.getSource(sourceId)) return
+                  if (!('properties' in options)) return
+                  
+                  map.getControls('layers').addGeoJSONLayers(sourceId, options)
+                } catch {}
+              }
+            },
+            {
               title: 'Edit mode',
               icon: svg.pencilSquareMini,
               attrs: `@click="edit = !edit"`,
@@ -1027,24 +1040,25 @@ export default class MetadataControl {
             innerText: 'Copy layer',
             events: {
               click: async (e) => {
-                // map.getControls('layers').addGeoJSONLayers(layer.source, {
-                //   beforeId: layerContainer.previousElementSibling?.dataset.layerName, 
-                //   properties: {metadata: {params: structuredClone(layer.metadata.params)}}
-                // })
+                navigator.clipboard.writeText(JSON.stringify([
+                  layer.source, {properties: {metadata: {params: layer.metadata.params}}}
+                ]))
               }
             },
           },
-          // {
-          //   innerText: 'Duplicate layer',
-          //   events: {
-          //     click: async (e) => {
-          //       map.getControls('layers').addGeoJSONLayers(layer.source, {
-          //         beforeId: layerContainer.previousElementSibling?.dataset.layerName, 
-          //         properties: {metadata: {params: structuredClone(layer.metadata.params)}}
-          //       })
-          //     }
-          //   },
-          // },
+          ...(!map.isStaticConfig() ? [
+            {
+              innerText: 'Duplicate layer',
+              events: {
+                click: async (e) => {
+                  map.getControls('layers').addGeoJSONLayers(layer.source, {
+                    beforeId: layerContainer.previousElementSibling?.dataset.layerName, 
+                    properties: {metadata: {params: structuredClone(layer.metadata.params)}}
+                  })
+                }
+              },
+            },
+          ] : []),
           {
             innerText: 'Save as local data',
             events: {
