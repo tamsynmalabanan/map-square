@@ -178,7 +178,7 @@ export class FileControl {
                                                 title: 'Open map',
                                                 icon: '📂',
                                                 classStr: 'size-[20px] self-center',
-                                                themedBg: false,
+                                                themedBtn: false,
                                             }))
                                             openBtn.addEventListener('click', (e) => {
                                                 this.loadMapFromConfig(item.config)
@@ -189,7 +189,7 @@ export class FileControl {
                                                 title: 'Delete map',
                                                 icon: '🗑️',
                                                 classStr: 'size-[20px] self-center',
-                                                themedBg: false,
+                                                themedBtn: false,
                                             }))
                                             deleteBtn.addEventListener('click', async (e) => {
                                                 await gisDB.deleteFromGISDB('maps', item.id)

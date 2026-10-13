@@ -145,7 +145,7 @@ export default function table(options = {}) {
 
     const thead = document.createElement('thead')
     thead.classList.add('sticky', 'top-0')
-    utils.appendBinding(thead, ':class', `['${utils.dynamicBgExp()}']: true`)
+    utils.appendBinding(thead, ':class', `['${utils.dynamicThemeExp()}']: true`)
     tableEl.appendChild(thead)
 
     const tbody = document.createElement('tbody')
@@ -257,7 +257,7 @@ export default function table(options = {}) {
                         title: 'View HTML',
                         icon: '📃',
                         classStr: 'size-[20px] self-center',
-                        themedBg: false,
+                        themedBtn: false,
                     }))
                     viewBtn.addEventListener('click', async (e) => {
                         const blob = new Blob([value], { type: "text/html" })
@@ -273,7 +273,7 @@ export default function table(options = {}) {
                     title: 'View JSON',
                     icon: '📃',
                     classStr: 'size-[20px] self-center',
-                    themedBg: false,
+                    themedBtn: false,
                 }))
                 viewBtn.addEventListener('click', async (e) => {
                     const jsonString = JSON.stringify(value, null, 2)

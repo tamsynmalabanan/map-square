@@ -54,7 +54,7 @@ export default ({
             :id="$id('modal', 'main')" 
             @click.outside="toggle" 
             :class="{
-              ['${utils.dynamicBgExp()}']: true,
+              ['${utils.dynamicThemeExp()}']: true,
             }"
             class="
               relative

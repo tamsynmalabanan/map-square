@@ -297,7 +297,7 @@ export default class HandleControls {
            
                 Alpine.$data(container)[`${name}Disabled`] = false
                 utils.appendBinding(container, ':class', `
-                    ['${utils.dynamicBgExp()}']: !${name}Disabled,
+                    ['${utils.dynamicThemeExp()}']: !${name}Disabled,
                     ['invisible! size-0! m-0!']: ${name}Disabled
                 `)
 

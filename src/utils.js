@@ -455,10 +455,10 @@ export const sortArray = (arr, {descending=false}={}) => {
     return sortedArray
 }
 
-export const dynamicBgExp = ({prefix='', opacity=100}={}) => {
+export const dynamicThemeExp = ({property='bg', prefix='', opacity=100}={}) => {
     return `
-        ${prefix? `${prefix}:` : ''}bg-'+color+'-200/${opacity}! 
-        ${prefix? `${prefix}:` : ''}dark:bg-'+color+'-950/${opacity}!
+        ${prefix? `${prefix}:` : ''}${property}-'+color+'-200/${opacity}! 
+        ${prefix? `${prefix}:` : ''}dark:${property}-'+color+'-950/${opacity}!
     `
 }
 

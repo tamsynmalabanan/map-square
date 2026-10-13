@@ -405,17 +405,17 @@ export default class Map extends maplibregl.Map {
       const result = originalRemoveLayer(layerId)
       this.fire('layerremoved', { layer })
       
-      const sourceId = layer.source
-      const layersControl = this.getControls('layers')
-      if (sourceId && !layersControl.isSystemSource(sourceId)) {
-        if (!layersControl.getLegendLayers().some(l => l.source === sourceId)) {
-          const config = this.getConfig()
-          if (!config.themes.some(theme => {
-            if (theme.id === config.activeTheme) return false
-            return theme.layers.some(l => l.source === sourceId)
-          })) this.removeSource(sourceId)
-        }
-      }
+      // const sourceId = layer.source
+      // const layersControl = this.getControls('layers')
+      // if (sourceId && !layersControl.isSystemSource(sourceId)) {
+      //   if (!layersControl.getLegendLayers().some(l => l.source === sourceId)) {
+      //     const config = this.getConfig()
+      //     if (!config.themes.some(theme => {
+      //       if (theme.id === config.activeTheme) return false
+      //       return theme.layers.some(l => l.source === sourceId)
+      //     })) this.removeSource(sourceId)
+      //   }
+      // }
 
       return result
     }

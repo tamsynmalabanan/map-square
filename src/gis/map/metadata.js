@@ -628,60 +628,14 @@ export default class MetadataControl {
     label.innerText = 'Legend'
     header.appendChild(label)
 
-    // const menuToggle = utils.strToEl(button({
-    //   title: 'Toggle menu',
-    //   icon: svg.bars3Mini,
-    //   classStr: 'size-[15px]! self-center border-none! opacity-25 hover:opacity-100',
-    //   attrs: `@click="showMenu = !showMenu"`,
-    //   minimal: true,
-    // }))
-    // header.appendChild(menuToggle)
-
-    Array(
-      {
-        title: '',
-        btns: [
-          ...(!this._map.isStaticConfig() ? [
-            // {
-            //   title: 'Add new group',
-            //   icon: svg.rectangleGroupMini,
-            //   classStr: `opacity-25 hover:opacity-100`,
-            //   handler: async (e) => {}
-            // },
-            {
-              title: 'Add new layer',
-              icon: svg.plusCircleMini,
-              themeBg: false,
-              classStr: `text-green-500/100! dark:text-green-500/100! opacity-50 hover:opacity-100`,
-              handler: async (e) => {}
-            },
-          ] : []),
-        ],
-      },
-    ).forEach((group, index) => {
-      // const groupContainer = document.createElement('div')
-      // groupContainer.classList.add(
-      //   'flex', 'flex-nowrap', 'gap-2',
-      //   'rounded', 'p-1',
-      //   'bg-gray-600/25!',
-      // )
-      // menuContainer.appendChild(groupContainer)
-
-      group.btns.forEach(btn => {
-        const el = utils.strToEl(button({
-          title: btn.title,
-          icon: btn.icon,
-          classStr: `
-            size-[15px]! self-center border-none!
-            ${btn.classStr ?? ''}
-          `,
-          minimal: true,
-          themedBg: btn.themeBg ?? true,
-        }))
-        el.addEventListener('click', btn.handler)
-        header.appendChild(el)
-      })
-    })
+    const menuToggle = utils.strToEl(button({
+      title: 'Toggle menu',
+      icon: svg.bars3Mini,
+      classStr: 'size-[15px]! self-center border-none! opacity-25 hover:opacity-100',
+      attrs: `@click="showMenu = !showMenu"`,
+      minimal: true,
+    }))
+    header.appendChild(menuToggle)
 
     const collapse = document.createElement('span')
     collapse.classList.add('size-[15px]!', 'self-center', 'cursor-pointer', 'opacity-25', 'hover:opacity-100')
@@ -689,10 +643,63 @@ export default class MetadataControl {
     collapse.setAttribute('@click', 'show=!show')
     header.appendChild(collapse)
 
-    // const menuContainer = document.createElement('div')
-    // menuContainer.classList.add('flex', 'gap-2')
-    // menuContainer.setAttribute('x-show', 'showMenu')
-    // container.appendChild(menuContainer)
+    const menuContainer = document.createElement('div')
+    menuContainer.classList.add('flex', 'gap-2')
+    menuContainer.setAttribute('x-show', 'showMenu')
+    container.appendChild(menuContainer)
+
+        Array(
+      {
+        title: '',
+        btns: [
+          {
+            title: 'Local data',
+            icon: svg.circleStackMini,
+          },
+          ...(!this._map.isStaticConfig() ? [
+            {
+              title: 'Add layer',
+              icon: svg.plusCircleMini,
+              handler: async (e) => {
+              }
+            },
+            {
+              title: 'Edit mode',
+              icon: svg.pencilSquareMini,
+              attrs: `@click="edit = !edit"`,
+              highlightExp: 'edit',
+              handler: async (e) => {
+              }
+            },
+          ] : []),
+        ],
+      },
+    ).forEach((group, index) => {
+      const groupContainer = document.createElement('div')
+      groupContainer.classList.add(
+        'flex', 'flex-nowrap', 'gap-2',
+        'rounded', 'p-1!',
+      )
+      utils.appendBinding(groupContainer, ':class', `['bg-'+color+'-600/25!']: true`)
+      menuContainer.appendChild(groupContainer)
+
+      group.btns.forEach(btn => {
+        const el = utils.strToEl(button({
+          title: btn.title,
+          icon: btn.icon,
+          attrs: btn.attrs ?? '',
+          highlightExp: btn.highlightExp,
+          classStr: `
+            size-[15px]! self-center border-none! rounded!
+            ${btn.classStr ?? ''}
+          `,
+          minimal: true,
+          themedBtn: btn.themeBg ?? true,
+        }))
+        el.addEventListener('click', btn.handler)
+        groupContainer.appendChild(el)
+      })
+    })
 
     const layersContainer = this.layersContainer = document.createElement('div')
     layersContainer.classList.add('flex', 'flex-col', `[&>*]:pt-3`)
@@ -836,7 +843,7 @@ export default class MetadataControl {
         classStr: 'size-[15px]! self-center border-none! opacity-50 hover:opacity-100 mx-1 text-green-500/100! dark:text-green-500/100!',
         attrs: `x-show=isRadioValue("current")`,
         minimal: true,
-        themedBg: false,
+        themedBtn: false,
       }))
       addTheme.addEventListener('click', async (e) => {
         const newTheme = Map.getDefaultConfig().themes[0]
@@ -1017,20 +1024,32 @@ export default class MetadataControl {
         titl: '',
         options: [
           {
-            innerText: 'Duplicate layer',
+            innerText: 'Copy layer',
             events: {
               click: async (e) => {
-                map.getControls('layers').addGeoJSONLayers(layer.source, {
-                  beforeId: layerContainer.previousElementSibling?.dataset.layerName, 
-                  properties: {metadata: {params: structuredClone(layer.metadata.params)}}
-                })
+                // map.getControls('layers').addGeoJSONLayers(layer.source, {
+                //   beforeId: layerContainer.previousElementSibling?.dataset.layerName, 
+                //   properties: {metadata: {params: structuredClone(layer.metadata.params)}}
+                // })
               }
             },
           },
+          // {
+          //   innerText: 'Duplicate layer',
+          //   events: {
+          //     click: async (e) => {
+          //       map.getControls('layers').addGeoJSONLayers(layer.source, {
+          //         beforeId: layerContainer.previousElementSibling?.dataset.layerName, 
+          //         properties: {metadata: {params: structuredClone(layer.metadata.params)}}
+          //       })
+          //     }
+          //   },
+          // },
           {
             innerText: 'Save as local data',
             events: {
               click: async (e) => {
+
                 // save to indexdb data
                   // listen for geojsonupdated in settings.configMap
                 // remove existing layers
@@ -1132,7 +1151,7 @@ export default class MetadataControl {
       icon: svg.bars3Mini,
       classStr: `size-[15px]! self-center border-none! opacity-25 hover:opacity-100`,
       attrs: `x-show=isRadioValue("edit") x-sort:handle`,
-      themedBg: false,
+      themedBtn: false,
       minimal: true,
     })))  
     
@@ -1141,7 +1160,7 @@ export default class MetadataControl {
       icon: svg.checkCircleMini,
       classStr: `size-[15px]! self-center border-none!`,
       attrs: `name='activeThemeBtn' x-show=isRadioValue("edit")`,
-      themedBg: false,
+      themedBtn: false,
       minimal: true,
     }))
     utils.appendBinding(activateTheme, ':class', `['text-green-500/100! dark:text-green-500/100!']: activeTheme === "${theme.id}"`)

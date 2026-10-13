@@ -10,8 +10,10 @@ export default ({
   collapsible=false,
   highlightExp=false,
   color=null,
-  themedBg=true,
+  themedBtn=true,
 }={}) => {
+  const property = minimal ? 'text' : 'bg'
+
   return `
     <button
       ${attrs}
@@ -19,11 +21,18 @@ export default ({
       x-data
       x-id="['button']" 
       :id="$id('button')"
-      ${themedBg && !minimal ? `
-        :class="{
-          ['bg-'+color+'-600/50!']: ${highlightExp},
-          ['${utils.dynamicBgExp()} enabled:hover:bg-'+color+'-600/50!']: !(${highlightExp})
-        }"
+      ${themedBtn ? `
+        ${minimal ? `
+          :class="{
+            ['opacity-100!']: ${highlightExp},
+            ['enabled:hover:opacity-100! opacity-25!']: !(${highlightExp})
+          }"
+        ` : `
+          :class="{
+            ['bg-'+color+'-600/50!']: ${highlightExp},
+            ['enabled:hover:bg-'+color+'-600/50! ${utils.dynamicThemeExp({property})}']: !(${highlightExp})
+          }"
+        `}
       ` : ``}
       class="
         flex 
@@ -35,7 +44,7 @@ export default ({
         py-1
         px-2 
         cursor-pointer
-        ${themedBg ? `dark:text-white` : ''}  
+        ${themedBtn ? `dark:text-white` : ''}  
         ${minimal ? 'disabled:text-gray-950/25!' : 'disabled:bg-gray-950/25!'}
         ${classStr}
       "

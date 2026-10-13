@@ -5,6 +5,7 @@ Alpine.data('mapApp', ({
   params=null,
 }={}) => ({
     locked: false,
+    edit: false,
     init() {
       this.$nextTick(async () => {
         const map = await Map.create(this.$el, JSON.parse(params))
@@ -20,7 +21,7 @@ export default ({
     x-id="['map']" 
     :id="$id('map')" 
     :class="{
-      ['${utils.dynamicBgExp()}']: true,
+      ['${utils.dynamicThemeExp()}']: true,
     }"
     class="size-full z-0" 
     x-data="mapApp({params:'${utils.objToStr(params)}'})"

@@ -773,7 +773,7 @@ export class SettingsControl {
         const tip = container.querySelector('.maplibregl-popup-tip')
 
         content.classList.add('p-0!', 'dark:text-white!', 'relative')
-        utils.appendBinding(content, ':class', `['${utils.dynamicBgExp()}']: true`)
+        utils.appendBinding(content, ':class', `['${utils.dynamicThemeExp()}']: true`)
         
         const displaySettings = Alpine.store('displaySettings')
         const colorOptions = displaySettings.colorOptions

@@ -62,7 +62,7 @@ export default ({
     menu.setAttribute('x-show', 'showDropdown')
     menu.setAttribute('x-cloak', '')
     utils.appendBinding(menu, `:class`, `
-        ['${utils.dynamicBgExp()}']: true,
+        ['${utils.dynamicThemeExp()}']: true,
         ['[&>*]:enabled:hover:bg-'+color+'-600/50!']: true
     `)
     container.appendChild(menu)
