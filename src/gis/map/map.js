@@ -10,10 +10,8 @@ import _, { before } from 'lodash';
 
 export default class Map extends maplibregl.Map { 
   constructor(container, config=null) {
-    const mask = Map.setMask(container)
-
     config = Map.normalizeConfig(config)
-
+    
     const options = {
       container,
       maxZoom: 22,
@@ -27,32 +25,17 @@ export default class Map extends maplibregl.Map {
         layers: []
       },
     }
-
+    
     super(options)
-
-    this.once('idle', (e) => {
-      mask.remove()
-    })
+    
+    this.setMask(container)
 
     this.on('load', () => {
       new HandleControls(this)
     })
 
-    this.getConfig = () => config
+    this._config = config
     
-    this.getTheme = () => {
-      const themes = config.themes
-      if (!themes?.length) return
-
-      let theme = themes.find(i => i.id === config.activeTheme)
-      if (!theme) {
-        theme = themes[0]
-        config.activeTheme = theme.id
-      }
-   
-      return theme
-    }
-
     this.configAddSource()
     this.configRemoveSource()
     this.configAddLayer()
@@ -349,7 +332,7 @@ export default class Map extends maplibregl.Map {
     return config
   }
 
-  static setMask(container) {
+  setMask() {
     const mask = document.createElement('div')
     mask.classList.add(
       'w-full!', 'h-full!', 
@@ -357,14 +340,36 @@ export default class Map extends maplibregl.Map {
       'absolute', 'top-0', 'left-0', 'overflow-hidden',
       'flex', 'justify-center', 'align-middle', 'text-center'
     )
-    container.parentElement.appendChild(mask)
+    this.getContainer().parentElement.appendChild(mask)
 
     const spinner = utils.strToEl(svg.spinner)
-    utils.appendBinding(spinner, ':class', `['text-'+color+'-200/100! dark:text-'+color+'-950/100!']: true`)
+    utils.appendBinding(
+      spinner, 
+      ':class', 
+      `['text-'+color+'-200/100! dark:text-'+color+'-950/100!']: true`
+    )
     spinner.classList.add('size-[5vw]!', 'self-center!')
     mask.appendChild(spinner)
 
-    return mask
+    this.once('idle', () => mask?.remove())
+  }
+
+  getConfig() {
+    return this._config
+  }
+
+  getTheme() {
+    const config = this.getConfig()
+    const themes = config.themes
+    if (!themes?.length) return
+
+    let theme = themes.find(i => i.id === config.activeTheme)
+    if (!theme) {
+      theme = themes[0]
+      config.activeTheme = theme.id
+    }
+  
+    return theme
   }
 
   configAddSource() {
@@ -499,7 +504,7 @@ export default class Map extends maplibregl.Map {
     }
   }
 
-  isStaticConfig() {
+  isStatic() {
     const config = this.getConfig()
     return config.id && config.src !== 'db'
   }

@@ -65,7 +65,7 @@ export class FileControl {
                 collapsible: true,
                 buttons: [
                     ...(config.id ? [
-                        ...(!map.isStaticConfig() ? [
+                        ...(!map.isStatic() ? [
                             {
                                 title: 'Autosave map changes',
                                 icon: `🔄️`,
@@ -114,6 +114,14 @@ export class FileControl {
                                 .updateConfig(['id'], utils.randomId())
                             )
                             this.loadMapFromConfig(config)
+                        },
+                    },
+                    {
+                        title: 'Download map',
+                        icon: '⬇️',
+                        highlight: null,
+                        handler: async (event) => {
+                            await this.exportMapConfig()
                         },
                     },
                 ]
@@ -288,20 +296,6 @@ export class FileControl {
                     },
                 ]
             },
-            {
-                label: 'Export',
-                collapsible: true,
-                buttons: [
-                    {
-                        title: 'Download map',
-                        icon: '⬇️',
-                        highlight: null,
-                        handler: async (event) => {
-                            await this.exportMapConfig()
-                        },
-                    },
-                ]
-            }
         ]
     }
 
@@ -386,7 +380,7 @@ export class FileControl {
             return
         } 
 
-        if (map.isStaticConfig()) {
+        if (map.isStatic()) {
             icon.innerText = `🔵`
             return
         }

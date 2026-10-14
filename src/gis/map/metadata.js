@@ -128,7 +128,7 @@ export default class MetadataControl {
 
     let editBtn, backBtn, saveBtn, collapseBtn
     
-    if (!this._map.isStaticConfig()) {
+    if (!this._map.isStatic()) {
       editBtn = utils.strToEl(button({
         title: 'Edit metadata',
         icon: svg.pencilSquareMini,
@@ -648,7 +648,7 @@ export default class MetadataControl {
     menuContainer.setAttribute('x-show', 'showMenu')
     container.appendChild(menuContainer)
 
-        Array(
+    Array(
       {
         title: '',
         btns: [
@@ -656,7 +656,7 @@ export default class MetadataControl {
             title: 'Local data',
             icon: svg.circleStackMini,
           },
-          ...(!map.isStaticConfig() ? [
+          ...(!map.isStatic() ? [
             {
               title: 'Add layer',
               icon: svg.plusCircleMini,
@@ -682,11 +682,11 @@ export default class MetadataControl {
       {
         title: 'Editor', 
         btns: [
-          ...(!map.isStaticConfig() ? [
+          ...(!map.isStatic() ? [
             {
               title: 'Edit vectors',
               icon: svg.pencilSquareMini,
-              attrs: `@click="edit = !edit"`,
+              attrs: `@click="vectorEdit = !vectorEdit"`,
               highlightExp: 'vectorEdit',
               handler: async (e) => {
               }
@@ -695,6 +695,8 @@ export default class MetadataControl {
         ],
       },
     ).forEach((group, index) => {
+      if (!group.btns?.length) return
+      
       const groupContainer = document.createElement('div')
       groupContainer.classList.add(
         'flex', 'flex-nowrap', 'gap-2',
@@ -856,7 +858,7 @@ export default class MetadataControl {
     count.setAttribute('x-show', `isRadioValue("current") && themesTotal > 1`)
     header.insertBefore(count, navBtns.next.btn)
 
-    if (!this._map.isStaticConfig()) {
+    if (!this._map.isStatic()) {
       const addTheme = utils.strToEl(button({
         title: 'Add new theme',
         icon: svg.plusCircleMini,
@@ -1057,7 +1059,7 @@ export default class MetadataControl {
               }
             },
           },
-          ...(!map.isStaticConfig() ? [
+          ...(!map.isStatic() ? [
             {
               innerText: 'Duplicate layer',
               events: {
@@ -1087,16 +1089,18 @@ export default class MetadataControl {
       {
         titl: '',
         options: [
-          {
-            innerText: 'Remove layer',
-            events: {
-              click: async (e) => {
-                map.getControls('layers').getLayersByName(layerName).forEach(l => {
-                  map.removeLayer(l.id)
-                })
-              }
+          ...(!map.isStatic() ? [
+            {
+              innerText: 'Remove layer',
+              events: {
+                click: async (e) => {
+                  map.getControls('layers').getLayersByName(layerName).forEach(l => {
+                    map.removeLayer(l.id)
+                  })
+                }
+              },
             },
-          },
+          ] : []),
         ],
       },
     )
@@ -1194,7 +1198,7 @@ export default class MetadataControl {
     })
     btnsContainer.appendChild(activateTheme)  
 
-    if (!this._map.isStaticConfig()) {
+    if (!this._map.isStatic()) {
       const themeDropdown = dropdown({
         parent: btnsContainer,
         title: 'Theme options',

@@ -68,6 +68,8 @@ export default ({
     container.appendChild(menu)
 
     menuContent.forEach((group, index) => {
+        if (!group.options?.length) return
+
         if (index !== 0) {
             const hr = document.createElement('hr')
             menu.appendChild(hr)

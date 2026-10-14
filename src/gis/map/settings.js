@@ -38,7 +38,7 @@ export class SettingsControl {
             title: 'Settings',
             icon: svg.cog8ToothMini,
             classStr: 'maplibregl-ctrl-settings',
-            attrs: `@click='toggleCollapse' x-show='collapsed' ${map.isStaticConfig() ? 'disabled=true' : ''}`
+            attrs: `@click='toggleCollapse' x-show='collapsed' ${map.isStatic() ? 'disabled=true' : ''}`
         })
 
         const content = document.createElement('div')
@@ -81,7 +81,6 @@ export class SettingsControl {
 
     async configMap() {
         const map = this._map
-
         const layersControl = map.getControls('layers')
 
         let sourceTimer
@@ -145,6 +144,59 @@ export class SettingsControl {
 
         await this.applyThemeConfig()
     }
+
+    async applyThemeConfig() {
+        const map = this._map
+        const controls = map.getControls()
+        const theme = map.getTheme()
+        const settings = theme.settings
+
+        this.unlock()
+
+        Object.keys(this.popups).forEach(i => {
+            this.clearPopup(i)
+        })
+
+        map.getStyle().layers.forEach(l => {
+            map.removeLayer(l.id)
+        })
+        
+        if (controls.geolocate.isEnabled()) {
+            controls.geolocate.toggle()
+        }
+
+        if (controls.terrain.isEnabled()) {
+            controls.terrain.toggle()
+        }
+
+        this.goToBookmark()
+
+        if (settings.geolocate) {
+            controls.geolocate.toggle()
+        }
+        
+        map.setProjection({type:settings.projection})
+        
+        if (settings.terrain !== controls.terrain.isEnabled()) {
+            controls.terrain.toggle()
+        }
+
+        this.configColorTheme()
+        this.configScaleBarUnit(settings.unit)
+        this.configBasemap()
+        
+        theme.layers.forEach(layer => {
+            if (controls.layers.isSystemSource(layer.id)) return
+            map.addLayer(layer)  
+        })
+
+        if (settings.locked) {
+            this.lock()
+        }
+
+        this.configCursor()
+    }
+
     
     getMenuButtons() {
         const map = this._map
@@ -810,58 +862,6 @@ export class SettingsControl {
         })
     }
 
-    async applyThemeConfig() {
-        const map = this._map
-        const controls = map.getControls()
-        const theme = map.getTheme()
-        const settings = theme.settings
-
-        this.unlock()
-
-        Object.keys(this.popups).forEach(i => {
-            this.clearPopup(i)
-        })
-
-        map.getStyle().layers.forEach(l => {
-            map.removeLayer(l.id)
-        })
-        
-        if (controls.geolocate.isEnabled()) {
-            controls.geolocate.toggle()
-        }
-
-        if (controls.terrain.isEnabled()) {
-            controls.terrain.toggle()
-        }
-
-        this.goToBookmark()
-
-        if (settings.geolocate) {
-            controls.geolocate.toggle()
-        }
-        
-        map.setProjection({type:settings.projection})
-        
-        if (settings.terrain !== controls.terrain.isEnabled()) {
-            controls.terrain.toggle()
-        }
-
-        this.configColorTheme()
-        this.configScaleBarUnit(settings.unit)
-        this.configBasemap()
-        
-        theme.layers.forEach(layer => {
-            if (controls.layers.isSystemSource(layer.id)) return
-            map.addLayer(layer)  
-        })
-
-        if (settings.locked) {
-            this.lock()
-        }
-
-        this.configCursor()
-    }
-
     lock() {
         const map = this._map
         map.scrollZoom.disable();
@@ -1033,7 +1033,7 @@ export class SettingsControl {
                 })
             }
 
-            if (!map.isStaticConfig() && (
+            if (!map.isStatic() && (
                 config.autosave || 
                 property[0] === 'autosave' || 
                 newMap

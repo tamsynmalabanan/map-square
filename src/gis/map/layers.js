@@ -1155,7 +1155,7 @@ export class LayersControl {
             {
                 title: 'Export options',
                 options: [
-                    ...(!map.isStaticConfig() ? [
+                    ...(!map.isStatic() ? [
                         {
                             innerText: 'Add as new layer',
                             events: {
@@ -1241,7 +1241,7 @@ export class LayersControl {
             {
                 title: '',
                 options: [
-                    ...(!map.isStaticConfig() && featureSource && !this.isSystemSource(featureSource) ? [
+                    ...(!map.isStatic() && featureSource && !this.isSystemSource(featureSource) ? [
                         {
                             innerText: 'Delete feature',
                             init: (btn) => {
@@ -1255,7 +1255,7 @@ export class LayersControl {
                                         action: 'remove',
                                     })
 
-                                    e.target.remove()
+                                    e.target.disabled = true
                                 }
                             }
                         },
