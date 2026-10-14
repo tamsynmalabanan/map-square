@@ -689,6 +689,12 @@ export default class MetadataControl {
               attrs: `@click="vectorEdit = !vectorEdit"`,
               highlightExp: 'vectorEdit',
               handler: async (e) => {
+                const enable = !Alpine.$data(map.getContainer()).vectorEdit
+                map.getControls('settings')
+                .updateConfig(
+                  ['backupSources'], 
+                  enable ? structuredClone(this.config.sources) : null
+                )
               }
             },
           ] : [])
@@ -696,7 +702,7 @@ export default class MetadataControl {
       },
     ).forEach((group, index) => {
       if (!group.btns?.length) return
-      
+
       const groupContainer = document.createElement('div')
       groupContainer.classList.add(
         'flex', 'flex-nowrap', 'gap-2',
@@ -1072,18 +1078,6 @@ export default class MetadataControl {
               },
             },
           ] : []),
-          {
-            innerText: 'Save as local data',
-            events: {
-              click: async (e) => {
-
-                // save to indexdb data
-                  // listen for geojsonupdated in settings.configMap
-                // remove existing layers
-                // add new layers from new source
-              }
-            },
-          },
         ],
       },
       {

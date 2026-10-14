@@ -1302,10 +1302,18 @@ export class LayersControl {
         sourceId,
         show = true,
     }={}) {
-        const label = [...new Set([
-            feature.layer?.metadata?.params?.title,
-            gisUtils.getFeatureLabel(feature) || feature.geometry?.type 
-        ].filter(Boolean))].join(' - ')
+        const featureSourceId = feature.source ?? feature.layer?.source
+
+        // const label = [...new Set([
+        //     feature.layer?.metadata?.params?.title,
+        //     gisUtils.getFeatureLabel(feature) ?? feature.geometry?.type 
+        // ].filter(Boolean))].join(' - ')
+
+        const label = (
+            gisUtils.getFeatureLabel(feature) 
+            ?? feature.layer?.metadata?.params?.title 
+            ?? feature.geometry?.type
+        )
 
         const container = document.createElement('div')
         container.setAttribute('x-data', `{show:${show}}`)
@@ -1360,22 +1368,49 @@ export class LayersControl {
         const tbody = document.createElement('tbody')
         tableEl.appendChild(tbody)
         
-        const properties = Object.entries(feature.properties).filter(i => i[0] !== '__ms__')
-        properties.forEach(([key, value], index) => {
+        Object.entries(feature.properties).filter(i => i[0] !== '__ms__').forEach(([key, value], index) => {
             const tRow = document.createElement('tr')
             tRow.classList.add('rounded', ...(index%2===0 ? ['bg-gray-200/50!','dark:bg-gray-950/50!'] : []))
             utils.appendBinding(tRow, `:class`, `['border-t border-'+color+'-600/25!']: true`)
             tbody.appendChild(tRow)
 
             const keyTd = document.createElement('td')
-            keyTd.classList.add('p-2')
+            keyTd.classList.add('p-2', 'focus:outline-none')
             keyTd.innerText = key
             tRow.appendChild(keyTd)
-
+            
             const valueTd = document.createElement('td')
-            valueTd.classList.add('p-2', 'break-normal')
+            valueTd.classList.add('p-2', 'break-normal', 'focus:outline-none')
             valueTd.innerText = value
             tRow.appendChild(valueTd)
+            
+            if (featureSourceId && !this.isSystemSource(featureSourceId)) {
+                Array(keyTd, valueTd).forEach(el => {
+                    el.setAttribute(':contenteditable', 'vectorEdit')
+                    
+                    let oldValue = el.innerText
+                    
+                    let timer
+                    Array('input', 'paste', 'cut').forEach(type => {
+                        el.addEventListener(type, (e) => {
+                            clearTimeout(timer)
+                            timer = setTimeout(() => {
+                                let value = utils.removeWhitespace(e.target.textContent)
+    
+                                if (el === keyTd) {
+                                    if (value === '') {
+                                        el.innerText = oldValue
+                                    } else {
+                                        oldValue = value
+                                        
+                                    }
+                                }
+    
+                            }, 1000)
+                        })
+                    })
+                })
+            }
         })
 
         return container

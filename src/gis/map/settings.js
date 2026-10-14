@@ -81,23 +81,36 @@ export class SettingsControl {
 
     async configMap() {
         const map = this._map
+        const config = map.getConfig()
         const layersControl = map.getControls('layers')
 
         let sourceTimer
         Array('sourceadded', 'sourceremoved', 'geojsonupdated').forEach(i => {
             map.on(i, (e) => {
-                if (layersControl.isSystemSource(e.sourceId)) return
+                const sourceId = e.sourceId
+                if (layersControl.isSystemSource(sourceId)) return
     
                 clearTimeout(sourceTimer)
+
+                if (config.backupSources) {
+                    if (e.type === 'sourceadded') {
+                        const source = map.getStyle().sources[sourceId]
+                        config.backupSources[sourceId] = structuredClone(source)
+                    }
+
+                    if (e.type === 'sourceremoved') {
+                        delete config.backupSources[sourceId]
+                    }
+                }
+
                 sourceTimer = setTimeout(async () => {
-                    const sources = Object.fromEntries(Object.entries(structuredClone(map.getStyle().sources)).map(([id, source]) => {
+                    this.updateConfig(['sources'], Object.fromEntries(Object.entries(structuredClone(map.getStyle().sources)).map(([id, source]) => {
                         if ('data' in source && (source.metadata?.params?.url || layersControl.isSystemSource(id))) {
                             source.data = turf.featureCollection([])
                         }
                         return [id, source]
-                    }))
-                    this.updateConfig(['sources'], sources)
-                }, 1000);
+                    })))
+                }, 1000)
             })
         })
 

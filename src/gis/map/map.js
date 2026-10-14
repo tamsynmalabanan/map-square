@@ -266,6 +266,11 @@ export default class Map extends maplibregl.Map {
       return cloneConfig
     }
 
+    if (config.backupSources) {
+      config.sources = structuredClone(config.backupSources)
+      delete config.backupSources
+    }
+
     const sources = config.sources ??= cloneConfig.sources
     sources.basemap ??= cloneConfig.sources.basemap
     sources.terrain ??= cloneConfig.sources.terrain
@@ -377,7 +382,7 @@ export default class Map extends maplibregl.Map {
 
     this.addSource = (sourceId, params) => {
       const source = original(sourceId, params)
-      this.fire('sourceadded', { source })
+      this.fire('sourceadded', { sourceId })
       return source
     }
   }
@@ -410,17 +415,19 @@ export default class Map extends maplibregl.Map {
       const result = originalRemoveLayer(layerId)
       this.fire('layerremoved', { layer })
       
-      // const sourceId = layer.source
-      // const layersControl = this.getControls('layers')
-      // if (sourceId && !layersControl.isSystemSource(sourceId)) {
-      //   if (!layersControl.getLegendLayers().some(l => l.source === sourceId)) {
-      //     const config = this.getConfig()
-      //     if (!config.themes.some(theme => {
-      //       if (theme.id === config.activeTheme) return false
-      //       return theme.layers.some(l => l.source === sourceId)
-      //     })) this.removeSource(sourceId)
-      //   }
-      // }
+      const sourceId = layer.source
+      const layersControl = this.getControls('layers')
+      if (sourceId && !layersControl.isSystemSource(sourceId)) {
+        setTimeout(() => {
+          if (!layersControl.getLegendLayers().some(l => l.source === sourceId)) {
+            const config = this.getConfig()
+            if (!config.themes.some(theme => {
+              if (theme.id === config.activeTheme) return false
+              return theme.layers.some(l => l.source === sourceId)
+            }) && this.getSource(sourceId)) this.removeSource(sourceId)
+          }
+        }, 3000)
+      }
 
       return result
     }
