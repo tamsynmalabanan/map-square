@@ -1067,8 +1067,13 @@ export class LayersControl {
 
     configFeatureMenu({parent, feature, sourceId}={}) {
         const map = this._map
-        const featureSource = feature.source ?? feature.layer?.source
-        const source = map.getSource(sourceId ?? featureSource)
+
+        const featureSourceId = feature.source ?? feature.layer?.source
+        const isLegendSource = featureSourceId && !this.isSystemSource(featureSourceId)
+        const featureSource = map.getSource(featureSourceId)
+        const isWebSource = featureSource?.metadata?.params?.url
+
+        const source = map.getSource(sourceId ?? featureSourceId)
         const featureId = gisUtils.getFeatureId(feature)
         const rawFeature = this.getRawFeature(feature)
 
@@ -1240,7 +1245,7 @@ export class LayersControl {
             {
                 title: '',
                 options: [
-                    ...(!map.isStatic() && featureSource && !this.isSystemSource(featureSource) ? [
+                    ...(!map.isStatic() && isLegendSource && !isWebSource ? [
                         {
                             innerText: 'Delete feature',
                             init: (btn) => {
@@ -1249,7 +1254,7 @@ export class LayersControl {
                             events: {
                                 'click': async (e) => {
                                     this.updateGeoJSONData({
-                                        sourceId: featureSource,
+                                        sourceId: featureSourceId,
                                         features: [rawFeature],
                                         action: 'remove',
                                     })
