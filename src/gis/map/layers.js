@@ -1248,8 +1248,14 @@ export class LayersControl {
                     ...(!map.isStatic() && isLegendSource && !isWebSource ? [
                         {
                             innerText: 'Delete feature',
-                            init: (btn) => {
+                            init: (btn, toggle, menu) => {
                                 btn.setAttribute('x-show', 'vectorEdit')
+                                toggle.addEventListener('click', (e) => {
+                                    btn.disabled = this.findFeatureById(
+                                        featureSourceId, 
+                                        gisUtils.getFeatureId(rawFeature)
+                                    ) ? false : true
+                                })
                             },
                             events: {
                                 'click': async (e) => {
@@ -1258,6 +1264,8 @@ export class LayersControl {
                                         features: [rawFeature],
                                         action: 'remove',
                                     })
+
+                                    e.target.disabled = true
                                 }
                             }
                         },
@@ -1296,6 +1304,11 @@ export class LayersControl {
 
     getLegendLayers() {
         return this._map.getStyle().layers.filter(l => !this.isSystemSource(l.id))
+    }
+
+    removeLegendLayers() {
+        const map = this._map
+        this.getLegendLayers().forEach(l => map.removeLayer(l.id))
     }
 
     createPropertiesTable({

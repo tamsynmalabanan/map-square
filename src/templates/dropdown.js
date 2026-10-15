@@ -40,7 +40,6 @@ export default ({
         'fixed', 
         'z-5!', 
         'w-max',
-        'right-0',
         'flex', 'flex-col',
         'text-xs', 'justify-end', 
         'cursor-pointer', 

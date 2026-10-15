@@ -419,13 +419,16 @@ export default class Map extends maplibregl.Map {
       const layersControl = this.getControls('layers')
       if (sourceId && !layersControl.isSystemSource(sourceId)) {
         setTimeout(() => {
-          if (!layersControl.getLegendLayers().some(l => l.source === sourceId)) {
-            const config = this.getConfig()
-            if (!config.themes.some(theme => {
-              if (theme.id === config.activeTheme) return false
-              return theme.layers.some(l => l.source === sourceId)
-            }) && this.getSource(sourceId)) this.removeSource(sourceId)
-          }
+          if (!this.getSource(sourceId)) return
+          if (layersControl.getLegendLayers().some(l => l.source === sourceId)) return
+          
+          const {themes, activeTheme} = this.getConfig()
+          if (themes.some(theme => (
+            theme.id !== activeTheme 
+            && theme.layers.some(l => l.source === sourceId)
+          ))) return
+          
+          this.removeSource(sourceId)
         }, 3000)
       }
 

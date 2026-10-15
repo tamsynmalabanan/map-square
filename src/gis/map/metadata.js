@@ -677,6 +677,31 @@ export default class MetadataControl {
                 } catch {}
               }
             },
+            {
+              init: (btn) => {
+                const [toggle, menu] = dropdown({
+                    parent: btn.parentElement,
+                    title: 'More options',
+                    menuClassList: ['mt-1'],
+                    menuContent: Array(
+                      {
+                        title: '',
+                        options: [
+                          {
+                            innerText: 'Remove all layers',
+                            events: {
+                              click: (e) => {
+                                map.getControls('layers').removeLegendLayers()
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    )
+                }).children
+                btn.remove()
+              },
+            },
           ] : []),
         ],
       },
@@ -695,6 +720,7 @@ export default class MetadataControl {
                     title: 'Edit options',
                     icon: svg.pencilSquareMini,
                     toggleHighlight: true,
+                    menuClassList: ['mt-1'],
                     menuContent: Array(
                       {
                         title: '',
@@ -758,8 +784,6 @@ export default class MetadataControl {
                 
                 dropdownContainer.setAttribute('x-show', 'vectorEdit')
                 const [toggle, menu] = dropdownContainer.children
-                menu.classList.add('mt-1')
-                menu.classList.remove('right-0')
               },
               handler: async (e) => {
                 map.updatedGeoJSONs = []
