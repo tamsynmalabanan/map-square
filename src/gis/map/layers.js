@@ -865,7 +865,7 @@ export class LayersControl {
 
     createGeoJSONSource(id, {properties={}}={}) {
         const map = this._map
-        map.addSource(id, {type: "geojson", data: turf.featureCollection([])})
+        map.addSource(id, {type: "geojson", data: properties.data ?? turf.featureCollection([])})
         return map.getSource(id)
     }
 
@@ -1161,13 +1161,12 @@ export class LayersControl {
                             events: {
                                 'click': async () => {
                                     const newSource = this.getOrCreateSource(utils.randomId(), {
-                                        properties: {metadata: {params: {
-                                            title: featureLabel || 'Untitled layer'
-                                        }}}
-                                    })
-                                    this.updateGeoJSONData({
-                                        sourceId: newSource.id,
-                                        features: [await gisUtils.normalizeProperties(rawFeature)],
+                                        properties: {
+                                            data: turf.featureCollection([await gisUtils.normalizeProperties(rawFeature)]),
+                                            metadata: {params: {
+                                                title: featureLabel || 'Untitled layer'
+                                            }}
+                                        }
                                     })
                                     this.addGeoJSONLayers(newSource.id)
                                 }
@@ -1254,8 +1253,6 @@ export class LayersControl {
                                         features: [rawFeature],
                                         action: 'remove',
                                     })
-
-                                    e.target.disabled = true
                                 }
                             }
                         },

@@ -85,7 +85,7 @@ export class SettingsControl {
         const layersControl = map.getControls('layers')
 
         let sourceTimer
-        Array('sourceadded', 'sourceremoved', 'geojsonupdated').forEach(i => {
+        Array('sourceadded', 'sourceremoved', 'sourceupdated', 'geojsonupdated').forEach(i => {
             map.on(i, (e) => {
                 const sourceId = e.sourceId
                 if (layersControl.isSystemSource(sourceId)) return
@@ -93,13 +93,15 @@ export class SettingsControl {
                 clearTimeout(sourceTimer)
 
                 if (config.backupSources) {
-                    if (e.type === 'sourceadded') {
-                        const source = map.getStyle().sources[sourceId]
-                        config.backupSources[sourceId] = structuredClone(source)
-                    }
-
                     if (e.type === 'sourceremoved') {
                         delete config.backupSources[sourceId]
+                    } else if (e.type === 'geojsonupdated') {
+                        map.updatedGeoJSONs.push(sourceId)
+                    } else if (Array('sourceadded', 'sourceupdated').includes(e.type)) {
+                        const source = map.getStyle().sources[sourceId]
+                        if (source) {
+                            config.backupSources[sourceId] = structuredClone(source)
+                        }
                     }
                 }
 

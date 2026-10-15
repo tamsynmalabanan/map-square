@@ -5,6 +5,7 @@ export default ({
     title = 'Dropdown',
     icon = svg.ellipsisHorizontalMini,
     menuClassList=[],
+    toggleHighlight=false,
     toggleClassStr=`
         size-[15px]! 
         rounded! 
@@ -26,6 +27,7 @@ export default ({
         title, icon,
         classStr: toggleClassStr,
         minimal: true,
+        highlightExp: toggleHighlight,
         attrs: `
             x-ref="dropdownToggle"
             @click='showDropdown = !showDropdown'
@@ -94,7 +96,7 @@ export default ({
                 btn.appendChild(label)
             }
 
-            params.init?.(btn)
+            params.init?.(btn, toggle, menu)
         })
     })
 

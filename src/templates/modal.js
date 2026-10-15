@@ -29,17 +29,18 @@ export default ({
     label=true,
     modalClass='',
     toggleclass='',
+    toggle=true,
 }={}) => {
   return `
     <div x-id="['modal']" :id="$id('modal')" x-data="modalApp({'open':${open}})" class="${modalClass}">
-      ${button({
+      ${toggle ? button({
         ...(label ? {label: title} : {title}), 
         icon, 
         collapsible,
         attrs: `@click="toggle"`,
         highlightExp: `open`,
         classStr: `${toggleclass}`,
-      })}
+      }) : ''}
       <template x-teleport="${parent}">
         <div 
           :id="$id('modal', 'container')"

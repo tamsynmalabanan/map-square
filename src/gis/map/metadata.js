@@ -1,11 +1,12 @@
 import Alpine from 'alpinejs';
 import * as svg from '../../svg.js'
 import button from '../../templates/button.js';
+import modal from '../../templates/modal.js'; 
 import Map from './map.js'
 import Quill from 'quill';
 import dropdown from "../../templates/dropdown.js";
 import * as turf from '@turf/turf'
-import { before } from 'lodash';
+import { before, drop } from 'lodash';
 
 export default class MetadataControl {
   onAdd(map) {
@@ -686,17 +687,84 @@ export default class MetadataControl {
             {
               title: 'Edit vectors',
               icon: svg.pencilSquareMini,
-              attrs: `@click="vectorEdit = !vectorEdit"`,
+              attrs: `@click="vectorEdit = true" x-show="!vectorEdit"`,
               highlightExp: 'vectorEdit',
+              init: (btn) => {
+                const dropdownContainer = dropdown({
+                    parent: btn.parentElement,
+                    title: 'Edit options',
+                    icon: svg.pencilSquareMini,
+                    toggleHighlight: true,
+                    menuContent: Array(
+                      {
+                        title: '',
+                        options: [
+                          {
+                            innerText: 'Save changes',
+                            init: (btn, toggle, menu) => {
+                              toggle.addEventListener('click', (e) => {
+                                btn.disabled = !map.updatedGeoJSONs?.length
+                              })
+                            },
+                            events: {
+                                'click': (e) => {
+                                  map.getControls('settings').updateConfig(['backupSources'], (
+                                    structuredClone(this.config.sources)
+                                  ))
+                                  map.updatedGeoJSONs = []
+                                }
+                            }
+                          },
+                          {
+                            innerText: 'Discard changes',
+                            init: (btn, toggle, menu) => {
+                              toggle.addEventListener('click', (e) => {
+                                btn.disabled = !map.updatedGeoJSONs?.length
+                              })
+                            },
+                            events: {
+                                'click': (e) => {
+                                  const layersControl = map.getControls('layers')
+                                  map.updatedGeoJSONs.forEach(sourceId => {
+                                    layersControl.updateGeoJSONData({
+                                      sourceId, 
+                                      features: this.config.backupSources[sourceId].data.features
+                                    })
+                                  })
+
+                                  map.updatedGeoJSONs = []
+                                }
+                            }
+                          },
+                          {
+                            innerText: 'Stop editing',
+                            init: (btn, toggle, menu) => {
+                              btn.setAttribute('@click', 'vectorEdit = false')
+                              toggle.addEventListener('click', (e) => {
+                                btn.disabled = map.updatedGeoJSONs?.length
+                              })
+                            },
+                            events: {
+                                'click': (e) => {
+                                  map.updatedGeoJSONs = []
+                                  map.getControls('settings').updateConfig(['backupSources'], null)
+                                }
+                            }
+                          },
+                        ]
+                      }
+                    ),
+                })
+                
+                dropdownContainer.setAttribute('x-show', 'vectorEdit')
+                const [toggle, menu] = dropdownContainer.children
+                menu.classList.add('mt-1')
+                menu.classList.remove('right-0')
+              },
               handler: async (e) => {
-                const enable = !Alpine.$data(map.getContainer()).vectorEdit
-
-                // make a modal
-
-                map.getControls('settings')
-                .updateConfig(
-                  ['backupSources'], 
-                  enable ? structuredClone(this.config.sources) : null
+                map.updatedGeoJSONs = []
+                map.getControls('settings').updateConfig(['backupSources'], 
+                  structuredClone(this.config.sources)
                 )
               }
             },
@@ -729,6 +797,7 @@ export default class MetadataControl {
         }))
         el.addEventListener('click', btn.handler)
         groupContainer.appendChild(el)
+        btn.init?.(el)
       })
     })
 
