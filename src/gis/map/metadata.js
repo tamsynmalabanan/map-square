@@ -1177,7 +1177,43 @@ export default class MetadataControl {
         ],
       },
       {
-        titl: '',
+        title: '',
+        options: [
+          ...(!map.isStatic() ? [
+            {
+              innerText: 'Paste features',
+              init: (btn) => {
+                btn.setAttribute('x-show', 'vectorEdit')
+              },
+              events: {
+                click: async (e) => {
+                  let features = JSON.parse((await navigator.clipboard.readText()) ?? '[]')
+
+                  if (Array.isArray(features)) {
+                    features = features.filter(f => f.type === 'Feature' && f.geometry?.coordinates?.length)
+                  } else if (typeof features === 'object') {
+                    if (features.type === 'Feature' && features.geometry?.coordinates?.length) {
+                      features = [features]
+                    } else if (features.type === 'FeatureCollection') {
+                      features = features.features ?? []
+                    }
+                  }
+                  
+                  if (!Array.isArray(features) || !features?.length) return
+
+                  map.getControls('layers').updateGeoJSONData({
+                    sourceId: layer.source, 
+                    features: (await gisUtils.normalizeGeoJSON(turf.featureCollection(features))).features,
+                    action: 'add',
+                  })
+                }
+              },
+            },
+          ] : []),
+        ],
+      },
+      {
+        title: '',
         options: [
           ...(!map.isStatic() ? [
             {
