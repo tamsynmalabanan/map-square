@@ -690,6 +690,9 @@ export default class MetadataControl {
               highlightExp: 'vectorEdit',
               handler: async (e) => {
                 const enable = !Alpine.$data(map.getContainer()).vectorEdit
+
+                // make a modal
+
                 map.getControls('settings')
                 .updateConfig(
                   ['backupSources'], 
