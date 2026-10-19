@@ -1,4 +1,4 @@
-export const objectStoreNames = ['data', 'maps']
+export const objectStoreNames = ['nominatim', 'maps', 'sources']
 
 export const requestGISDB = () => {
     const request = indexedDB.open('gisdb', 1)
