@@ -689,6 +689,19 @@ export default class MetadataControl {
                         options: [
                           {
                             innerText: 'Remove all layers',
+                            init: (btn) => {
+                              btn.disabled = !map.getTheme()?.layers?.length
+
+                              let timer
+                              Array('layeradded', 'layerremoved').forEach(i => {
+                                map.on(i, (e) => {
+                                  clearTimeout(timer)
+                                  timer = setTimeout(() => {
+                                    btn.disabled = !map.getControls('layers').getLegendLayers().length
+                                  }, 100)
+                                })
+                              })
+                            },
                             events: {
                               click: (e) => {
                                 map.getControls('layers').removeLegendLayers()
@@ -715,6 +728,18 @@ export default class MetadataControl {
               attrs: `@click="vectorEdit = true" x-show="!vectorEdit"`,
               highlightExp: 'vectorEdit',
               init: (btn) => {
+                btn.disabled = true
+
+                let timer
+                Array('load', 'layeradded', 'layerremoved').forEach(i => {
+                  map.on(i, (e) => {
+                    clearTimeout(timer)
+                    timer = setTimeout(() => {
+                      btn.disabled = !map.getControls('layers').getEditableLayers().length
+                    }, 100)
+                  })
+                })
+
                 const dropdownContainer = dropdown({
                     parent: btn.parentElement,
                     title: 'Edit options',
@@ -803,7 +828,7 @@ export default class MetadataControl {
         'flex', 'flex-nowrap', 'gap-2',
         'rounded', 'p-1!',
       )
-      utils.appendBinding(groupContainer, ':class', `['bg-'+color+'-600/25!']: true`)
+      // utils.appendBinding(groupContainer, ':class', `['bg-'+color+'-600/25!']: true`)
       menuContainer.appendChild(groupContainer)
 
       group.btns.forEach(btn => {

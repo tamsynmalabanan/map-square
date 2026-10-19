@@ -1306,6 +1306,16 @@ export class LayersControl {
         return this._map.getStyle().layers.filter(l => !this.isSystemSource(l.id))
     }
 
+    getEditableLayers() {
+        const map = this._map
+        return this.getLegendLayers().filter(l => {
+            return (
+                !l.metadata?.params?.url
+                && map.getSource(l.source)?.type === 'geojson'
+            )
+        })
+    }
+
     removeLegendLayers() {
         const map = this._map
         this.getLegendLayers().forEach(l => map.removeLayer(l.id))
