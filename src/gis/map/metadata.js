@@ -718,10 +718,10 @@ export default class MetadataControl {
           ] : []),
         ],
       },
-      {
-        title: 'Editor', 
-        btns: [
-          ...(!map.isStatic() ? [
+      ...(!map.isStatic() ? [
+        {
+          title: 'Editor', 
+          btns: [
             {
               title: 'Edit vectors',
               icon: svg.pencilSquareMini,
@@ -817,9 +817,9 @@ export default class MetadataControl {
                 )
               }
             },
-          ] : [])
-        ],
-      },
+          ],
+        },
+      ] : [])
     ).forEach((group, index) => {
       if (!group.btns?.length) return
 

@@ -1398,44 +1398,48 @@ export class LayersControl {
             tRow.classList.add('rounded', ...(index%2===0 ? ['bg-gray-200/50!','dark:bg-gray-950/50!'] : []))
             utils.appendBinding(tRow, `:class`, `['border-t border-'+color+'-600/25!']: true`)
             tbody.appendChild(tRow)
-
-            const keyTd = document.createElement('td')
-            keyTd.classList.add('p-2', 'focus:outline-none')
-            keyTd.innerText = key
-            tRow.appendChild(keyTd)
             
-            const valueTd = document.createElement('td')
-            valueTd.classList.add('p-2', 'break-normal', 'focus:outline-none')
-            valueTd.innerText = value
-            tRow.appendChild(valueTd)
-            
-            if (featureSourceId && !this.isSystemSource(featureSourceId)) {
-                Array(keyTd, valueTd).forEach(el => {
-                    el.setAttribute(':contenteditable', 'vectorEdit')
-                    
-                    let oldValue = el.innerText
-                    
-                    let timer
-                    Array('input', 'paste', 'cut').forEach(type => {
-                        el.addEventListener(type, (e) => {
-                            clearTimeout(timer)
-                            timer = setTimeout(() => {
-                                let value = utils.removeWhitespace(e.target.textContent)
+            Array(key, value).forEach(i => {
+                const td = document.createElement('td')
+                tRow.appendChild(td)
     
-                                if (el === keyTd) {
-                                    if (value === '') {
-                                        el.innerText = oldValue
-                                    } else {
-                                        oldValue = value
+                const input = document.createElement('input')
+                input.value = i
+                td.appendChild(input)
+                
+                input.classList.add('p-2', 'focus:outline-none', 'break-normal')
+                input.setAttribute('placeholder', `Set attribute ${i === key ? 'key' : 'value'}`)
+                input.setAttribute('maxlength', 256)
+                input.setAttribute('readonly', true)
+            })
+            
+            // if (featureSourceId && !this.isSystemSource(featureSourceId)) {
+            //     Array(keyTd, valueTd).forEach(el => {
+            //         el.setAttribute(':contenteditable', 'vectorEdit')
+                    
+            //         let oldValue = el.innerText
+                    
+            //         let timer
+            //         Array('input', 'paste', 'cut').forEach(type => {
+            //             el.addEventListener(type, (e) => {
+            //                 clearTimeout(timer)
+            //                 timer = setTimeout(() => {
+            //                     let value = utils.removeWhitespace(e.target.textContent)
+    
+            //                     if (el === keyTd) {
+            //                         if (value === '') {
+            //                             el.innerText = oldValue
+            //                         } else {
+            //                             oldValue = value
                                         
-                                    }
-                                }
+            //                         }
+            //                     }
     
-                            }, 1000)
-                        })
-                    })
-                })
-            }
+            //                 }, 1000)
+            //             })
+            //         })
+            //     })
+            // }
         })
 
         return container
