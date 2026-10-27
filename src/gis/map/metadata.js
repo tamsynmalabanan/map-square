@@ -697,7 +697,7 @@ export default class MetadataControl {
                                 map.on(i, (e) => {
                                   clearTimeout(timer)
                                   timer = setTimeout(() => {
-                                    btn.disabled = !map.getControls('layers').getLegendLayers().length
+                                    btn.disabled = !map.getControls('layers').getLegendLayers()?.length
                                   }, 100)
                                 })
                               })
@@ -735,7 +735,7 @@ export default class MetadataControl {
                   map.on(i, (e) => {
                     clearTimeout(timer)
                     timer = setTimeout(() => {
-                      btn.disabled = !map.getControls('layers').getEditableLayers().length
+                      btn.disabled = !map.getControls('layers').getEditableLayers()?.length
                     }, 100)
                   })
                 })

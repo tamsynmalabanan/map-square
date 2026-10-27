@@ -1303,22 +1303,20 @@ export class LayersControl {
     }
 
     getLegendLayers() {
-        return this._map.getStyle().layers.filter(l => !this.isSystemSource(l.id))
+        return this._map?.getStyle().layers.filter(l => !this.isSystemSource(l.id))
     }
 
     getEditableLayers() {
-        const map = this._map
-        return this.getLegendLayers().filter(l => {
+        return this.getLegendLayers()?.filter(l => {
             return (
                 !l.metadata?.params?.url
-                && map.getSource(l.source)?.type === 'geojson'
+                && this._map.getSource(l.source)?.type === 'geojson'
             )
         })
     }
 
     removeLegendLayers() {
-        const map = this._map
-        this.getLegendLayers().forEach(l => map.removeLayer(l.id))
+        this.getLegendLayers()?.forEach(l => this._map.removeLayer(l.id))
     }
 
     createPropertiesTable({
@@ -1327,7 +1325,7 @@ export class LayersControl {
         sourceId,
         show = true,
     }={}) {
-        const featureSourceId = feature.source ?? feature.layer?.source
+        // const featureSourceId = feature.source ?? feature.layer?.source
 
         // const label = [...new Set([
         //     feature.layer?.metadata?.params?.title,
