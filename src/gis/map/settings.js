@@ -965,17 +965,19 @@ export class SettingsControl {
     }
 
     async saveConfig({date=(new Date()).toLocaleString("en-US"), timeout=1000}) {
+        const map = this._map
+        
         return new Promise((resolve, reject) => {
             if (this.saveTimer) {
                 clearTimeout(this.saveTimer)
             }
 
             this.saveTimer = setTimeout(async () => {
-                const map = this._map
                 const config = map?.getConfig()
                 if (!config) return
 
                 const snapshotPromise = Promise.race([
+                    new Promise((resolve) => setTimeout(() => resolve(), 3000)),
                     new Promise((resolve) => {
                         map.once('idle', () => {
                             config.metadata.snapshot = map.getCanvas().toDataURL('image/png')
@@ -985,7 +987,6 @@ export class SettingsControl {
                         // map.setPixelRatio(0.1)
                         map.triggerRepaint()
                     }),
-                    new Promise((resolve) => setTimeout(() => resolve(), 3000))
                 ]);
 
                 await snapshotPromise

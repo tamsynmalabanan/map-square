@@ -100,7 +100,8 @@ export class FileControl {
                             icon: `🔃`,
                             highlight: null,
                             handler: async (event) => {
-                                this.loadMapFromConfig(config)
+                                const savedConfig = await gisDB.getFromGISDB('maps', config.id)
+                                this.loadMapFromConfig(savedConfig ?? config)
                             },
                         },
                     ] : []),
@@ -361,9 +362,15 @@ export class FileControl {
         url.searchParams.set('src', src)
         url.searchParams.set('id', id)
         window.history.replaceState({}, '', url)
-
+        
         const map = this._map
         const container = map.getContainer()
+        
+        const settingsControl = map.getControls('settings')
+        Object.keys(settingsControl.popups).forEach(i => {
+            settingsControl.clearPopup(i)
+        })
+
         map.remove()
         new Map(container, config)
     }
