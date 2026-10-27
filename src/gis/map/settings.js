@@ -472,7 +472,7 @@ export class SettingsControl {
 
     configBasemap() {
         const map = this._map
-        const settings = map.getTheme().settings
+        const settings = map?.getTheme().settings
         const basemap = settings.basemap        
         const paints = basemap.paints[Alpine.store('displaySettings').darkMode ? 'dark' : 'default']
         const currentBasemap = map.getLayer('basemap')
